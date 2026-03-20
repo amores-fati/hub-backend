@@ -1,0 +1,74 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  quality-and-test:
+    name: Code Quality and Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres-test:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: api_db_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Prepare Test Environments
+        run: cp .env.test.example .env.test
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Lint Code (ESLint & Prettier)
+        run: |
+          npm run lint
+          npx prettier --check "src/**/*.ts" "test/**/*.ts"
+
+      - name: Run Unit Tests
+        run: npm run test
+
+      - name: Run E2E Tests
+        run: npm run test:e2e
+
+  build-docker:
+    name: Docker Build Check
+    runs-on: ubuntu-latest
+    needs: quality-and-test
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: backend-api:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
