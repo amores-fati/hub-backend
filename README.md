@@ -1,4 +1,4 @@
-# Hub Backend (API Hexagonal)
+# Amores Fati - Backend
 
 Esta é uma API NestJS estruturada estritamente seguindo os princípios de Arquitetura Hexagonal (Ports & Adapters), SOLID e Clean Code.
 
