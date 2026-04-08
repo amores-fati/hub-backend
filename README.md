@@ -24,7 +24,7 @@ Para rodar este projeto, você precisará ter instalado em sua máquina:
    ```bash
    docker-compose up -d --build
    ```
-
+4. Rodar npm i para baixar as dependencias do package.json
 A API estará rodando na porta definida no `.env` (por padrão `http://localhost:3000`).
 
 **Acesse a documentação Swagger em:** `http://localhost:3000/api`
