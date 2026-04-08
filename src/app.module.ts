@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 
 // User Adapters & Core
 import { UserController } from './adapters/in/user/user.controller';
@@ -15,6 +16,14 @@ import { CourseService } from './core/services/course.service';
 import { CourseRepository } from './adapters/out/course/course.repository';
 import { CourseOrmEntity } from './adapters/out/course/course.orm-entity';
 import { ICourseRepository } from './core/ports/course.repository.interface';
+
+// Auth Adapters & Core
+import { AuthController } from './adapters/in/auth/auth.controller';
+import { AuthService } from './core/services/auth.service';
+import { BcryptHashService } from './adapters/out/auth/bcrypt-hash.service';
+import { JwtTokenService } from './adapters/out/auth/jwt-token.service';
+import { IHashService } from './core/ports/hash.service.interface';
+import { ITokenService } from './core/ports/token.service.interface';
 
 @Module({
   imports: [
@@ -37,8 +46,16 @@ import { ICourseRepository } from './core/ports/course.repository.interface';
       }),
     }),
     TypeOrmModule.forFeature([UserOrmEntity, CourseOrmEntity]),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET') ?? 'changeme',
+        signOptions: { expiresIn: '7d' },
+      }),
+    }),
   ],
-  controllers: [UserController, CourseController],
+  controllers: [UserController, CourseController, AuthController],
   providers: [
     {
       provide: UserService,
@@ -61,6 +78,24 @@ import { ICourseRepository } from './core/ports/course.repository.interface';
     {
       provide: ICourseRepository,
       useClass: CourseRepository,
+    },
+    {
+      provide: AuthService,
+      useFactory: (
+        userRepository: IUserRepository,
+        hashService: IHashService,
+        tokenService: ITokenService,
+      ) => new AuthService(userRepository, hashService, tokenService),
+      inject: [IUserRepository, IHashService, ITokenService],
+    },
+    {
+      provide: IHashService,
+      useClass: BcryptHashService,
+    },
+    {
+      provide: ITokenService,
+      useFactory: (jwtService: JwtService) => new JwtTokenService(jwtService),
+      inject: [JwtService],
     },
   ],
 })

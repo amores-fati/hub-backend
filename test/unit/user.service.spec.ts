@@ -27,17 +27,25 @@ describe('UserService', () => {
       Promise.resolve(user),
     );
 
-    const result = await service.createUser('John', 'john@test.com');
+    const result = await service.createUser('Luca', 'luca@test.com');
     expect(result.id).toBeDefined();
-    expect(result.email).toBe('john@test.com');
+    expect(result.email).toBe('luca@test.com');
   });
 
   it('should throw UserAlreadyExistsException if email already exists', async () => {
     (mockRepository.findByEmail as jest.Mock).mockResolvedValue(
-      new User('id', 'John', 'john@test.com', new Date(), new Date()),
+      new User(
+        'id',
+        'Luca',
+        'luca@test.com',
+        '',
+        'student',
+        new Date(),
+        new Date(),
+      ),
     );
 
-    await expect(service.createUser('John', 'john@test.com')).rejects.toThrow(
+    await expect(service.createUser('Luca', 'luca@test.com')).rejects.toThrow(
       UserAlreadyExistsException,
     );
   });

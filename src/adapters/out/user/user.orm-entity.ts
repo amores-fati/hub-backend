@@ -17,6 +17,12 @@ export class UserOrmEntity {
   @Column({ unique: true })
   email: string;
 
+  @Column()
+  passwordHash: string;
+
+  @Column({ default: 'student' })
+  role: string;
+
   @CreateDateColumn()
   createdAt: Date;
 
