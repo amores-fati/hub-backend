@@ -15,6 +15,11 @@ import { CourseService } from './core/services/course.service';
 import { CourseRepository } from './adapters/out/course/course.repository';
 import { CourseOrmEntity } from './adapters/out/course/course.orm-entity';
 import { ICourseRepository } from './core/ports/course.repository.interface';
+import { CompanyOrmEntity } from './adapters/out/company/company.orm-entity';
+import { CompanyController } from './adapters/in/company/company.controller';
+import { CompanyService } from './core/services/company.service';
+import { ICompanyRepository } from './core/ports/company.repository.interface';
+import { CompanyRepository } from './adapters/out/company/company.repository';
 
 @Module({
   imports: [
@@ -32,13 +37,13 @@ import { ICourseRepository } from './core/ports/course.repository.interface';
         username: configService.get<string>('DB_USER'),
         password: configService.get<string>('DB_PASS'),
         database: configService.get<string>('DB_NAME'),
-        entities: [UserOrmEntity, CourseOrmEntity],
+        entities: [UserOrmEntity, CourseOrmEntity, CompanyOrmEntity],
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
       }),
     }),
-    TypeOrmModule.forFeature([UserOrmEntity, CourseOrmEntity]),
+    TypeOrmModule.forFeature([UserOrmEntity, CourseOrmEntity, CompanyOrmEntity]),
   ],
-  controllers: [UserController, CourseController],
+  controllers: [UserController, CourseController, CompanyController],
   providers: [
     {
       provide: UserService,
@@ -61,6 +66,17 @@ import { ICourseRepository } from './core/ports/course.repository.interface';
     {
       provide: ICourseRepository,
       useClass: CourseRepository,
+    },
+    {
+      provide: CompanyService,
+      useFactory: (companyRepository: ICompanyRepository) => {
+        return new CompanyService(companyRepository);
+      },
+      inject: [ICompanyRepository],
+    },
+    {
+      provide: ICompanyRepository,
+      useClass: CompanyRepository,
     },
   ],
 })
