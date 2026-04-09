@@ -6,7 +6,7 @@ import { Course } from '../../../core/domain/course.entity';
 import { CourseOrmEntity } from './course.orm-entity';
 
 @Injectable()
-export class CourseRepository implements ICourseRepository {
+export class CourseRepository implements CourseRepository {
   constructor(
     @InjectRepository(CourseOrmEntity)
     private readonly ormRepository: Repository<CourseOrmEntity>,

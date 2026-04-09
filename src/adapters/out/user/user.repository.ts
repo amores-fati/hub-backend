@@ -6,7 +6,7 @@ import { User } from '../../../core/domain/user.entity';
 import { UserOrmEntity } from './user.orm-entity';
 
 @Injectable()
-export class UserRepository implements IUserRepository {
+export class UserRepository implements UserRepository {
   constructor(
     @InjectRepository(UserOrmEntity)
     private readonly ormRepository: Repository<UserOrmEntity>,
