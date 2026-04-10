@@ -58,7 +58,7 @@ const AppDataSource = new DataSource({
 
 async function seed() {
   await AppDataSource.initialize();
-  console.log('🔗 Conectado ao banco de dados.');
+  console.log(' Conectado ao banco de dados.');
 
   await AppDataSource.query(`TRUNCATE TABLE
     skills_job, skills_curriculum, jobs, curriculums,
@@ -66,7 +66,7 @@ async function seed() {
     social_benefits, accessibility_resources,
     students, admins, enterprises, contacts, users
     RESTART IDENTITY CASCADE`);
-  console.log('🧹 Dados anteriores removidos.');
+  console.log('Dados anteriores removidos.');
 
   const SALT = 10;
   const senhaAdmin   = await bcrypt.hash('Admin@123',   SALT);
@@ -91,7 +91,7 @@ async function seed() {
   });
   await AppDataSource.getRepository(AdminOrmEntity).save(admin);
 
-  console.log('✅ Admin criado.');
+  console.log('Admin criado.');
 
   // ══════════════════════════════════════════════════════════════════════════
   // 2. EMPRESAS
@@ -158,7 +158,7 @@ async function seed() {
     empresas.push(enterprise);
   }
 
-  console.log('✅ 3 empresas criadas.');
+  console.log('3 empresas criadas.');
 
   // ══════════════════════════════════════════════════════════════════════════
   // 3. CURSOS
@@ -228,7 +228,7 @@ async function seed() {
     cursos.push(curso);
   }
 
-  console.log('✅ 5 cursos criados.');
+  console.log(' 5 cursos criados.');
 
   // ══════════════════════════════════════════════════════════════════════════
   // 4. ALUNOS (15)
@@ -322,7 +322,7 @@ async function seed() {
     alunos.push(student);
   }
 
-  console.log('✅ 15 alunos criados.');
+  console.log(' 15 alunos criados.');
 
   // ══════════════════════════════════════════════════════════════════════════
   // CURSOS PRESENCIAIS (fora do loop de alunos)
@@ -356,7 +356,7 @@ async function seed() {
     skills.push(skill);
   }
 
-  console.log('✅ Skills criadas.');
+  console.log(' Skills criadas.');
 
   // ══════════════════════════════════════════════════════════════════════════
   // 6. CURRÍCULOS (2)
@@ -385,7 +385,7 @@ async function seed() {
     }
   }
 
-  console.log('✅ 2 currículos com skills criados.');
+  console.log(' 2 currículos com skills criados.');
 
   // ══════════════════════════════════════════════════════════════════════════
   // 7. VAGAS (5)
@@ -418,9 +418,9 @@ async function seed() {
     }
   }
 
-  console.log('✅ 5 vagas com skills criadas.');
+  console.log(' 5 vagas com skills criadas.');
 
-  console.log('\n🌱 Seed concluído com sucesso!');
+  console.log('\n Seed concluído com sucesso!');
   await AppDataSource.destroy();
 }
 
