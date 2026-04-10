@@ -41,7 +41,11 @@ import { CompanyRepository } from './adapters/out/company/company.repository';
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
       }),
     }),
-    TypeOrmModule.forFeature([UserOrmEntity, CourseOrmEntity, CompanyOrmEntity]),
+    TypeOrmModule.forFeature([
+      UserOrmEntity,
+      CourseOrmEntity,
+      CompanyOrmEntity,
+    ]),
   ],
   controllers: [UserController, CourseController, CompanyController],
   providers: [
