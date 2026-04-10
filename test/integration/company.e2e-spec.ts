@@ -3,6 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { Server } from 'http';
+import { cnpj } from 'cpf-cnpj-validator';
 
 interface CompanyResponse {
   id: string;
@@ -27,7 +28,7 @@ describe('CompanyController (e2e)', () => {
     );
     await app.init();
 
-    dynamicCnpj = `${Date.now()}`.substring(0, 14);
+    dynamicCnpj = cnpj.generate();
   });
 
   afterAll(async () => {
