@@ -8,10 +8,10 @@ export class Company {
     public state: string,
     public street: string,
     public neighborhood: string,
-    public cep: number,
+    public cep: string,
     public number: number,
     public responsibleName: string,
-    public phone: number,
+    public phone: string,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}

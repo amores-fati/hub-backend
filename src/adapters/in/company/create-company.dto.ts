@@ -1,46 +1,77 @@
 import { IsString, IsNotEmpty, IsNumber, IsEmail } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsCnpj } from '../../../utils/validators/cnpj.validator';
+import { IsCep } from '../../../utils/validators/cep.validator';
 
-export class CreateCompanyDto { 
-    @IsString()
-    @IsNotEmpty()   
-    name: string;
+export class CreateCompanyDto {
+  @ApiProperty({
+    example: 'Tech Corp LTDA',
+    description: 'Razão social da empresa',
+  })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
-    @IsString()
-    @IsNotEmpty()
-    cnpj: string;
+  @ApiProperty({
+    example: '60680743000181',
+    description: 'CNPJ da empresa (somente números)',
+  })
+  @IsCnpj()
+  @IsString()
+  @IsNotEmpty()
+  cnpj: string;
 
-    @IsEmail()
-    @IsNotEmpty()
-    email: string;
+  @ApiProperty({
+    example: 'contato@techcorp.com',
+    description: 'E-mail corporativo',
+  })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
 
-    @IsString()
-    city: string;
+  @ApiProperty({ example: 'São Paulo', description: 'Cidade sede' })
+  @IsString()
+  city: string;
 
-    @IsString()
-    state: string;
+  @ApiProperty({ example: 'SP', description: 'Estado (UF)' })
+  @IsString()
+  state: string;
 
-    @IsString()
-    street: string;
+  @ApiProperty({ example: 'Avenida Paulista', description: 'Logradouro / Rua' })
+  @IsString()
+  street: string;
 
-    @IsString() 
-    neighborhood: string; //bairro
+  @ApiProperty({ example: 'Bela Vista', description: 'Bairro' })
+  @IsString()
+  neighborhood: string;
 
-    @IsNumber() 
-    @IsNotEmpty()
-    cep: number;
+  @ApiProperty({ example: '89900000', description: 'CEP (somente números)' })
+  @IsCep()
+  @IsNotEmpty()
+  cep: string;
 
-    @IsNumber()
-    number: number; //número do endereço
+  @ApiProperty({ example: 1000, description: 'Número do endereço' })
+  @IsNumber()
+  number: number;
 
-    @IsString()
-    @IsNotEmpty()
-    responsibleName: string;
+  @ApiProperty({ example: 'João da Silva', description: 'Nome do responsável' })
+  @IsString()
+  @IsNotEmpty()
+  responsibleName: string;
 
-    @IsNumber()
-    @IsNotEmpty()
-    phone: number; 
+  @ApiProperty({
+    example: '47999999999',
+    description: 'Telefone de contato (somente números)',
+  })
+  @IsString()
+  @IsNotEmpty()
+  phone: string;
 
-    @IsString()
-    @IsNotEmpty()
-    password: string;
+  @ApiProperty({
+    example: 'senhaForte123!',
+    description: 'Senha de acesso à plataforma',
+  })
+  @IsString()
+  @IsNotEmpty()
+  password: string;
 }

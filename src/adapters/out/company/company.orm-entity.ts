@@ -33,7 +33,7 @@ export class CompanyOrmEntity {
   neighborhood: string;
 
   @Column()
-  cep: number;
+  cep: string;
 
   @Column()
   number: number;
@@ -42,7 +42,7 @@ export class CompanyOrmEntity {
   responsibleName: string;
 
   @Column()
-  phone: number;
+  phone: string;
 
   @CreateDateColumn()
   createdAt: Date;
