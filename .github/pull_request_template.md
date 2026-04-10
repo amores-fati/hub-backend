@@ -30,3 +30,5 @@
 - [ ] `.env.example` foi atualizado se for o caso.
 - [ ] Documentação foi atualizada se for o caso.
 - [ ] Sem comentários desnecessários (e emojis).
+
+## Imagens
