@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { IUserRepository } from '../ports/user.repository.interface';
+import type { CourseRepository } from '../ports/course.repository.interface';
 import { ICourseRepository } from '../ports/course.repository.interface';
 import { UserRepository } from 'src/adapters/out/user/user.repository';
 
 @Injectable()
 export class DashboardService {
     constructor(
-        private readonly userRepo: UserRepository,
+        private readonly userRepo: IUserRepository,
         private readonly courseRepo: CourseRepository
     ){}
     async getDashboard(){
@@ -65,7 +66,7 @@ export class DashboardService {
             courses,
 
         ] = await Promise.all([
-            this.courseRepo.coursesTimeline(),
+            this.courseRepo.impactTimeline(),
             this.userRepo.timeline()
             ]);
         const timeline = [

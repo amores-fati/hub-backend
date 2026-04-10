@@ -7,5 +7,5 @@ export interface CourseRepository {
   findAll(): Promise<Course[]>;
   countVacancies(): Promise<number>;
   studentsPerCourse(): Promise<{ courseId: string; studentCount: number }[]>;
-  coursesTimeline(): Promise<{ data: string; type: number }[]>;
+  impactTimeline(): Promise<{ date: string; type: number }[]>;
 }

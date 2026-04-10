@@ -2,18 +2,22 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
-// User Adapters & Core
+// User
 import { UserController } from './adapters/in/user/user.controller';
 import { UserService } from './core/services/user.service';
 import { UserRepository } from './adapters/out/user/user.repository';
 import { UserOrmEntity } from './adapters/out/user/user.orm-entity';
+
+import type { IUserRepository as IUserRepositoryType } from './core/ports/user.repository.interface';
 import { IUserRepository } from './core/ports/user.repository.interface';
 
-// Course Adapters & Core
+// Course
 import { CourseController } from './adapters/in/course/course.controller';
 import { CourseService } from './core/services/course.service';
 import { CourseRepository } from './adapters/out/course/course.repository';
 import { CourseOrmEntity } from './adapters/out/course/course.orm-entity';
+
+import type { CourseRepository as ICourseRepositoryType } from './core/ports/course.repository.interface';
 import { ICourseRepository } from './core/ports/course.repository.interface';
 
 @Module({
@@ -22,6 +26,7 @@ import { ICourseRepository } from './core/ports/course.repository.interface';
       isGlobal: true,
       envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
     }),
+
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -36,31 +41,37 @@ import { ICourseRepository } from './core/ports/course.repository.interface';
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
       }),
     }),
+
     TypeOrmModule.forFeature([UserOrmEntity, CourseOrmEntity]),
   ],
+
   controllers: [UserController, CourseController],
+
   providers: [
-    {
-      provide: UserService,
-      useFactory: (userRepository: IUserRepository) => {
-        return new UserService(userRepository);
-      },
-      inject: [IUserRepository],
-    },
     {
       provide: IUserRepository,
       useClass: UserRepository,
     },
-    {
-      provide: CourseService,
-      useFactory: (courseRepository: ICourseRepository) => {
-        return new CourseService(courseRepository);
-      },
-      inject: [ICourseRepository],
-    },
+
     {
       provide: ICourseRepository,
       useClass: CourseRepository,
+    },
+
+    {
+      provide: UserService,
+      useFactory: (userRepository: IUserRepositoryType) => {
+        return new UserService(userRepository);
+      },
+      inject: [IUserRepository],
+    },
+
+    {
+      provide: CourseService,
+      useFactory: (courseRepository: ICourseRepositoryType) => {
+        return new CourseService(courseRepository);
+      },
+      inject: [ICourseRepository],
     },
   ],
 })
