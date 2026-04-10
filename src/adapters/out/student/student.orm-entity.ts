@@ -4,8 +4,11 @@ import {
   PrimaryColumn,
   OneToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { ContactOrmEntity } from '../contact/contact.orm-entity';
+import { AccessibilityResourceOrmEntity } from '../accessibility_resources/accessibility_resourses.orm-entity';
+import {SocialBenefitOrmEntity} from '../social_benefits/social_benefits';
 
 @Entity('students')
 export class StudentOrmEntity {
@@ -73,5 +76,11 @@ export class StudentOrmEntity {
 
   @Column({ nullable: true })
   compromisse: boolean;
+
+@OneToMany(() => AccessibilityResourceOrmEntity, (resource) => resource.student_id)
+accessibilityResources: AccessibilityResourceOrmEntity[];
+
+@OneToMany(() => SocialBenefitOrmEntity, (benefit) => benefit.student)
+socialBenefits: SocialBenefitOrmEntity[];
 
 }

@@ -14,7 +14,7 @@ export class CurriculumOrmEntity {
     
     @OneToOne(() => StudentOrmEntity, { cascade: true, onDelete: 'CASCADE' })   
     @JoinColumn()
-    student: StudentOrmEntity;
+    student_id: StudentOrmEntity;
 
     @Column()
     is_avaliable: boolean;

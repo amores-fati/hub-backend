@@ -13,7 +13,7 @@ export class UserService {
       throw new UserAlreadyExistsException(email);
     }
 
-    const user = new User(randomUUID(), name, email, new Date(), new Date());
+    const user = new User(randomUUID(), email, '', 'student');
     return this.userRepository.create(user);
   }
 }

@@ -49,3 +49,11 @@ A API estará rodando na porta definida no `.env` (por padrão `http://localhost
 Para os detalhes arquiteturais, veja os arquivos README dentro de cada diretório do diretório `src/`.
 - `src/core/`: Domínio, portas, exceções e regras de negócio.
 - `src/adapters/`: Controladores, Repositórios ORM e implementações concretas das portas.
+
+## Credenciais documentadas
+Admin:        email: admin@fatilab.com         | senha: Admin@123
+Empresa 1:    email: tech@innovatech.com       | senha: Empresa@123
+Empresa 2:    email: rh@solucoesdigitais.com   | senha: Empresa@123
+Empresa 3:    email: vagas@nextera.com         | senha: Empresa@123
+Alunos:       email: aluno01~15@fatilab.com    | senha: Aluno@123
+

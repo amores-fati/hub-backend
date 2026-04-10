@@ -29,13 +29,13 @@ export class CourseOrmEntity {
   @Column()
   end_date: Date;
 
-  @Column
+  @Column()
   start_registrations: Date;
   
-  @Column
+  @Column()
   end_registrations: Date;
 
-  @Column
+  @Column()
   link_access: string;
 
 }
