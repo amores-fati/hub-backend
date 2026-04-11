@@ -21,6 +21,13 @@ import { CompanyService } from './core/services/company.service';
 import { ICompanyRepository } from './core/ports/company.repository.interface';
 import { CompanyRepository } from './adapters/out/company/company.repository';
 
+// Student Adapters & Core
+import { StudentController } from './adapters/in/student/student.controller';
+import { StudentService } from './core/services/student.service';
+import { StudentRepository } from './adapters/out/student/student.repository';
+import { StudentOrmEntity } from './adapters/out/student/student.orm-entity';
+import { IStudentRepository } from './core/ports/student.repository.interface';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -37,7 +44,7 @@ import { CompanyRepository } from './adapters/out/company/company.repository';
         username: configService.get<string>('DB_USER'),
         password: configService.get<string>('DB_PASS'),
         database: configService.get<string>('DB_NAME'),
-        entities: [UserOrmEntity, CourseOrmEntity, CompanyOrmEntity],
+        entities: [UserOrmEntity, CourseOrmEntity, CompanyOrmEntity, StudentOrmEntity],
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
       }),
     }),
@@ -45,9 +52,10 @@ import { CompanyRepository } from './adapters/out/company/company.repository';
       UserOrmEntity,
       CourseOrmEntity,
       CompanyOrmEntity,
+      StudentOrmEntity,
     ]),
   ],
-  controllers: [UserController, CourseController, CompanyController],
+  controllers: [UserController, CourseController, CompanyController, StudentController,],
   providers: [
     {
       provide: UserService,
@@ -81,6 +89,17 @@ import { CompanyRepository } from './adapters/out/company/company.repository';
     {
       provide: ICompanyRepository,
       useClass: CompanyRepository,
+    },
+    {
+      provide: StudentService,
+      useFactory: (studentRepository: IStudentRepository) => {
+        return new StudentService(studentRepository);
+      },
+      inject: [IStudentRepository],
+    },
+    {
+      provide: IStudentRepository,
+      useClass: StudentRepository,
     },
   ],
 })
