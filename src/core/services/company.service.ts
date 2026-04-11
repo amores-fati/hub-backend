@@ -3,49 +3,45 @@ import { ICompanyRepository } from '../ports/company.repository.interface';
 import { randomUUID } from 'crypto';
 import { CompanyNotFoundException } from '../exceptions/company-not-found.exception';
 import { CompanyAlreadyExistsException } from '../exceptions/company-already-exists.exception';
-
-export type CompanyUpdateData = Omit<Company, 'id' | 'createdAt' | 'updatedAt'>;
+import {
+  CreateCompanyCommand,
+  PatchCompanyCommand,
+  UpdateCompanyCommand,
+} from '../command/company.command';
+import { Contact } from '../domain/contact.entity';
 
 export class CompanyService {
   constructor(private readonly companyRepository: ICompanyRepository) {}
 
-  async createCompany(
-    name: string,
-    cnpj: string,
-    email: string,
-    city: string,
-    state: string,
-    street: string,
-    neighborhood: string,
-    cep: string,
-    number: number,
-    responsibleName: string,
-    phone: string,
-    password: string,
-  ): Promise<Company> {
-    const existingCompany = await this.companyRepository.findByCnpj(cnpj);
+  async createCompany(command: CreateCompanyCommand): Promise<Company> {
+    const existingCompany = await this.companyRepository.findByCnpj(
+      command.cnpj,
+    );
     if (existingCompany) {
-      throw new CompanyAlreadyExistsException(cnpj);
+      throw new CompanyAlreadyExistsException(command.cnpj);
     }
 
-    console.log(password); // temporary fix
+    const contact = new Contact(
+      randomUUID(),
+      command.contact.phone,
+      command.contact.neighbourhood,
+      command.contact.state,
+      command.contact.city,
+      command.contact.address,
+      command.contact.cep,
+      command.contact.complement,
+    );
 
     const company = new Company(
       randomUUID(),
-      name,
-      cnpj,
-      email,
-      city,
-      state,
-      street,
-      neighborhood,
-      cep,
-      number,
-      responsibleName,
-      phone,
-      new Date(),
-      new Date(),
+      command.email,
+      command.password,
+      command.name,
+      command.cnpj,
+      command.ownerName,
+      contact,
     );
+
     return this.companyRepository.create(company);
   }
 
@@ -69,43 +65,63 @@ export class CompanyService {
     return company;
   }
 
-  async updateCompany(id: string, data: CompanyUpdateData): Promise<Company> {
+  async updateCompany(
+    id: string,
+    command: UpdateCompanyCommand,
+  ): Promise<Company> {
     const company = await this.getCompanyById(id);
 
-    company.name = data.name;
-    company.cnpj = data.cnpj;
-    company.email = data.email;
-    company.city = data.city;
-    company.state = data.state;
-    company.street = data.street;
-    company.neighborhood = data.neighborhood;
-    company.cep = data.cep;
-    company.number = data.number;
-    company.responsibleName = data.responsibleName;
-    company.phone = data.phone;
+    company.changeEmail(command.email);
+    company.changePassword(command.password);
+    company.changeName(command.name);
+    company.changeOwnerName(command.ownerName);
+
+    company.contact.changePhone(command.contact.phone);
+    company.contact.changeAddress({
+      neighbourhood: command.contact.neighbourhood,
+      state: command.contact.state,
+      city: command.contact.city,
+      address: command.contact.address,
+      cep: command.contact.cep,
+      complement: command.contact.complement,
+    });
 
     return this.companyRepository.update(company);
   }
 
   async patchCompany(
     id: string,
-    data: Partial<CompanyUpdateData>,
+    command: PatchCompanyCommand,
   ): Promise<Company> {
     const company = await this.getCompanyById(id);
 
-    if (data.name !== undefined) company.name = data.name;
-    if (data.cnpj !== undefined) company.cnpj = data.cnpj;
-    if (data.email !== undefined) company.email = data.email;
-    if (data.city !== undefined) company.city = data.city;
-    if (data.state !== undefined) company.state = data.state;
-    if (data.street !== undefined) company.street = data.street;
-    if (data.neighborhood !== undefined)
-      company.neighborhood = data.neighborhood;
-    if (data.cep !== undefined) company.cep = data.cep;
-    if (data.number !== undefined) company.number = data.number;
-    if (data.responsibleName !== undefined)
-      company.responsibleName = data.responsibleName;
-    if (data.phone !== undefined) company.phone = data.phone;
+    if (command.email !== undefined) company.changeEmail(command.email);
+    if (command.password !== undefined)
+      company.changePassword(command.password);
+    if (command.name !== undefined) company.changeName(command.name);
+    if (command.ownerName !== undefined)
+      company.changeOwnerName(command.ownerName);
+
+    if (command.contact) {
+      if (command.contact.phone !== undefined)
+        company.contact.changePhone(command.contact.phone);
+      if (command.contact.neighbourhood !== undefined)
+        company.contact.changeAddress({
+          neighbourhood: command.contact.neighbourhood,
+        });
+      if (command.contact.state !== undefined)
+        company.contact.changeAddress({ state: command.contact.state });
+      if (command.contact.city !== undefined)
+        company.contact.changeAddress({ city: command.contact.city });
+      if (command.contact.address !== undefined)
+        company.contact.changeAddress({ address: command.contact.address });
+      if (command.contact.cep !== undefined)
+        company.contact.changeAddress({ cep: command.contact.cep });
+      if (command.contact.complement !== undefined)
+        company.contact.changeAddress({
+          complement: command.contact.complement,
+        });
+    }
 
     return this.companyRepository.update(company);
   }
