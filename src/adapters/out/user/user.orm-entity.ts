@@ -2,24 +2,21 @@ import {
   Entity,
   Column,
   PrimaryColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
 } from 'typeorm';
+
+export type Role = 'admin' | 'student' | 'enterprise';
 
 @Entity('users')
 export class UserOrmEntity {
   @PrimaryColumn('uuid')
   id: string;
 
-  @Column()
-  name: string;
-
   @Column({ unique: true })
   email: string;
 
-  @CreateDateColumn()
-  createdAt: Date;
+  @Column()
+  password: string;
 
-  @UpdateDateColumn()
-  updatedAt: Date;
+  @Column({ type: 'varchar', nullable: true })
+  role: Role;
 }

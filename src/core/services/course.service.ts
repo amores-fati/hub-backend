@@ -10,8 +10,6 @@ export class CourseService {
       randomUUID(),
       title,
       description,
-      new Date(),
-      new Date(),
     );
     return this.courseRepository.create(course);
   }

@@ -31,10 +31,9 @@ export class UserRepository implements IUserRepository {
   private mapToDomain(ormEntity: UserOrmEntity): User {
     return new User(
       ormEntity.id,
-      ormEntity.name,
       ormEntity.email,
-      ormEntity.createdAt,
-      ormEntity.updatedAt,
+      ormEntity.password,
+      ormEntity.role
     );
   }
 }
