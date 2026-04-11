@@ -3,9 +3,7 @@ import { DashboardService } from 'src/core/services/dashboard.service';
 
 @Controller('admin')
 export class AdminController {
-  constructor(
-    private readonly dashboardService: DashboardService
-  ) {}
+  constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('dashboard')
   async getDashboard() {

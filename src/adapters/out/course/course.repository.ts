@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ICourseRepository } from '../../../core/ports/course.repository.interface';
 import { Course } from '../../../core/domain/course.entity';
 import { CourseOrmEntity } from './course.orm-entity';
 

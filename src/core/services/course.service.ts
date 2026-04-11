@@ -1,9 +1,9 @@
 import { Course } from '../domain/course.entity';
-import { CourseRepository, ICourseRepository } from '../ports/course.repository.interface';
+import { ICourseRepository } from '../ports/course.repository.interface';
 import { randomUUID } from 'crypto';
 
 export class CourseService {
-  constructor(private readonly courseRepository: CourseRepository) {}
+  constructor(private readonly courseRepository: ICourseRepository) {}
 
   async createCourse(title: string, description: string): Promise<Course> {
     const course = new Course(
