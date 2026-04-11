@@ -19,6 +19,8 @@ import { CourseOrmEntity } from './adapters/out/course/course.orm-entity';
 
 import type { CourseRepository as ICourseRepositoryType } from './core/ports/course.repository.interface';
 import { ICourseRepository } from './core/ports/course.repository.interface';
+import { EnterpriseController } from './adapters/in/user/enterprise.controller';
+import { StudentController } from './adapters/in/user/student.controller';
 
 @Module({
   imports: [
@@ -45,7 +47,7 @@ import { ICourseRepository } from './core/ports/course.repository.interface';
     TypeOrmModule.forFeature([UserOrmEntity, CourseOrmEntity]),
   ],
 
-  controllers: [UserController, CourseController],
+  controllers: [UserController, CourseController, StudentController, EnterpriseController],
 
   providers: [
     {

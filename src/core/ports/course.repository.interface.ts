@@ -8,4 +8,10 @@ export interface CourseRepository {
   countVacancies(): Promise<number>;
   studentsPerCourse(): Promise<{ courseId: string; studentCount: number }[]>;
   impactTimeline(): Promise<{ date: string; type: number }[]>;
+  findJobOpenings(params: {
+    term?: string;
+    location?: string;
+    any_disability?: boolean;
+    page: number;
+  }): Promise<Course[]>;
 }

@@ -12,4 +12,15 @@ export interface IUserRepository {
   enrollmentsByMonth(): Promise<{ label: string; count: number }[]>;
   statusDistribution(): Promise<{ status: string; total: number }[]>;
   timeline(): Promise<{ date: Date; type: string }[]>;
+  findStudents(params: {
+    term?: string;
+    location?: string;
+    any_disability?: boolean;
+    profile?: string;
+    page: number;
+  }): Promise<User[]>;
+  studentsRange(params: {
+    date_register_begin: string;
+    date_register_end: string;
+  }): Promise<User[]>;
 }
