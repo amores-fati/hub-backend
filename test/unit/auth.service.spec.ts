@@ -1,15 +1,15 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { AuthService } from '../../src/core/services/auth.service';
 import { IUserRepository } from '../../src/core/ports/user.repository.interface';
 import { IHashService } from '../../src/core/ports/hash.service.interface';
 import { ITokenService } from '../../src/core/ports/token.service.interface';
-import { User } from '../../src/core/domain/user.entity';
 import { InvalidCredentialsException } from '../../src/core/exceptions/invalid-credentials.exception';
+import { LoginCommand } from '../../src/core/command/auth.command';
 
 describe('AuthService', () => {
   let service: AuthService;
 
   const mockUserRepository: IUserRepository = {
-    create: jest.fn(),
     findById: jest.fn(),
     findByEmail: jest.fn(),
   };
@@ -32,65 +32,49 @@ describe('AuthService', () => {
     );
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
+  describe('login', () => {
+    const command: LoginCommand = {
+      email: 'test@test.com',
+      password: 'password123',
+    };
 
-  it('should throw InvalidCredentialsException when email is not found', async () => {
-    (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
+    const mockUser = {
+      id: 'user-id',
+      email: 'test@test.com',
+      password: 'hashedPassword',
+    };
 
-    await expect(service.login('notfound@test.com', 'anypass')).rejects.toThrow(
-      InvalidCredentialsException,
-    );
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    expect(jest.mocked(mockHashService.compare)).not.toHaveBeenCalled();
-  });
+    it('should return an access token if credentials are valid', async () => {
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(mockUser);
+      (mockHashService.compare as jest.Mock).mockResolvedValue(true);
+      (mockTokenService.generate as jest.Mock).mockReturnValue('access-token');
 
-  it('should throw InvalidCredentialsException when password is wrong', async () => {
-    const existingUser = new User(
-      'uuid-1',
-      'Luca',
-      'luca@test.com',
-      'hashed_password',
-      'student',
-      new Date(),
-      new Date(),
-    );
-    (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(
-      existingUser,
-    );
-    (mockHashService.compare as jest.Mock).mockResolvedValue(false);
+      const result = await service.login(command);
 
-    await expect(service.login('luca@test.com', 'wrongpass')).rejects.toThrow(
-      InvalidCredentialsException,
-    );
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    expect(jest.mocked(mockTokenService.generate)).not.toHaveBeenCalled();
-  });
+      expect(result.accessToken).toBe('access-token');
+      expect(mockTokenService.generate).toHaveBeenCalledWith({
+        sub: mockUser.id,
+        email: mockUser.email,
+      });
+    });
 
-  it('should return accessToken and role on valid credentials', async () => {
-    const existingUser = new User(
-      'uuid-1',
-      'Luca',
-      'luca@test.com',
-      'hashed_password',
-      'student',
-      new Date(),
-      new Date(),
-    );
-    (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(
-      existingUser,
-    );
-    (mockHashService.compare as jest.Mock).mockResolvedValue(true);
-    (mockTokenService.generate as jest.Mock).mockReturnValue('jwt.token.here');
+    it('should throw InvalidCredentialsException if user not found', async () => {
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
 
-    const result = await service.login('luca@test.com', 'correctpass');
+      await expect(service.login(command)).rejects.toThrow(
+        InvalidCredentialsException,
+      );
+      expect(mockHashService.compare).not.toHaveBeenCalled();
+    });
 
-    expect(result).toEqual({ accessToken: 'jwt.token.here', role: 'student' });
+    it('should throw InvalidCredentialsException if password does not match', async () => {
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(mockUser);
+      (mockHashService.compare as jest.Mock).mockResolvedValue(false);
 
-    expect(jest.mocked(mockTokenService.generate)).toHaveBeenCalledWith({
-      sub: 'uuid-1',
-      role: 'student',
+      await expect(service.login(command)).rejects.toThrow(
+        InvalidCredentialsException,
+      );
+      expect(mockTokenService.generate).not.toHaveBeenCalled();
     });
   });
 });
