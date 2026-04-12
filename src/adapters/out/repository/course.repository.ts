@@ -24,12 +24,6 @@ export class CourseRepository implements ICourseRepository {
   }
 
   private mapToDomain(ormEntity: CourseOrmEntity): Course {
-    return new Course(
-      ormEntity.id,
-      ormEntity.title,
-      ormEntity.description,
-      ormEntity.createdAt,
-      ormEntity.updatedAt,
-    );
+    return new Course(ormEntity.id, ormEntity.name, ormEntity.description);
   }
 }

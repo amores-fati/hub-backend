@@ -73,7 +73,19 @@ export class CompanyRepository implements ICompanyRepository {
     });
 
     if (ormEntity) {
-      await this.ormRepository.remove(ormEntity);
+      await this.ormRepository.manager.transaction(
+        async (transactionalEntityManager) => {
+          await transactionalEntityManager.remove(ormEntity);
+
+          if (ormEntity.contact) {
+            await transactionalEntityManager.remove(ormEntity.contact);
+          }
+
+          if (ormEntity.user) {
+            await transactionalEntityManager.remove(ormEntity.user);
+          }
+        },
+      );
     }
   }
 
@@ -116,8 +128,8 @@ export class CompanyRepository implements ICompanyRepository {
 
     return new Company(
       ormEntity.id,
-      ormEntity.user.password,
       ormEntity.user.email,
+      ormEntity.user.password,
       ormEntity.name,
       ormEntity.cnpj,
       ormEntity.ownerName,

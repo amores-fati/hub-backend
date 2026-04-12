@@ -1,105 +1,92 @@
-import { Entity, Column, PrimaryColumn, OneToOne, OneToMany, JoinColumn } from 'typeorm';
-import { UserOrmEntity } from './user.orm-entity';
+import {
+  Entity,
+  Column,
+  PrimaryColumn,
+  OneToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
 import { ContactOrmEntity } from './contact.orm-entity';
-import { DisabilityOrmEntity } from './disability.orm-entity';
-import { SocialBenefitOrmEntity } from './social-benefit.orm-entity';
-import { AccessibilityResourceOrmEntity } from './accessibility-resource.orm-entity';
+import { AccessibilityResourceOrmEntity } from './accessibility_resourses.orm-entity';
+import { SocialBenefitOrmEntity } from './social_benefits';
+import { UserOrmEntity } from './user.orm-entity';
 
 @Entity('students')
 export class StudentOrmEntity {
   @PrimaryColumn('uuid')
-  id!: string;
+  id: string;
 
-  @Column({ type: 'varchar', length: 14 })
-  cpf!: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  socialName!: string | null;
-
-  @Column({ type: 'date', nullable: true })
-  birthDate!: Date | null;
-
-  @Column({ type: 'varchar', nullable: true })
-  gender!: string | null;
-
-  @Column({ type: 'varchar', nullable: true })
-  race!: string | null;
-
-  @Column({ type: 'varchar', nullable: true })
-  education!: string | null;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  courseName!: string | null;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  institution!: string | null;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  activityArea!: string | null;
-
-  @Column({ type: 'boolean', nullable: true })
-  hasProgrammingExperience!: boolean | null;
-
-  @Column({ type: 'boolean', nullable: true })
-  hasTechCourses!: boolean | null;
-
-  @Column({ type: 'text', nullable: true })
-  techCoursesList!: string | null;
-
-  @Column({ type: 'boolean', default: false })
-  sendCurriculum!: boolean;
-
-  @Column({ type: 'text', nullable: true })
-  fatilabMotivation!: string | null;
-
-  @Column({ type: 'varchar', nullable: true })
-  howHeard!: string | null;
-
-  @Column({ type: 'boolean', nullable: true })
-  hasComputer!: boolean | null;
-
-  @Column({ type: 'boolean', nullable: true })
-  hasInternet!: boolean | null;
-
-  @Column({ type: 'boolean', nullable: true })
-  committedToParticipate!: boolean | null;
-
-  @OneToOne(() => UserOrmEntity, { cascade: true, eager: true })
+  @OneToOne(() => UserOrmEntity, { cascade: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id' })
-  user!: UserOrmEntity;
+  user: UserOrmEntity;
 
-  @OneToOne(() => ContactOrmEntity, { cascade: true, eager: true })
+  @OneToOne(() => ContactOrmEntity, { cascade: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'contact_id' })
-  contact!: ContactOrmEntity;
+  contact: ContactOrmEntity;
 
-  @OneToOne(
-  () => DisabilityOrmEntity,
-  (disability) => disability.student,
-  {
-    cascade: true,
-    eager: true,
-    nullable: true,
-  },
-)
-disability!: DisabilityOrmEntity | null;
+  @Column()
+  cpf: string;
 
-  @OneToMany(
-    () => SocialBenefitOrmEntity,
-    (socialBenefit) => socialBenefit.student,
-    {
-      cascade: true,
-      eager: true,
-    },
-  )
-  socialBenefits!: SocialBenefitOrmEntity[];
+  @Column({ nullable: true })
+  social_name: string;
+
+  @Column({ nullable: true })
+  date_of_birth: Date;
+
+  @Column({ nullable: true })
+  gender: string;
+
+  @Column({ nullable: true })
+  gender_other: string;
+
+  @Column({ nullable: true })
+  color: string;
+
+  @Column({ nullable: true })
+  education: string;
+
+  @Column({ nullable: true })
+  course: string;
+
+  @Column({ nullable: true })
+  institution: string;
+
+  @Column({ nullable: true })
+  area_activity: string;
+
+  @Column({ nullable: true })
+  programming_exp: boolean;
+
+  @Column({ nullable: true })
+  tecnology_course: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  which_courses: string;
+
+  @Column({ nullable: true })
+  send_curriculum: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  motivation: string;
+
+  @Column({ nullable: true })
+  how_know: string;
+
+  @Column({ nullable: true })
+  has_computer: boolean;
+
+  @Column({ nullable: true })
+  has_internet: boolean;
+
+  @Column({ nullable: true })
+  compromisse: boolean;
 
   @OneToMany(
     () => AccessibilityResourceOrmEntity,
     (resource) => resource.student,
-    {
-      cascade: true,
-      eager: true,
-    },
   )
-  accessibilityResources!: AccessibilityResourceOrmEntity[];
+  accessibilityResources: AccessibilityResourceOrmEntity[];
+
+  @OneToMany(() => SocialBenefitOrmEntity, (benefit) => benefit.student)
+  socialBenefits: SocialBenefitOrmEntity[];
 }

@@ -1,24 +1,21 @@
-import { Entity, PrimaryColumn, Column, OneToOne, JoinColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from 'typeorm';
 import { StudentOrmEntity } from './student.orm-entity';
 
-@Entity('disability')
+@Entity('disabilities')
 export class DisabilityOrmEntity {
-  @PrimaryColumn('varchar')
-  studentId!: string;
+  @PrimaryColumn({ name: 'student_id', type: 'uuid' })
+  student_id: string;
 
-  @Column({ type: 'boolean' })
-  hasDisability!: boolean;
+  @OneToOne(() => StudentOrmEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'student_id' })
+  student: StudentOrmEntity;
 
-  @Column({ type: 'text', nullable: true })
-  description!: string | null;
+  @Column({ name: 'has_disability', default: false })
+  hasDisability: boolean;
 
-  @Column({ type: 'varchar', nullable: true })
-  hasReport!: string | null;
+  @Column({ name: 'description', type: 'text', nullable: true })
+  description: string | null;
 
-  @Column({ type: 'varchar', nullable: true })
-  type!: string | null;
-
-  @OneToOne(() => StudentOrmEntity, (student) => student.disability)
-  @JoinColumn({ name: 'student_id', referencedColumnName: 'id' })
-  student!: StudentOrmEntity;
+  @Column({ name: 'has_report', type: 'varchar', nullable: true })
+  hasReport: string | null;
 }
