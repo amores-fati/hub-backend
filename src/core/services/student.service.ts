@@ -1,104 +1,99 @@
 import { randomUUID } from 'crypto';
 import { Student } from '../domain/student.entity';
+import { Contact } from '../domain/contact.entity';
+import { Disability } from '../domain/disability.entity';
+import { SocialBenefit } from '../domain/social-benefit.entity';
+import { AccessibilityResource } from '../domain/accessibility-resource.entity';
 import { IStudentRepository } from '../ports/student.repository.interface';
 import { StudentAlreadyExistsException } from '../exceptions/student-already-exists.exception';
+import {
+  CreateStudentCommand,
+  PatchStudentCommand,
+  UpdateStudentCommand,
+} from '../command/student.command';
+import { StudentNotFoundException } from '../exceptions/student-not-found.exception';
 
 export class StudentService {
   constructor(private readonly studentRepository: IStudentRepository) {}
 
-  async createStudent(
-    name: string,
-    socialName: string | undefined,
-    cpf: string,
-    birthDate: string,
-    phone: string,
-    email: string,
-    password: string,
-    gender: string,
-    race: string,
-    cep: string,
-    address: string | undefined,
-    complement: string | undefined,
-    neighborhood: string | undefined,
-    city: string | undefined,
-    state: string | undefined,
-    education: string,
-    courseName: string | undefined,
-    institution: string | undefined,
-    fatilabMotivation: string,
-    howHeard: string | undefined,
-    hasComputer: boolean | undefined,
-    hasInternet: boolean | undefined,
-    committedToParticipate: boolean | undefined,
-    familyIncome: string | undefined,
-    householdSize: number | undefined,
-    socialBenefits: string | undefined,
-    hasProgrammingExperience: boolean | undefined,
-    hasTechCourses: boolean | undefined,
-    techCoursesList: string | undefined,
-    isEmployed: boolean | undefined,
-    workArea: string | undefined,
-    isPcd: boolean,
-    disabilityType: string | undefined,
-    disabilityDescription: string | undefined,
-    hasMedicalReport: string | undefined,
-    accessibilityResources: string | undefined,
-    specificAccessibilityNeeds: string | undefined,
-    authorizesImageUse: boolean,
-    acceptsLgpd: boolean,
-  ): Promise<Student> {
-    const existingStudent = await this.studentRepository.findByCpf(cpf);
+  async createStudent(command: CreateStudentCommand): Promise<Student> {
+    const existingStudent = await this.studentRepository.findByCpf(command.cpf);
 
     if (existingStudent) {
-      throw new StudentAlreadyExistsException(cpf);
+      throw new StudentAlreadyExistsException(command.cpf);
     }
 
-    console.log(password); // temporary fix
+    const studentId = randomUUID();
+
+    const contact = new Contact(
+      randomUUID(),
+      command.contact.phone,
+      command.contact.neighbourhood,
+      command.contact.state,
+      command.contact.city,
+      command.contact.address,
+      command.contact.cep,
+      command.contact.complement,
+    );
+
+    const disability = command.disability
+      ? new Disability(
+          studentId,
+          command.disability.hasDisability,
+          command.disability.description,
+          command.disability.hasReport,
+          command.disability.type,
+        )
+      : undefined;
+
+    const socialBenefits =
+      command.socialBenefits?.map(
+        (benefit, index) =>
+          new SocialBenefit(
+            index + 1,
+            studentId,
+            benefit.benefit,
+            benefit.benefitOther,
+          ),
+      ) || [];
+
+    const accessibilityResources =
+      command.accessibilityResources?.map(
+        (resource, index) =>
+          new AccessibilityResource(
+            index + 1,
+            studentId,
+            resource.resource,
+            resource.resourceOther,
+          ),
+      ) || [];
 
     const student = new Student(
-      randomUUID(),
-      name,
-      socialName ?? null,
-      cpf,
-      new Date(birthDate),
-      phone,
-      email,
-      password,
-      gender,
-      race,
-      cep ?? null,
-      address ?? null,
-      complement ?? null,
-      neighborhood ?? null,
-      city ?? null,
-      state ?? null,
-      education,
-      courseName ?? null,
-      institution ?? null,
-      fatilabMotivation,
-      howHeard ?? null,
-      hasComputer ?? null,
-      hasInternet ?? null,
-      committedToParticipate ?? null,
-      familyIncome ?? null,
-      householdSize ?? null,
-      socialBenefits ?? null,
-      hasProgrammingExperience ?? null,
-      hasTechCourses ?? null,
-      techCoursesList ?? null,
-      isEmployed ?? null,
-      workArea ?? null,
-      isPcd,
-      disabilityType ?? null,
-      disabilityDescription ?? null,
-      hasMedicalReport ?? null,
-      accessibilityResources ?? null,
-      specificAccessibilityNeeds ?? null,
-      authorizesImageUse,
-      acceptsLgpd,
-      false,
-      new Date(),
-      new Date(),
+      studentId,
+      command.password,
+      command.email,
+      command.cpf,
+      contact,
+      command.socialName,
+      command.birthDate ? new Date(command.birthDate) : undefined,
+      command.gender,
+      command.race,
+      command.education,
+      command.courseName,
+      command.institution,
+      command.activityArea,
+      command.hasProgrammingExperience,
+      command.hasTechCourses,
+      command.techCoursesList,
+      command.sendCurriculum ?? false,
+      command.fatilabMotivation,
+      command.howHeard,
+      command.hasComputer,
+      command.hasInternet,
+      command.committedToParticipate,
+      disability,
+      socialBenefits,
+      accessibilityResources,
     );
 
     return this.studentRepository.create(student);
@@ -108,11 +103,199 @@ export class StudentService {
     return this.studentRepository.findAll();
   }
 
-  async getStudentById(id: string): Promise<Student | null> {
-    return this.studentRepository.findById(id);
+  async getStudentById(id: string): Promise<Student> {
+    const student = await this.studentRepository.findById(id);
+
+    if (!student) {
+      throw new StudentNotFoundException(id);
+    }
+
+    return student;
   }
 
-  async getStudentByCpf(cpf: string): Promise<Student | null> {
-    return this.studentRepository.findByCpf(cpf);
+  async getStudentByCpf(cpf: string): Promise<Student> {
+    const student = await this.studentRepository.findByCpf(cpf);
+
+    if (!student) {
+      throw new StudentNotFoundException(cpf);
+    }
+
+    return student;
+  }
+
+  async updateStudent(
+    id: string,
+    command: UpdateStudentCommand,
+  ): Promise<Student> {
+    const student = await this.getStudentById(id);
+
+    student.changeEmail(command.email);
+    student.changePassword(command.password);
+    student.changeSocialName(command.socialName);
+
+    student.changeAcademicData({
+      education: command.education,
+      courseName: command.courseName,
+      institution: command.institution,
+      activityArea: command.activityArea,
+    });
+
+    student.changeTechnologyData({
+      hasProgrammingExperience: command.hasProgrammingExperience,
+      hasTechCourses: command.hasTechCourses,
+      techCoursesList: command.techCoursesList,
+    });
+
+    student.changeParticipationData({
+      sendCurriculum: command.sendCurriculum,
+      fatilabMotivation: command.fatilabMotivation,
+      howHeard: command.howHeard,
+      hasComputer: command.hasComputer,
+      hasInternet: command.hasInternet,
+      committedToParticipate: command.committedToParticipate,
+    });
+
+    student.contact.changePhone(command.contact.phone);
+    student.contact.changeAddress({
+      neighbourhood: command.contact.neighbourhood,
+      state: command.contact.state,
+      city: command.contact.city,
+      address: command.contact.address,
+      cep: command.contact.cep,
+      complement: command.contact.complement,
+    });
+
+    if (command.disability) {
+      const disability = new Disability(
+        student.id,
+        command.disability.hasDisability,
+        command.disability.description,
+        command.disability.hasReport,
+        command.disability.type,
+      );
+      student.changeDisability(disability);
+    }
+
+    if (command.socialBenefits) {
+      const benefits = command.socialBenefits.map(
+        (benefit, index) =>
+          new SocialBenefit(
+            index + 1,
+            student.id,
+            benefit.benefit,
+            benefit.benefitOther,
+          ),
+      );
+      student.replaceSocialBenefits(benefits);
+    }
+
+    if (command.accessibilityResources) {
+      const resources = command.accessibilityResources.map(
+        (resource, index) =>
+          new AccessibilityResource(
+            index + 1,
+            student.id,
+            resource.resource,
+            resource.resourceOther,
+          ),
+      );
+      student.replaceAccessibilityResources(resources);
+    }
+
+    return this.studentRepository.update(student);
+  }
+
+  async patchStudent(
+    id: string,
+    command: PatchStudentCommand,
+  ): Promise<Student> {
+    const student = await this.getStudentById(id);
+
+    if (command.email !== undefined) student.changeEmail(command.email);
+    if (command.password !== undefined) student.changePassword(command.password);
+    if (command.socialName !== undefined) {
+      student.changeSocialName(command.socialName);
+    }
+
+    student.changeAcademicData({
+      education: command.education,
+      courseName: command.courseName,
+      institution: command.institution,
+      activityArea: command.activityArea,
+    });
+
+    student.changeTechnologyData({
+      hasProgrammingExperience: command.hasProgrammingExperience,
+      hasTechCourses: command.hasTechCourses,
+      techCoursesList: command.techCoursesList,
+    });
+
+    student.changeParticipationData({
+      sendCurriculum: command.sendCurriculum,
+      fatilabMotivation: command.fatilabMotivation,
+      howHeard: command.howHeard,
+      hasComputer: command.hasComputer,
+      hasInternet: command.hasInternet,
+      committedToParticipate: command.committedToParticipate,
+    });
+
+    if (command.contact) {
+      if (command.contact.phone !== undefined) {
+        student.contact.changePhone(command.contact.phone);
+      }
+
+      student.contact.changeAddress({
+        neighbourhood: command.contact.neighbourhood,
+        state: command.contact.state,
+        city: command.contact.city,
+        address: command.contact.address,
+        cep: command.contact.cep,
+        complement: command.contact.complement,
+      });
+    }
+
+    if (command.disability) {
+      const disability = new Disability(
+        student.id,
+        command.disability.hasDisability ?? false,
+        command.disability.description,
+        command.disability.hasReport,
+        command.disability.type,
+      );
+      student.changeDisability(disability);
+    }
+
+    if (command.socialBenefits) {
+      const benefits = command.socialBenefits.map(
+        (benefit, index) =>
+          new SocialBenefit(
+            index + 1,
+            student.id,
+            benefit.benefit!,
+            benefit.benefitOther,
+          ),
+      );
+      student.replaceSocialBenefits(benefits);
+    }
+
+    if (command.accessibilityResources) {
+      const resources = command.accessibilityResources.map(
+        (resource, index) =>
+          new AccessibilityResource(
+            index + 1,
+            student.id,
+            resource.resource!,
+            resource.resourceOther,
+          ),
+      );
+      student.replaceAccessibilityResources(resources);
+    }
+
+    return this.studentRepository.update(student);
+  }
+
+  async deleteStudent(id: string): Promise<void> {
+    const student = await this.getStudentById(id);
+    await this.studentRepository.delete(student.id);
   }
 }

@@ -7,4 +7,6 @@ export interface IStudentRepository {
   findAll(): Promise<Student[]>;
   findById(id: string): Promise<Student | null>;
   findByCpf(cpf: string): Promise<Student | null>;
+  update(student: Student): Promise<Student>;
+  delete(id: string): Promise<void>;
 }
