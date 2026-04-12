@@ -6,22 +6,14 @@ import { randomUUID } from 'crypto';
 export class UserService {
   constructor(private readonly userRepository: IUserRepository) {}
 
-  async createUser(name: string, email: string): Promise<User> {
+  async createUser(email: string, password: string): Promise<User> {
     const existingUser = await this.userRepository.findByEmail(email);
 
     if (existingUser) {
       throw new UserAlreadyExistsException(email);
     }
 
-    const user = new User(
-      randomUUID(),
-      name,
-      email,
-      '',
-      'student',
-      new Date(),
-      new Date(),
-    );
+    const user = new User(randomUUID(), email, password);
     return this.userRepository.create(user);
   }
 }
