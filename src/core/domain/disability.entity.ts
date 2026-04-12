@@ -37,7 +37,8 @@ export class Disability {
     hasReport?: string;
     type?: string;
   }): void {
-    if (data.hasDisability !== undefined) this._hasDisability = data.hasDisability;
+    if (data.hasDisability !== undefined)
+      this._hasDisability = data.hasDisability;
     if (data.description !== undefined) this._description = data.description;
     if (data.hasReport !== undefined) this._hasReport = data.hasReport;
     if (data.type !== undefined) this._type = data.type;

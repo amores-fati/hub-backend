@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, JoinColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  JoinColumn,
+  ManyToOne,
+} from 'typeorm';
 import { StudentOrmEntity } from './student.orm-entity';
 import { SocialBenefitType } from '../../../core/domain/enums/social-benefit.enum';
 
@@ -13,7 +19,12 @@ export class SocialBenefitOrmEntity {
   @Column({ type: 'varchar' })
   benefit: SocialBenefitType;
 
-  @Column({ name: 'benefit_other', type: 'varchar', length: 100, nullable: true })
+  @Column({
+    name: 'benefit_other',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
   benefitOther: string | null;
 
   @ManyToOne(() => StudentOrmEntity, (student) => student.socialBenefits)

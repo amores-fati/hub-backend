@@ -185,8 +185,7 @@ export class StudentRepository implements IStudentRepository {
     ormEntity.howHeard = student.howHeard || null;
     ormEntity.hasComputer = student.hasComputer ?? null;
     ormEntity.hasInternet = student.hasInternet ?? null;
-    ormEntity.committedToParticipate =
-      student.committedToParticipate ?? null;
+    ormEntity.committedToParticipate = student.committedToParticipate ?? null;
 
     ormEntity.user = new UserOrmEntity();
     ormEntity.user.id = student.id;
@@ -204,7 +203,8 @@ export class StudentRepository implements IStudentRepository {
     ormEntity.contact.complement = student.contact.complement || null;
 
     ormEntity.disability = student.disability
-  ? this.mapDisabilityToOrm(student.disability, ormEntity): null;
+      ? this.mapDisabilityToOrm(student.disability, ormEntity)
+      : null;
 
     ormEntity.socialBenefits = student.socialBenefits.map((benefit) =>
       this.mapSocialBenefitToOrm(benefit, student.id, ormEntity),
@@ -289,19 +289,19 @@ export class StudentRepository implements IStudentRepository {
     );
   }
 
-private mapDisabilityToOrm(
-  disability: Disability,
-  student: StudentOrmEntity,
-): DisabilityOrmEntity {
-  const orm = new DisabilityOrmEntity();
-  orm.studentId = disability.studentId;
-  orm.hasDisability = disability.hasDisability;
-  orm.description = disability.description || null;
-  orm.hasReport = disability.hasReport || null;
-  orm.type = disability.type || null;
-  orm.student = student;
-  return orm;
-}
+  private mapDisabilityToOrm(
+    disability: Disability,
+    student: StudentOrmEntity,
+  ): DisabilityOrmEntity {
+    const orm = new DisabilityOrmEntity();
+    orm.studentId = disability.studentId;
+    orm.hasDisability = disability.hasDisability;
+    orm.description = disability.description || null;
+    orm.hasReport = disability.hasReport || null;
+    orm.type = disability.type || null;
+    orm.student = student;
+    return orm;
+  }
 
   private mapSocialBenefitToOrm(
     benefit: SocialBenefit,

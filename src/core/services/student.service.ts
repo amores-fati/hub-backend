@@ -212,7 +212,8 @@ export class StudentService {
     const student = await this.getStudentById(id);
 
     if (command.email !== undefined) student.changeEmail(command.email);
-    if (command.password !== undefined) student.changePassword(command.password);
+    if (command.password !== undefined)
+      student.changePassword(command.password);
     if (command.socialName !== undefined) {
       student.changeSocialName(command.socialName);
     }

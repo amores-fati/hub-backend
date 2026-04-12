@@ -1,5 +1,20 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, ConflictException, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBody, ApiCreatedResponse, ApiBadRequestResponse, ApiConflictResponse } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiBadRequestResponse,
+  ApiConflictResponse,
+} from '@nestjs/swagger';
 import { CreateStudentDto } from '../dtos/student/create-student.dto';
 import { StudentService } from '../../../core/services/student.service';
 import { CreateStudentCommand } from '../../../core/command/student.command';

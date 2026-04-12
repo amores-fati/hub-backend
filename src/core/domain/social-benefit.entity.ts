@@ -19,7 +19,7 @@ export class SocialBenefit {
     return this._studentId;
   }
 
-  get benefit(): SocialBenefitType{
+  get benefit(): SocialBenefitType {
     return this._benefit;
   }
 
