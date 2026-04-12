@@ -5,8 +5,8 @@ import { User } from './user.entity';
 export class Company extends User {
   constructor(
     id: string,
-    password: string,
     email: string,
+    password: string,
     private _name: string,
     private readonly _cnpj: string,
     private _ownerName: string,

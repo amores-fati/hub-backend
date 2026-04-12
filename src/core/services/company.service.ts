@@ -21,8 +21,10 @@ export class CompanyService {
       throw new CompanyAlreadyExistsException(command.cnpj);
     }
 
+    const companyId = randomUUID();
+
     const contact = new Contact(
-      randomUUID(),
+      companyId,
       command.contact.phone,
       command.contact.neighbourhood,
       command.contact.state,
@@ -33,7 +35,7 @@ export class CompanyService {
     );
 
     const company = new Company(
-      randomUUID(),
+      companyId,
       command.email,
       command.password,
       command.name,
