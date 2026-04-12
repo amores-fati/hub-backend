@@ -23,29 +23,33 @@ describe('CompanyService', () => {
     delete: jest.fn(),
   };
 
-  const mockContact = new Contact(
-    'contact-id',
-    '11999999999',
-    'Bela Vista',
-    'SP',
-    'São Paulo',
-    'Avenida Paulista',
-    '01310100',
-    'Bloco A',
-  );
-
-  const mockCompany = new Company(
-    '123e4567-e89b-12d3-a456-426614174000',
-    'password123',
-    'contato@techcorp.com',
-    'Tech Corp LTDA',
-    '12345678000199',
-    'João da Silva',
-    mockContact,
-  );
+  let mockContact: Contact;
+  let mockCompany: Company;
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    mockContact = new Contact(
+      'contact-id',
+      '11999999999',
+      'Bela Vista',
+      'SP',
+      'São Paulo',
+      'Avenida Paulista',
+      '01310100',
+      'Bloco A',
+    );
+
+    mockCompany = new Company(
+      '123e4567-e89b-12d3-a456-426614174000',
+      'contato@techcorp.com',
+      'password123',
+      'Tech Corp LTDA',
+      '12345678000199',
+      'João da Silva',
+      mockContact,
+    );
+
     service = new CompanyService(mockRepository);
   });
 
@@ -165,8 +169,8 @@ describe('CompanyService', () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(
         new Company(
           mockCompany.id,
-          mockCompany.password,
           mockCompany.email,
+          mockCompany.password,
           mockCompany.name,
           mockCompany.cnpj,
           mockCompany.ownerName,
