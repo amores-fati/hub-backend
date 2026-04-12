@@ -27,7 +27,9 @@ export class SocialBenefitOrmEntity {
   })
   benefitOther: string | null;
 
-  @ManyToOne(() => StudentOrmEntity, (student) => student.socialBenefits)
+  @ManyToOne(() => StudentOrmEntity, (student) => student.socialBenefits, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'student_id' })
   student: StudentOrmEntity;
 }

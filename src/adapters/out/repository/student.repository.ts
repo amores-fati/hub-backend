@@ -159,7 +159,30 @@ export class StudentRepository implements IStudentRepository {
     });
 
     if (ormEntity) {
-      await this.ormRepository.remove(ormEntity);
+      await this.ormRepository.manager.transaction(
+        async (transactionalEntityManager) => {
+          if (ormEntity.accessibilityResources?.length > 0) {
+            await transactionalEntityManager.remove(
+              ormEntity.accessibilityResources,
+            );
+          }
+          if (ormEntity.socialBenefits?.length > 0) {
+            await transactionalEntityManager.remove(ormEntity.socialBenefits);
+          }
+          if (ormEntity.disability) {
+            await transactionalEntityManager.remove(ormEntity.disability);
+          }
+
+          await transactionalEntityManager.remove(ormEntity);
+
+          if (ormEntity.contact) {
+            await transactionalEntityManager.remove(ormEntity.contact);
+          }
+          if (ormEntity.user) {
+            await transactionalEntityManager.remove(ormEntity.user);
+          }
+        },
+      );
     }
   }
 

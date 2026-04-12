@@ -30,6 +30,7 @@ export class AccessibilityResourceOrmEntity {
   @ManyToOne(
     () => StudentOrmEntity,
     (student) => student.accessibilityResources,
+    { onDelete: 'CASCADE' },
   )
   @JoinColumn({ name: 'student_id' })
   student: StudentOrmEntity;
