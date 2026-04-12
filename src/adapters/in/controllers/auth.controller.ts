@@ -32,7 +32,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Autentica um usuário e retorna um JWT',
-    description: 'Recebe credenciais de usuário, orquestra a validação e retorna um token de acesso.',
+    description:
+      'Recebe credenciais de usuário, orquestra a validação e retorna um token de acesso.',
   })
   @ApiBody({ type: LoginDto })
   @ApiOkResponse({

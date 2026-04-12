@@ -88,7 +88,7 @@ export class CompanyService {
     const company = await this.getCompanyById(id);
 
     company.changeEmail(command.email);
-    
+
     if (command.password) {
       const hashedPassword = await this.hashService.hash(command.password);
       company.changePassword(hashedPassword);

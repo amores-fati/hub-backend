@@ -70,7 +70,7 @@ export class CompanyController {
       throw error;
     }
   }
-  
+
   @RequireAuth()
   @Get()
   @ApiOperation({ summary: 'Lista todas as empresas' })

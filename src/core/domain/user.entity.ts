@@ -12,11 +12,11 @@ export abstract class User {
   get id(): string {
     return this._id;
   }
-  
+
   get email(): string {
     return this._email;
   }
-  
+
   get password(): string {
     return this._password;
   }
@@ -41,7 +41,9 @@ export abstract class User {
       throw new DomainException('A senha é obrigatória.');
     }
     if (password.length > 100) {
-      throw new DomainException('A senha não pode ter mais que 100 caracteres.');
+      throw new DomainException(
+        'A senha não pode ter mais que 100 caracteres.',
+      );
     }
   }
 
@@ -50,7 +52,9 @@ export abstract class User {
       throw new DomainException('O e-mail é obrigatório.');
     }
     if (email.length > 100) {
-      throw new DomainException('O e-mail não pode ter mais que 100 caracteres.');
+      throw new DomainException(
+        'O e-mail não pode ter mais que 100 caracteres.',
+      );
     }
   }
 

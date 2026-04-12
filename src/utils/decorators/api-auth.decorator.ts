@@ -6,6 +6,8 @@ export function RequireAuth() {
   return applyDecorators(
     UseGuards(JwtAuthGuard),
     ApiBearerAuth('access-token'),
-    ApiUnauthorizedResponse({ description: 'Não autorizado. JWT ausente ou inválido.' }),
+    ApiUnauthorizedResponse({
+      description: 'Não autorizado. JWT ausente ou inválido.',
+    }),
   );
 }

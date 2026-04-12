@@ -80,7 +80,8 @@ describe('StudentController (e2e)', () => {
         })
         .expect(200);
 
-      accessToken = response.body.accessToken;
+      const body = response.body as { accessToken: string };
+      accessToken = body.accessToken;
       expect(accessToken).toBeDefined();
     });
 

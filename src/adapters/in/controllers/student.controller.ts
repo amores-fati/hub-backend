@@ -71,7 +71,7 @@ export class StudentController {
       throw error;
     }
   }
-  
+
   @RequireAuth()
   @Get()
   @ApiOperation({ summary: 'Lista todos os alunos' })

@@ -62,7 +62,10 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET', 'default-secret-key-for-dev'),
+        secret: configService.get<string>(
+          'JWT_SECRET',
+          'default-secret-key-for-dev',
+        ),
         signOptions: { expiresIn: '7d' },
       }),
     }),
@@ -159,7 +162,11 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
         userRepository: IUserRepository,
         hashService: IHashService,
       ) => {
-        return new CompanyService(companyRepository, userRepository, hashService);
+        return new CompanyService(
+          companyRepository,
+          userRepository,
+          hashService,
+        );
       },
       inject: [ICompanyRepository, IUserRepository, IHashService],
     },
@@ -174,7 +181,11 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
         userRepository: IUserRepository,
         hashService: IHashService,
       ) => {
-        return new StudentService(studentRepository, userRepository, hashService);
+        return new StudentService(
+          studentRepository,
+          userRepository,
+          hashService,
+        );
       },
       inject: [IStudentRepository, IUserRepository, IHashService],
     },
@@ -184,5 +195,4 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
     },
   ],
 })
-export class AppModule { }
-
+export class AppModule {}

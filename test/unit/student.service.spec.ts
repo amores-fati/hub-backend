@@ -221,7 +221,9 @@ describe('StudentService', () => {
 
     it('should update and return the student', async () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
-      (mockHashService.hash as jest.Mock).mockResolvedValue('hashedPassword-new');
+      (mockHashService.hash as jest.Mock).mockResolvedValue(
+        'hashedPassword-new',
+      );
       (mockRepository.update as jest.Mock).mockImplementation((student) =>
         Promise.resolve(student),
       );
@@ -263,7 +265,9 @@ describe('StudentService', () => {
 
     it('should partially update password and return the student', async () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
-      (mockHashService.hash as jest.Mock).mockResolvedValue('hashedPassword-new');
+      (mockHashService.hash as jest.Mock).mockResolvedValue(
+        'hashedPassword-new',
+      );
       (mockRepository.update as jest.Mock).mockImplementation((student) =>
         Promise.resolve(student),
       );

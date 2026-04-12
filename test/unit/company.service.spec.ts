@@ -192,7 +192,9 @@ describe('CompanyService', () => {
 
     it('should update and return the company', async () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(mockCompany);
-      (mockHashService.hash as jest.Mock).mockResolvedValue('hashedPassword-new');
+      (mockHashService.hash as jest.Mock).mockResolvedValue(
+        'hashedPassword-new',
+      );
       (mockRepository.update as jest.Mock).mockImplementation((company) =>
         Promise.resolve(company),
       );
@@ -232,7 +234,9 @@ describe('CompanyService', () => {
 
     it('should partially update password and return the company', async () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(mockCompany);
-      (mockHashService.hash as jest.Mock).mockResolvedValue('hashedPassword-new');
+      (mockHashService.hash as jest.Mock).mockResolvedValue(
+        'hashedPassword-new',
+      );
       (mockRepository.update as jest.Mock).mockImplementation((company) =>
         Promise.resolve(company),
       );

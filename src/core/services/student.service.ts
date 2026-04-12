@@ -20,7 +20,7 @@ export class StudentService {
   constructor(
     private readonly studentRepository: IStudentRepository,
     private readonly userRepository: IUserRepository,
-    private readonly hashService: IHashService
+    private readonly hashService: IHashService,
   ) {}
 
   async createStudent(command: CreateStudentCommand): Promise<Student> {

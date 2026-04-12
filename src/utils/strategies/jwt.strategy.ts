@@ -14,17 +14,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET', 'default-secret-key-for-dev'),
+      secretOrKey: configService.get<string>(
+        'JWT_SECRET',
+        'default-secret-key-for-dev',
+      ),
     });
   }
 
   async validate(payload: { sub: string; email: string }) {
     const user = await this.userRepository.findById(payload.sub);
-    
+
     if (!user) {
       throw new UnauthorizedException('Usuário não encontrado.');
     }
-    
+
     return { id: payload.sub, email: payload.email };
   }
 }

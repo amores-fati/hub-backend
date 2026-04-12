@@ -8,7 +8,6 @@ import {
   HttpStatus,
   ConflictException,
   BadRequestException,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,7 +16,6 @@ import {
   ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
-  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AdminService } from '../../../core/services/admin.service';
 import { CreateAdminDto } from '../dtos/admin/create-admin.dto';
@@ -32,7 +30,7 @@ export class AdminController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @RequireAuth() 
+  @RequireAuth()
   @ApiOperation({
     summary: 'Registra um novo Administrador do sistema',
     description: 'Cria uma conta de acesso com privilégios administrativos.',
@@ -51,7 +49,10 @@ export class AdminController {
         email: admin.email,
       };
     } catch (error) {
-      if (error instanceof Error && error.name === 'UserAlreadyExistsException') {
+      if (
+        error instanceof Error &&
+        error.name === 'UserAlreadyExistsException'
+      ) {
         throw new ConflictException(error.message);
       }
       if (error instanceof DomainException) {

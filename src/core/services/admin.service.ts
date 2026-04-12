@@ -21,9 +21,9 @@ export class AdminService {
     }
 
     const hashedPassword = await this.hashService.hash(command.password);
-    
+
     const adminUser = new Admin(randomUUID(), command.email, hashedPassword);
-    
+
     return this.adminRepository.create(adminUser);
   }
 }
