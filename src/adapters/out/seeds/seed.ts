@@ -8,8 +8,8 @@ import { AdminOrmEntity } from '../orm/admin.orm-entity';
 import { ContactOrmEntity } from '../orm/contact.orm-entity';
 import { CompanyOrmEntity } from '../orm/company.orm-entity';
 import { StudentOrmEntity } from '../orm/student.orm-entity';
-import { AccessibilityResourceOrmEntity } from '../orm/accessibility_resourses.orm-entity';
-import { SocialBenefitOrmEntity } from '../orm/social_benefits';
+import { AccessibilityResourceOrmEntity } from '../orm/accessibility-resource.orm-entity';
+import { SocialBenefitOrmEntity } from '../orm/social-benefit.orm-entity';
 import { DisabilityOrmEntity } from '../orm/disability.orm-entity';
 import { CourseOrmEntity } from '../orm/course.orm-entity';
 import { PersonCourseOrmEntity } from '../orm/person_course.orm-entity';
@@ -18,6 +18,8 @@ import { CurriculumOrmEntity } from '../orm/curriculum.orm-entity';
 import { SkillsCurriculumOrmEntity } from '../orm/skills_curriculum.orm-entity';
 import { JobOrmEntity } from '../orm/jobs.orm-entity';
 import { SkillsJobOrmEntity } from '../orm/skills_job.orm-entity';
+import { SocialBenefitType } from '../../../core/domain/enums/social-benefit.enum';
+import { AccessibilityResourceType } from '../../../core/domain/enums/accessibility-resource.enum';
 
 dotenv.config();
 
@@ -401,24 +403,25 @@ async function seed() {
       cpf: `${100000000 + i * 11111111}`.slice(0, 11),
       education: a.education,
       gender: a.gender,
-      color: a.color,
-      area_activity: a.area,
-      programming_exp: i % 2 === 0,
-      tecnology_course: i % 3 !== 0,
-      has_computer: true,
-      has_internet: true,
-      compromisse: true,
-      send_curriculum: i % 2 === 0,
-      motivation: `Quero desenvolver habilidades em ${a.area} para ingressar no mercado de trabalho.`,
-      how_know: ['instagram', 'indicacao', 'google', 'evento'][i % 4],
+      race: a.color,
+      activityArea: a.area,
+      hasProgrammingExperience: i % 2 === 0,
+      hasTechCourses: i % 3 !== 0,
+      hasComputer: true,
+      hasInternet: true,
+      committedToParticipate: true,
+      sendCurriculum: i % 2 === 0,
+      fatilabMotivation: `Quero desenvolver habilidades em ${a.area} para ingressar no mercado de trabalho.`,
+      howHeard: ['instagram', 'indicacao', 'google', 'evento'][i % 4],
     });
     await AppDataSource.getRepository(StudentOrmEntity).save(student);
 
     const disability = AppDataSource.getRepository(DisabilityOrmEntity).create({
-      student_id: userId,
+      studentId: userId,
       hasDisability: a.has_disability,
       description: a.has_disability ? a.disability : null,
       hasReport: a.has_disability ? 'sim' : null,
+      type: a.has_disability ? a.disability : null,
     });
     await AppDataSource.getRepository(DisabilityOrmEntity).save(disability);
 
@@ -427,14 +430,21 @@ async function seed() {
         SocialBenefitOrmEntity,
       ).create({
         student: student,
-        benefit: ['bolsa_familia', 'bpc', 'auxilio_brasil'][i % 3],
+        benefit: [
+          SocialBenefitType.bolsaFamilia,
+          SocialBenefitType.bpc,
+          SocialBenefitType.auxilioDoenca,
+        ][i % 3],
       });
       await AppDataSource.getRepository(SocialBenefitOrmEntity).save(benefit);
     }
     if (a.has_disability) {
       const resource = AppDataSource.getRepository(
         AccessibilityResourceOrmEntity,
-      ).create({ student: student, resource: a.disability });
+      ).create({
+        student: student,
+        resource: AccessibilityResourceType.other,
+      });
       await AppDataSource.getRepository(AccessibilityResourceOrmEntity).save(
         resource,
       );
@@ -459,7 +469,7 @@ async function seed() {
     });
     await AppDataSource.getRepository(PersonCourseOrmEntity).save(personCourse);
   }
-  console.log('✅ 2 cursos presenciais criados.');
+  console.log('2 cursos presenciais criados.');
 
   // 5. SKILLS
   const skillNames = [
@@ -572,6 +582,6 @@ async function seed() {
 }
 
 seed().catch((err) => {
-  console.error('❌ Erro no seed:', err);
+  console.error('Erro no seed:', err);
   process.exit(1);
 });

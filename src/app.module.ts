@@ -25,6 +25,16 @@ import { CompanyRepository } from './adapters/out/repository/company.repository'
 
 // Additional ORM Entities
 import { ContactOrmEntity } from './adapters/out/orm/contact.orm-entity';
+import { DisabilityOrmEntity } from './adapters/out/orm/disability.orm-entity';
+import { SocialBenefitOrmEntity } from './adapters/out/orm/social-benefit.orm-entity';
+import { AccessibilityResourceOrmEntity } from './adapters/out/orm/accessibility-resource.orm-entity';
+
+// Student Adapters & Core
+import { StudentController } from './adapters/in/controllers/student.controller';
+import { StudentService } from './core/services/student.service';
+import { StudentRepository } from './adapters/out/repository/student.repository';
+import { StudentOrmEntity } from './adapters/out/orm/student.orm-entity';
+import { IStudentRepository } from './core/ports/student.repository.interface';
 
 @Module({
   imports: [
@@ -50,10 +60,19 @@ import { ContactOrmEntity } from './adapters/out/orm/contact.orm-entity';
       UserOrmEntity,
       CourseOrmEntity,
       CompanyOrmEntity,
+      StudentOrmEntity,
       ContactOrmEntity,
+      DisabilityOrmEntity,
+      SocialBenefitOrmEntity,
+      AccessibilityResourceOrmEntity,
     ]),
   ],
-  controllers: [UserController, CourseController, CompanyController],
+  controllers: [
+    UserController,
+    CourseController,
+    CompanyController,
+    StudentController,
+  ],
   providers: [
     {
       provide: UserService,
@@ -87,6 +106,17 @@ import { ContactOrmEntity } from './adapters/out/orm/contact.orm-entity';
     {
       provide: ICompanyRepository,
       useClass: CompanyRepository,
+    },
+    {
+      provide: StudentService,
+      useFactory: (studentRepository: IStudentRepository) => {
+        return new StudentService(studentRepository);
+      },
+      inject: [IStudentRepository],
+    },
+    {
+      provide: IStudentRepository,
+      useClass: StudentRepository,
     },
   ],
 })

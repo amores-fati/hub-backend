@@ -4,13 +4,15 @@ import { StudentOrmEntity } from './student.orm-entity';
 @Entity('disabilities')
 export class DisabilityOrmEntity {
   @PrimaryColumn({ name: 'student_id', type: 'uuid' })
-  student_id: string;
+  studentId: string;
 
-  @OneToOne(() => StudentOrmEntity, { onDelete: 'CASCADE' })
+  @OneToOne(() => StudentOrmEntity, (student) => student.disability, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'student_id' })
   student: StudentOrmEntity;
 
-  @Column({ name: 'has_disability', default: false })
+  @Column({ name: 'has_disability', type: 'boolean', default: false })
   hasDisability: boolean;
 
   @Column({ name: 'description', type: 'text', nullable: true })
@@ -18,4 +20,7 @@ export class DisabilityOrmEntity {
 
   @Column({ name: 'has_report', type: 'varchar', nullable: true })
   hasReport: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  type: string | null;
 }
