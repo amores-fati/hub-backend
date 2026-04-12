@@ -27,6 +27,14 @@ Para rodar este projeto, você precisará ter instalado em sua máquina:
    ```bash
    docker-compose up -d --build
    ```
+4. Se quiser popular a base com dados de desenvolvimento, execute explicitamente:
+   ```bash
+   npm run seed:dev
+   ```
+   Se quiser limpar e recriar todo o dataset de desenvolvimento:
+   ```bash
+   npm run seed:dev:reset
+   ```
 
 A API estará rodando na porta definida no `.env` (por padrão `http://localhost:3001`).
 
@@ -37,16 +45,30 @@ A API estará rodando na porta definida no `.env` (por padrão `http://localhost
 | Comando                                         | Descrição                                                                                                                       |
 | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `npm run start:dev`                             | Inicia a aplicação com hot-reload ativo (ideal para desenvolvimento).                                                           |
+| `npm run seed:dev`                              | Executa o seed de desenvolvimento apenas se o banco estiver vazio.                                                              |
+| `npm run seed:dev:reset`                        | Limpa os dados e recria o dataset de desenvolvimento de forma explícita.                                                       |
 | `npm run build`                                 | Compila o projeto TypeScript para JavaScript de produção (pasta `/dist`).                                                       |
 | `npm run test`                                  | Executa os testes unitários utilizando o Jest.                                                                                  |
 | `docker-compose up -d postgres-test`            | Sobe o banco de dados dedicado para testes (`api_db_test`). Obrigatório rodar localmente antes dos testes E2E.                  |
-| `npm run test:e2e`                              | Executa os testes de integração (End-to-End). Conecta-se automaticamente ao banco de testes graças ao `.env.test`.              |
+| `npm run test:e2e`                              | Executa os testes de integração (End-to-End) preparando o banco de testes com migrations antes de subir o `AppModule`.         |
 | `npm run lint`                                  | Roda o ESLint no projeto para garantir os padrões de código e TypeScript.                                                       |
 | `npm run format`                                | Roda o Prettier sobre o código para formatá-lo.                                                                                 |
 | `docker-compose up -d`                          | Sobe a stack inteira (banco Postgres e imagem final da API no Docker).                                                          |
 | `npm run migration:generate -- NomeDaMigration` | Gera uma nova migration, capturando e versionando as mudanças feitas nas suas classes `Entity`.                                 |
 | `npm run migration:run`                         | Executa fisicamente todas as migrations pendentes no banco. **Obrigatório para validar schemas no Deploy Oficial de Produção.** |
 | `npm run migration:revert`                      | Reverte a última migration executada no banco de dados.                                                                         |
+
+### Reset do banco de teste
+
+Se o `postgres-test` ficar com volume antigo ou credenciais divergentes, recrie apenas a stack de teste:
+
+```bash
+docker compose stop postgres-test
+docker compose rm -f postgres-test
+docker volume rm hub-backend_pgdata_test
+docker compose up -d postgres-test
+npm run test:e2e
+```
 
 ## Estrutura do Projeto
 
@@ -56,6 +78,8 @@ Para os detalhes arquiteturais, veja os arquivos README dentro de cada diretóri
 - `src/adapters/`: Controladores, Repositórios ORM e implementações concretas das portas.
 
 ## Credenciais documentadas
+
+As credenciais abaixo só existirão se o seed de desenvolvimento tiver sido executado.
 
 ```
 ADMIN

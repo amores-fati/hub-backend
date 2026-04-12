@@ -1,0 +1,36 @@
+services:
+  api-feature:
+    build:
+      context: .
+      target: builder
+    command: sh -c "npm install && npm run start:docker:dev"
+    ports:
+      - '3004:3004'
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+      - DB_HOST=postgres-feature
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=api_db_feature
+      - JWT_SECRET=${JWT_SECRET:-default-secret-key-for-dev}
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - postgres-feature
+
+  postgres-feature:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: api_db_feature
+    ports:
+      - '5434:5432'
+    volumes:
+      - pgdata_feature:/var/lib/postgresql/data
+
+volumes:
+  pgdata_feature:

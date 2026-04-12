@@ -105,6 +105,7 @@ describe('StudentService', () => {
       expect(result.id).toBeDefined();
       expect(result.cpf).toBe(mockStudent.cpf);
       expect(result.password).toBe('hashedPassword');
+      expect(result.contact.id).toBe(result.id);
       expect(mockRepository.create).toHaveBeenCalledTimes(1);
     });
 

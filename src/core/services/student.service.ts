@@ -39,7 +39,7 @@ export class StudentService {
     const hashedPassword = await this.hashService.hash(command.password);
 
     const contact = new Contact(
-      randomUUID(),
+      studentId,
       command.contact.phone,
       command.contact.neighbourhood,
       command.contact.state,

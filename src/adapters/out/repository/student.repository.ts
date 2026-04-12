@@ -217,6 +217,7 @@ export class StudentRepository implements IStudentRepository {
 
     ormEntity.contact = new ContactOrmEntity();
     ormEntity.contact.id = student.contact.id;
+    ormEntity.contact.user = ormEntity.user;
     ormEntity.contact.phone = student.contact.phone;
     ormEntity.contact.neighbourhood = student.contact.neighbourhood || null;
     ormEntity.contact.state = student.contact.state || null;

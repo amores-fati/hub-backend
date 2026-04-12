@@ -12,7 +12,7 @@ export class CourseOrmEntity {
   banner: string;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  description: string | null;
 
   @Column()
   course_load: string;

@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule, JwtService } from '@nestjs/jwt';
+import { buildDatabaseOptions } from './config/database.config';
 
 // Admin Adapters & Core
 import { AdminController } from './adapters/in/controllers/admin.controller';
@@ -73,16 +74,7 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get<string>('DB_HOST'),
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USER'),
-        password: configService.get<string>('DB_PASS'),
-        database: configService.get<string>('DB_NAME'),
-        autoLoadEntities: true,
-        synchronize: configService.get<string>('NODE_ENV') !== 'production',
-      }),
+      useFactory: () => buildDatabaseOptions(),
     }),
     TypeOrmModule.forFeature([
       UserOrmEntity,

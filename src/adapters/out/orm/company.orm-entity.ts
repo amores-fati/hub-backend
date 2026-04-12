@@ -7,7 +7,7 @@ export class CompanyOrmEntity {
   @PrimaryColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 18 })
+  @Column({ type: 'varchar', length: 18, unique: true })
   cnpj: string;
 
   @Column({ type: 'varchar', length: 100 })
@@ -16,11 +16,19 @@ export class CompanyOrmEntity {
   @Column({ type: 'varchar', length: 100 })
   ownerName: string;
 
-  @OneToOne(() => UserOrmEntity, { cascade: true, eager: true })
+  @OneToOne(() => UserOrmEntity, {
+    cascade: true,
+    eager: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'id' })
   user: UserOrmEntity;
 
-  @OneToOne(() => ContactOrmEntity, { cascade: true, eager: true })
+  @OneToOne(() => ContactOrmEntity, {
+    cascade: true,
+    eager: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'contact_id' })
   contact: ContactOrmEntity;
 }

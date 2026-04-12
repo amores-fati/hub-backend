@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
+import { buildDatabaseOptions } from '../../../config/database.config';
 
 import { UserOrmEntity } from '../orm/user.orm-entity';
 import { AdminOrmEntity } from '../orm/admin.orm-entity';
@@ -21,46 +22,49 @@ import { SkillsJobOrmEntity } from '../orm/skills_job.orm-entity';
 import { SocialBenefitType } from '../../../core/domain/enums/social-benefit.enum';
 import { AccessibilityResourceType } from '../../../core/domain/enums/accessibility-resource.enum';
 
-dotenv.config();
-
-const AppDataSource = new DataSource({
-  type: 'postgres',
-  host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-  username: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-  entities: [
-    UserOrmEntity,
-    AdminOrmEntity,
-    ContactOrmEntity,
-    CompanyOrmEntity,
-    StudentOrmEntity,
-    AccessibilityResourceOrmEntity,
-    SocialBenefitOrmEntity,
-    DisabilityOrmEntity,
-    CourseOrmEntity,
-    PersonCourseOrmEntity,
-    SkillOrmEntity,
-    CurriculumOrmEntity,
-    SkillsCurriculumOrmEntity,
-    JobOrmEntity,
-    SkillsJobOrmEntity,
-  ],
-  synchronize: false,
+dotenv.config({
+  path: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
+  quiet: true,
 });
+
+const shouldReset = process.argv.includes('--reset');
+const AppDataSource = new DataSource(buildDatabaseOptions());
+
+async function ensureSeedMode(): Promise<boolean> {
+  const userCount = await AppDataSource.getRepository(UserOrmEntity).count();
+
+  if (!shouldReset && userCount > 0) {
+    console.log(
+      'Seed cancelado: o banco ja possui dados. Use "npm run seed:dev:reset" para recriar tudo.',
+    );
+    return false;
+  }
+
+  if (shouldReset) {
+    await AppDataSource.query(`TRUNCATE TABLE
+      skills_job, skills_curriculum, skills, jobs, curriculums,
+      person_courses, courses, disabilities,
+      social_benefits, accessibility_resources,
+      students, admins, companies, contacts, users
+      RESTART IDENTITY CASCADE`);
+    console.log('Dados anteriores removidos.');
+  } else {
+    console.log('Banco vazio detectado. Seed inicial sera executado sem reset.');
+  }
+
+  return true;
+}
 
 async function seed() {
   await AppDataSource.initialize();
   console.log(' Conectado ao banco de dados.');
 
-  await AppDataSource.query(`TRUNCATE TABLE
-    skills_job, skills_curriculum, skills, jobs, curriculums,
-    person_courses, courses, disabilities,
-    social_benefits, accessibility_resources,
-    students, admins, companies, contacts, users
-    RESTART IDENTITY CASCADE`);
-  console.log('Dados anteriores removidos.');
+  const shouldContinue = await ensureSeedMode();
+
+  if (!shouldContinue) {
+    await AppDataSource.destroy();
+    return;
+  }
 
   const SALT = 10;
   const senhaAdmin = await bcrypt.hash('Admin@123', SALT);

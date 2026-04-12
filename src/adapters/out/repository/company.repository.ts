@@ -103,6 +103,7 @@ export class CompanyRepository implements ICompanyRepository {
 
     ormEntity.contact = new ContactOrmEntity();
     ormEntity.contact.id = company.contact.id;
+    ormEntity.contact.user = ormEntity.user;
     ormEntity.contact.phone = company.contact.phone;
     ormEntity.contact.neighbourhood = company.contact.neighbourhood || null;
     ormEntity.contact.state = company.contact.state || null;

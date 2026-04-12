@@ -25,7 +25,7 @@ export class StudentOrmEntity {
   @JoinColumn({ name: 'contact_id' })
   contact: ContactOrmEntity;
 
-  @Column()
+  @Column({ unique: true })
   cpf: string;
 
   @Column({ name: 'social_name', type: 'varchar', nullable: true })

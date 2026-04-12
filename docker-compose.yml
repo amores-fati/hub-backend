@@ -33,9 +33,9 @@ services:
   postgres-test:
     image: postgres:18-alpine
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASS}
-      POSTGRES_DB: ${DB_NAME}_test
+      POSTGRES_USER: ${DB_TEST_USER:-root}
+      POSTGRES_PASSWORD: ${DB_TEST_PASS:-secret}
+      POSTGRES_DB: ${DB_TEST_NAME:-api_db_test}
     ports:
       - '${DB_TEST_PORT:-5433}:5432'
     volumes:

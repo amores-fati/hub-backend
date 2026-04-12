@@ -1,9 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from '../../src/app.module';
 import { Server } from 'http';
 import { cnpj } from 'cpf-cnpj-validator';
+import { createIntegrationApp } from './bootstrap';
 
 interface CompanyResponse {
   id: string;
@@ -24,21 +23,14 @@ describe('CompanyController (e2e)', () => {
   const companyPassword = 'securepassword123';
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({ transform: true, whitelist: true }),
-    );
-    await app.init();
-
+    app = await createIntegrationApp();
     dynamicCnpj = cnpj.generate();
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   describe('/companies (POST)', () => {

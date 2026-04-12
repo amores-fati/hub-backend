@@ -13,17 +13,43 @@ export class CourseRepository implements ICourseRepository {
   ) {}
 
   async create(course: Course): Promise<Course> {
-    const ormEntity = this.ormRepository.create(course);
+    const ormEntity = this.ormRepository.create(this.mapToOrm(course));
     const savedEntity = await this.ormRepository.save(ormEntity);
     return this.mapToDomain(savedEntity);
   }
 
   async findAll(): Promise<Course[]> {
     const ormEntities = await this.ormRepository.find();
-    return ormEntities.map((e) => this.mapToDomain(e));
+    return ormEntities.map((entity) => this.mapToDomain(entity));
   }
 
   private mapToDomain(ormEntity: CourseOrmEntity): Course {
-    return new Course(ormEntity.id, ormEntity.name, ormEntity.description);
+    return new Course(
+      ormEntity.id,
+      ormEntity.name,
+      ormEntity.banner,
+      ormEntity.course_load,
+      ormEntity.start_date,
+      ormEntity.end_date,
+      ormEntity.start_registrations,
+      ormEntity.end_registrations,
+      ormEntity.link_access,
+      ormEntity.description ?? undefined,
+    );
+  }
+
+  private mapToOrm(course: Course): CourseOrmEntity {
+    return {
+      id: course.id,
+      name: course.name,
+      banner: course.banner,
+      description: course.description ?? null,
+      course_load: course.courseLoad,
+      start_date: course.startDate,
+      end_date: course.endDate,
+      start_registrations: course.startRegistrations,
+      end_registrations: course.endRegistrations,
+      link_access: course.linkAccess,
+    };
   }
 }
