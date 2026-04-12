@@ -12,10 +12,7 @@ export class JobOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'company_id' })
-  companyId: string;
-
-  @ManyToOne(() => CompanyOrmEntity)
+  @ManyToOne(() => CompanyOrmEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'company_id' })
   company: CompanyOrmEntity;
 

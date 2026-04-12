@@ -1,8 +1,4 @@
-import {
-  Entity,
-  Column,
-  PrimaryColumn,
-} from 'typeorm';
+import { Entity, Column, PrimaryColumn } from 'typeorm';
 
 @Entity('courses')
 export class CourseOrmEntity {
@@ -15,7 +11,7 @@ export class CourseOrmEntity {
   @Column()
   banner: string;
 
-  @Column({type: 'text', nullable: true})
+  @Column({ type: 'text', nullable: true })
   description: string;
 
   @Column()
@@ -23,17 +19,16 @@ export class CourseOrmEntity {
 
   @Column()
   start_date: Date;
-  
+
   @Column()
   end_date: Date;
 
   @Column()
   start_registrations: Date;
-  
+
   @Column()
   end_registrations: Date;
 
   @Column()
   link_access: string;
-
 }

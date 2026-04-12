@@ -1,20 +1,19 @@
-import { Entity, 
-PrimaryGeneratedColumn, 
-Column, ManyToOne, 
-JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { StudentOrmEntity } from './student.orm-entity';
 
 @Entity('social_benefits')
 export class SocialBenefitOrmEntity {
-    
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({})
-  student_id: string;
-
   @ManyToOne(() => StudentOrmEntity, (student) => student.socialBenefits)
-  @JoinColumn({})
+  @JoinColumn({ name: 'student_id' })
   student: StudentOrmEntity;
 
   @Column({ type: 'varchar' })

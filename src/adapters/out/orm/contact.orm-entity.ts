@@ -1,8 +1,8 @@
 import { Entity, PrimaryColumn, Column } from 'typeorm';
 
-@Entity('contact')
+@Entity('contacts')
 export class ContactOrmEntity {
-  @PrimaryColumn('varchar')
+  @PrimaryColumn('uuid')
   id: string;
 
   @Column({ type: 'varchar', length: 20 })

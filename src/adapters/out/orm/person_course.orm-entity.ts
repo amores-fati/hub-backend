@@ -1,25 +1,18 @@
-import{
-    Entity,
-    Column,
-    PrimaryColumn,
-    OneToOne,
-    JoinColumn,
-} from 'typeorm';
+import { Entity, Column, PrimaryColumn, OneToOne, JoinColumn } from 'typeorm';
 import { CourseOrmEntity } from './course.orm-entity';
 
 @Entity('person_courses')
 export class PersonCourseOrmEntity {
-    
   @PrimaryColumn('uuid')
   id: string;
 
-  @OneToOne(() => CourseOrmEntity, { cascade: true, onDelete: 'CASCADE' })   
+  @OneToOne(() => CourseOrmEntity, { cascade: true, onDelete: 'CASCADE' })
   @JoinColumn()
-  course: CourseOrmEntity; 
+  course: CourseOrmEntity;
 
   @Column()
   adress: string;
-  
+
   @Column()
   start_date: Date;
 

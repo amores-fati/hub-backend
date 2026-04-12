@@ -10,7 +10,7 @@ export class SkillsJobOrmEntity {
   @PrimaryColumn({ name: 'skill_id' })
   skill_id: string;
 
-  @ManyToOne(() => JobOrmEntity)
+  @ManyToOne(() => JobOrmEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'job_id' })
   job: JobOrmEntity;
 

@@ -9,15 +9,19 @@ import {
 import { ContactOrmEntity } from './contact.orm-entity';
 import { AccessibilityResourceOrmEntity } from './accessibility_resourses.orm-entity';
 import { SocialBenefitOrmEntity } from './social_benefits';
+import { UserOrmEntity } from './user.orm-entity';
 
 @Entity('students')
 export class StudentOrmEntity {
-
   @PrimaryColumn('uuid')
   id: string;
 
+  @OneToOne(() => UserOrmEntity, { cascade: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'id' })
+  user: UserOrmEntity;
+
   @OneToOne(() => ContactOrmEntity, { cascade: true, onDelete: 'CASCADE' })
-  @JoinColumn()
+  @JoinColumn({ name: 'contact_id' })
   contact: ContactOrmEntity;
 
   @Column()
@@ -54,7 +58,7 @@ export class StudentOrmEntity {
   programming_exp: boolean;
 
   @Column({ nullable: true })
-  tecnology_course: boolean
+  tecnology_course: boolean;
 
   @Column({ type: 'text', nullable: true })
   which_courses: string;
@@ -77,10 +81,12 @@ export class StudentOrmEntity {
   @Column({ nullable: true })
   compromisse: boolean;
 
-  @OneToMany(() => AccessibilityResourceOrmEntity, (resource) => resource.student_id)
+  @OneToMany(
+    () => AccessibilityResourceOrmEntity,
+    (resource) => resource.student,
+  )
   accessibilityResources: AccessibilityResourceOrmEntity[];
 
   @OneToMany(() => SocialBenefitOrmEntity, (benefit) => benefit.student)
   socialBenefits: SocialBenefitOrmEntity[];
-
 }
