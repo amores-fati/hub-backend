@@ -8,6 +8,7 @@ A principal responsabilidade do Core é resolver o problema de negócio para o q
 
 ## Estrutura
 
+- `/command`: Definições de comandos (objetos de entrada) que representam intenções de mudança.
 - `/domain`: Modelos e entidades puras do negócio.
 - `/exceptions`: Erros customizados da aplicação.
 - `/ports`: Interfaces que definem contratos de entrada e saída.
