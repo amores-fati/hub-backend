@@ -1,10 +1,10 @@
 import { DomainException } from '../exceptions/domain.exception';
 
-export class User {
+export abstract class User {
   constructor(
-    private readonly _id: string,
-    private _email: string,
-    private _password: string,
+    protected readonly _id: string,
+    protected _email: string,
+    protected _password: string,
   ) {
     this.validateUser();
   }
@@ -12,9 +12,11 @@ export class User {
   get id(): string {
     return this._id;
   }
+
   get email(): string {
     return this._email;
   }
+
   get password(): string {
     return this._password;
   }

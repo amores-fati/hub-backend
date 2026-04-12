@@ -1,13 +1,28 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { PassportModule } from '@nestjs/passport';
+import { JwtModule, JwtService } from '@nestjs/jwt';
+
+// Admin Adapters & Core
+import { AdminController } from './adapters/in/controllers/admin.controller';
+import { AdminService } from './core/services/admin.service';
+import { AdminRepository } from './adapters/out/repository/admin.repository';
+import { IAdminRepository } from './core/ports/admin.repository.interface';
 
 // User Adapters & Core
-import { UserController } from './adapters/in/controllers/user.controller';
-import { UserService } from './core/services/user.service';
 import { UserRepository } from './adapters/out/repository/user.repository';
 import { UserOrmEntity } from './adapters/out/orm/user.orm-entity';
 import { IUserRepository } from './core/ports/user.repository.interface';
+
+// Auth Adapters & Core
+import { AuthController } from './adapters/in/controllers/auth.controller';
+import { AuthService } from './core/services/auth.service';
+import { BcryptHashService } from './adapters/out/auth/bcrypt-hash.service';
+import { JwtTokenService } from './adapters/out/auth/jwt-token.service';
+import { IHashService } from './core/ports/hash.service.interface';
+import { ITokenService } from './core/ports/token.service.interface';
+import { JwtStrategy } from './utils/strategies/jwt.strategy';
 
 // Course Adapters & Core
 import { CourseController } from './adapters/in/controllers/course.controller';
@@ -42,6 +57,18 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
       isGlobal: true,
       envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
     }),
+    PassportModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>(
+          'JWT_SECRET',
+          'default-secret-key-for-dev',
+        ),
+        signOptions: { expiresIn: '7d' },
+      }),
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -68,19 +95,51 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
     ]),
   ],
   controllers: [
-    UserController,
+    AdminController,
+    AuthController,
     CourseController,
     CompanyController,
     StudentController,
   ],
   providers: [
     {
-      provide: UserService,
-      useFactory: (userRepository: IUserRepository) => {
-        return new UserService(userRepository);
+      provide: AdminService,
+      useFactory: (
+        userRepository: IUserRepository,
+        adminRepository: IAdminRepository,
+        hashService: IHashService,
+      ) => {
+        return new AdminService(userRepository, adminRepository, hashService);
       },
-      inject: [IUserRepository],
+      inject: [IUserRepository, IAdminRepository, IHashService],
     },
+    {
+      provide: IAdminRepository,
+      useClass: AdminRepository,
+    },
+    {
+      provide: AuthService,
+      useFactory: (
+        userRepository: IUserRepository,
+        hashService: IHashService,
+        tokenService: ITokenService,
+      ) => {
+        return new AuthService(userRepository, hashService, tokenService);
+      },
+      inject: [IUserRepository, IHashService, ITokenService],
+    },
+    {
+      provide: IHashService,
+      useClass: BcryptHashService,
+    },
+    {
+      provide: ITokenService,
+      useFactory: (jwtService: JwtService) => {
+        return new JwtTokenService(jwtService);
+      },
+      inject: [JwtService],
+    },
+    JwtStrategy,
     {
       provide: IUserRepository,
       useClass: UserRepository,
@@ -98,10 +157,18 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
     },
     {
       provide: CompanyService,
-      useFactory: (companyRepository: ICompanyRepository) => {
-        return new CompanyService(companyRepository);
+      useFactory: (
+        companyRepository: ICompanyRepository,
+        userRepository: IUserRepository,
+        hashService: IHashService,
+      ) => {
+        return new CompanyService(
+          companyRepository,
+          userRepository,
+          hashService,
+        );
       },
-      inject: [ICompanyRepository],
+      inject: [ICompanyRepository, IUserRepository, IHashService],
     },
     {
       provide: ICompanyRepository,
@@ -109,10 +176,18 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
     },
     {
       provide: StudentService,
-      useFactory: (studentRepository: IStudentRepository) => {
-        return new StudentService(studentRepository);
+      useFactory: (
+        studentRepository: IStudentRepository,
+        userRepository: IUserRepository,
+        hashService: IHashService,
+      ) => {
+        return new StudentService(
+          studentRepository,
+          userRepository,
+          hashService,
+        );
       },
-      inject: [IStudentRepository],
+      inject: [IStudentRepository, IUserRepository, IHashService],
     },
     {
       provide: IStudentRepository,

@@ -19,6 +19,9 @@ describe('CompanyController (e2e)', () => {
   let app: INestApplication;
   let createdCompanyId: string;
   let dynamicCnpj: string;
+  let accessToken: string;
+  const companyEmail = `test-${Date.now()}@company.com`;
+  const companyPassword = 'securepassword123';
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -45,8 +48,8 @@ describe('CompanyController (e2e)', () => {
         .send({
           name: 'E2E Company',
           cnpj: dynamicCnpj,
-          email: `test-${Date.now()}@company.com`,
-          password: 'securepassword123',
+          email: companyEmail,
+          password: companyPassword,
           ownerName: 'Admin E2E',
           contact: {
             city: 'São Paulo',
@@ -64,6 +67,20 @@ describe('CompanyController (e2e)', () => {
           expect(body.cnpj).toBe(dynamicCnpj);
           createdCompanyId = body.id;
         });
+    });
+
+    it('should login and obtain an access token', async () => {
+      const response = await request(app.getHttpServer() as Server)
+        .post('/auth/login')
+        .send({
+          email: companyEmail,
+          password: companyPassword,
+        })
+        .expect(200);
+
+      const body = response.body as { accessToken: string };
+      accessToken = body.accessToken;
+      expect(accessToken).toBeDefined();
     });
 
     it('should return 400 Bad Request for invalid payload', () => {
@@ -96,6 +113,7 @@ describe('CompanyController (e2e)', () => {
     it('should return an array of companies (200)', () => {
       return request(app.getHttpServer() as Server)
         .get('/companies')
+        .set('Authorization', `Bearer ${accessToken}`)
         .expect(200)
         .expect((res) => {
           const body = res.body as unknown as CompanyResponse[];
@@ -109,6 +127,7 @@ describe('CompanyController (e2e)', () => {
     it('should return a company by ID (200)', () => {
       return request(app.getHttpServer() as Server)
         .get(`/companies/${createdCompanyId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
         .expect(200)
         .expect((res) => {
           const body = res.body as unknown as CompanyResponse;
@@ -121,6 +140,7 @@ describe('CompanyController (e2e)', () => {
       const nonExistentUuid = '123e4567-e89b-12d3-a456-426614174000';
       return request(app.getHttpServer() as Server)
         .get(`/companies/${nonExistentUuid}`)
+        .set('Authorization', `Bearer ${accessToken}`)
         .expect(404);
     });
   });
@@ -129,6 +149,7 @@ describe('CompanyController (e2e)', () => {
     it('should update a company completely (200)', () => {
       return request(app.getHttpServer() as Server)
         .put(`/companies/${createdCompanyId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
         .send({
           name: 'Updated E2E Company',
           email: 'updated@company.com',
@@ -150,12 +171,27 @@ describe('CompanyController (e2e)', () => {
           expect(body.contact.city).toBe('Rio de Janeiro');
         });
     });
+
+    it('should partially update a company (200)', () => {
+      return request(app.getHttpServer() as Server)
+        .patch(`/companies/${createdCompanyId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          name: 'Patched E2E Company',
+        })
+        .expect(200)
+        .expect((res) => {
+          const body = res.body as unknown as CompanyResponse;
+          expect(body.name).toBe('Patched E2E Company');
+        });
+    });
   });
 
   describe('/companies/:id (DELETE)', () => {
     it('should delete a company (204)', () => {
       return request(app.getHttpServer() as Server)
         .delete(`/companies/${createdCompanyId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
         .expect(204);
     });
   });

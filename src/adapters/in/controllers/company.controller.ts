@@ -33,6 +33,7 @@ import {
   CreateCompanyCommand,
   UpdateCompanyCommand,
 } from '../../../core/command/company.command';
+import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 
 @ApiTags('Companies')
 @Controller('companies')
@@ -70,6 +71,7 @@ export class CompanyController {
     }
   }
 
+  @RequireAuth()
   @Get()
   @ApiOperation({ summary: 'Lista todas as empresas' })
   @ApiOkResponse({
@@ -79,6 +81,7 @@ export class CompanyController {
     return this.companyService.findAllCompanies();
   }
 
+  @RequireAuth()
   @Get(':id')
   @ApiOperation({ summary: 'Busca uma empresa por ID' })
   @ApiOkResponse({ description: 'Empresa encontrada com sucesso.' })
@@ -94,6 +97,7 @@ export class CompanyController {
     }
   }
 
+  @RequireAuth()
   @Get('cnpj/:cnpj')
   @ApiOperation({ summary: 'Busca uma empresa por CNPJ' })
   @ApiOkResponse({ description: 'Empresa encontrada com sucesso.' })
@@ -109,6 +113,7 @@ export class CompanyController {
     }
   }
 
+  @RequireAuth()
   @Put(':id')
   @ApiOperation({ summary: 'Atualiza completamente os dados de uma empresa' })
   @ApiBody({ type: UpdateCompanyDto })
@@ -135,6 +140,7 @@ export class CompanyController {
     }
   }
 
+  @RequireAuth()
   @Patch(':id')
   @ApiOperation({ summary: 'Atualiza parcialmente os dados de uma empresa' })
   @ApiBody({ type: PatchCompanyDto })
@@ -160,6 +166,7 @@ export class CompanyController {
     }
   }
 
+  @RequireAuth()
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Deleta uma empresa pelo ID' })

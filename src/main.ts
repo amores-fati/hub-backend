@@ -12,6 +12,15 @@ async function bootstrap() {
     .setTitle('AmoresFati API')
     .setDescription('API criada para o projeto AmoresFati')
     .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Insira o token JWT retornado no login.',
+      },
+      'access-token',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

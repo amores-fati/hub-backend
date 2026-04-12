@@ -19,6 +19,9 @@ describe('StudentController (e2e)', () => {
   let app: INestApplication;
   let createdStudentId: string;
   let dynamicCpf: string;
+  let accessToken: string;
+  const studentEmail = `student-${Date.now()}@test.com`;
+  const studentPassword = 'securepassword123';
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -43,8 +46,8 @@ describe('StudentController (e2e)', () => {
       return request(app.getHttpServer() as Server)
         .post('/students')
         .send({
-          email: `student-${Date.now()}@test.com`,
-          password: 'securepassword123',
+          email: studentEmail,
+          password: studentPassword,
           cpf: dynamicCpf,
           socialName: 'Student E2E',
           birthDate: '1995-05-20',
@@ -66,6 +69,20 @@ describe('StudentController (e2e)', () => {
           expect(body.cpf).toBe(dynamicCpf);
           createdStudentId = body.id;
         });
+    });
+
+    it('should login and obtain an access token', async () => {
+      const response = await request(app.getHttpServer() as Server)
+        .post('/auth/login')
+        .send({
+          email: studentEmail,
+          password: studentPassword,
+        })
+        .expect(200);
+
+      const body = response.body as { accessToken: string };
+      accessToken = body.accessToken;
+      expect(accessToken).toBeDefined();
     });
 
     it('should return 400 Bad Request for invalid payload', () => {
@@ -100,6 +117,7 @@ describe('StudentController (e2e)', () => {
     it('should return an array of students (200)', () => {
       return request(app.getHttpServer() as Server)
         .get('/students')
+        .set('Authorization', `Bearer ${accessToken}`)
         .expect(200)
         .expect((res) => {
           const body = res.body as unknown as StudentResponse[];
@@ -113,6 +131,7 @@ describe('StudentController (e2e)', () => {
     it('should return a student by ID (200)', () => {
       return request(app.getHttpServer() as Server)
         .get(`/students/${createdStudentId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
         .expect(200)
         .expect((res) => {
           const body = res.body as unknown as StudentResponse;
@@ -125,6 +144,7 @@ describe('StudentController (e2e)', () => {
       const nonExistentUuid = '123e4567-e89b-12d3-a456-426614174000';
       return request(app.getHttpServer() as Server)
         .get(`/students/${nonExistentUuid}`)
+        .set('Authorization', `Bearer ${accessToken}`)
         .expect(404);
     });
   });
@@ -133,6 +153,7 @@ describe('StudentController (e2e)', () => {
     it('should return a student by CPF (200)', () => {
       return request(app.getHttpServer() as Server)
         .get(`/students/cpf/${dynamicCpf}`)
+        .set('Authorization', `Bearer ${accessToken}`)
         .expect(200)
         .expect((res) => {
           const body = res.body as unknown as StudentResponse;
@@ -145,6 +166,7 @@ describe('StudentController (e2e)', () => {
       const nonExistentCpf = cpf.generate();
       return request(app.getHttpServer() as Server)
         .get(`/students/cpf/${nonExistentCpf}`)
+        .set('Authorization', `Bearer ${accessToken}`)
         .expect(404);
     });
   });
@@ -153,6 +175,7 @@ describe('StudentController (e2e)', () => {
     it('should update a student completely (200)', () => {
       return request(app.getHttpServer() as Server)
         .put(`/students/${createdStudentId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
         .send({
           email: `updatedstudent-${Date.now()}@test.com`,
           password: 'newpassword123',
@@ -182,6 +205,7 @@ describe('StudentController (e2e)', () => {
     it('should update a student partially (200)', () => {
       return request(app.getHttpServer() as Server)
         .patch(`/students/${createdStudentId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
         .send({
           socialName: 'Patched Student E2E',
         })
@@ -197,6 +221,7 @@ describe('StudentController (e2e)', () => {
     it('should delete a student (204)', () => {
       return request(app.getHttpServer() as Server)
         .delete(`/students/${createdStudentId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
         .expect(204);
     });
   });

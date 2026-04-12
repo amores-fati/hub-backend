@@ -5,18 +5,18 @@ import { IUserRepository } from '../../../core/ports/user.repository.interface';
 import { User } from '../../../core/domain/user.entity';
 import { UserOrmEntity } from '../orm/user.orm-entity';
 
+class BaseUser extends User {
+  constructor(id: string, email: string, password: string) {
+    super(id, email, password);
+  }
+}
+
 @Injectable()
 export class UserRepository implements IUserRepository {
   constructor(
     @InjectRepository(UserOrmEntity)
     private readonly ormRepository: Repository<UserOrmEntity>,
   ) {}
-
-  async create(user: User): Promise<User> {
-    const ormEntity = this.ormRepository.create(user);
-    const savedEntity = await this.ormRepository.save(ormEntity);
-    return this.mapToDomain(savedEntity);
-  }
 
   async findById(id: string): Promise<User | null> {
     const ormEntity = await this.ormRepository.findOne({ where: { id } });
@@ -29,6 +29,6 @@ export class UserRepository implements IUserRepository {
   }
 
   private mapToDomain(ormEntity: UserOrmEntity): User {
-    return new User(ormEntity.id, ormEntity.email, ormEntity.password);
+    return new BaseUser(ormEntity.id, ormEntity.email, ormEntity.password);
   }
 }

@@ -9,9 +9,16 @@ import {
   UpdateCompanyCommand,
 } from '../command/company.command';
 import { Contact } from '../domain/contact.entity';
+import { IHashService } from '../ports/hash.service.interface';
+import { IUserRepository } from '../ports/user.repository.interface';
+import { UserAlreadyExistsException } from '../exceptions/user-already-exists.exception';
 
 export class CompanyService {
-  constructor(private readonly companyRepository: ICompanyRepository) {}
+  constructor(
+    private readonly companyRepository: ICompanyRepository,
+    private readonly userRepository: IUserRepository,
+    private readonly hashService: IHashService,
+  ) {}
 
   async createCompany(command: CreateCompanyCommand): Promise<Company> {
     const existingCompany = await this.companyRepository.findByCnpj(
@@ -21,7 +28,14 @@ export class CompanyService {
       throw new CompanyAlreadyExistsException(command.cnpj);
     }
 
+    const existingUser = await this.userRepository.findByEmail(command.email);
+    if (existingUser) {
+      throw new UserAlreadyExistsException(command.email);
+    }
+
     const companyId = randomUUID();
+
+    const hashedPassword = await this.hashService.hash(command.password);
 
     const contact = new Contact(
       companyId,
@@ -37,7 +51,7 @@ export class CompanyService {
     const company = new Company(
       companyId,
       command.email,
-      command.password,
+      hashedPassword,
       command.name,
       command.cnpj,
       command.ownerName,
@@ -74,7 +88,12 @@ export class CompanyService {
     const company = await this.getCompanyById(id);
 
     company.changeEmail(command.email);
-    company.changePassword(command.password);
+
+    if (command.password) {
+      const hashedPassword = await this.hashService.hash(command.password);
+      company.changePassword(hashedPassword);
+    }
+
     company.changeName(command.name);
     company.changeOwnerName(command.ownerName);
 
@@ -98,8 +117,10 @@ export class CompanyService {
     const company = await this.getCompanyById(id);
 
     if (command.email !== undefined) company.changeEmail(command.email);
-    if (command.password !== undefined)
-      company.changePassword(command.password);
+    if (command.password !== undefined) {
+      const hashedPassword = await this.hashService.hash(command.password);
+      company.changePassword(hashedPassword);
+    }
     if (command.name !== undefined) company.changeName(command.name);
     if (command.ownerName !== undefined)
       company.changeOwnerName(command.ownerName);

@@ -10,6 +10,9 @@ import {
   UpdateStudentCommand,
   PatchStudentCommand,
 } from '../../src/core/command/student.command';
+import { IUserRepository } from '../../src/core/ports/user.repository.interface';
+import { IHashService } from '../../src/core/ports/hash.service.interface';
+import { UserAlreadyExistsException } from '../../src/core/exceptions/user-already-exists.exception';
 
 describe('StudentService', () => {
   let service: StudentService;
@@ -21,6 +24,16 @@ describe('StudentService', () => {
     findByCpf: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+  };
+
+  const mockUserRepository: IUserRepository = {
+    findById: jest.fn(),
+    findByEmail: jest.fn(),
+  };
+
+  const mockHashService: IHashService = {
+    hash: jest.fn(),
+    compare: jest.fn(),
   };
 
   let mockContact: Contact;
@@ -42,7 +55,7 @@ describe('StudentService', () => {
 
     mockStudent = new Student(
       '123e4567-e89b-12d3-a456-426614174000',
-      'password123',
+      'hashedPassword',
       'aluno@teste.com',
       '12345678909',
       mockContact,
@@ -52,7 +65,11 @@ describe('StudentService', () => {
       'Branca',
     );
 
-    service = new StudentService(mockRepository);
+    service = new StudentService(
+      mockRepository,
+      mockUserRepository,
+      mockHashService,
+    );
   });
 
   describe('createStudent', () => {
@@ -77,6 +94,8 @@ describe('StudentService', () => {
       };
 
       (mockRepository.findByCpf as jest.Mock).mockResolvedValue(null);
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
+      (mockHashService.hash as jest.Mock).mockResolvedValue('hashedPassword');
       (mockRepository.create as jest.Mock).mockImplementation((student) =>
         Promise.resolve(student),
       );
@@ -85,6 +104,7 @@ describe('StudentService', () => {
 
       expect(result.id).toBeDefined();
       expect(result.cpf).toBe(mockStudent.cpf);
+      expect(result.password).toBe('hashedPassword');
       expect(mockRepository.create).toHaveBeenCalledTimes(1);
     });
 
@@ -104,6 +124,28 @@ describe('StudentService', () => {
 
       await expect(service.createStudent(command)).rejects.toThrow(
         StudentAlreadyExistsException,
+      );
+    });
+
+    it('should throw UserAlreadyExistsException if email already exists', async () => {
+      const command: CreateStudentCommand = {
+        email: mockStudent.email,
+        password: 'password123',
+        cpf: mockStudent.cpf,
+        socialName: mockStudent.socialName,
+        birthDate: '1990-01-01',
+        gender: mockStudent.gender!,
+        race: mockStudent.race!,
+        contact: { phone: '11999999999' },
+      };
+
+      (mockRepository.findByCpf as jest.Mock).mockResolvedValue(null);
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(
+        mockStudent,
+      );
+
+      await expect(service.createStudent(command)).rejects.toThrow(
+        UserAlreadyExistsException,
       );
     });
   });
@@ -179,6 +221,9 @@ describe('StudentService', () => {
 
     it('should update and return the student', async () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
+      (mockHashService.hash as jest.Mock).mockResolvedValue(
+        'hashedPassword-new',
+      );
       (mockRepository.update as jest.Mock).mockImplementation((student) =>
         Promise.resolve(student),
       );
@@ -215,6 +260,23 @@ describe('StudentService', () => {
 
       expect(result.socialName).toBe(partialData.socialName);
       expect(result.email).toBe(mockStudent.email);
+      expect(mockRepository.update).toHaveBeenCalled();
+    });
+
+    it('should partially update password and return the student', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
+      (mockHashService.hash as jest.Mock).mockResolvedValue(
+        'hashedPassword-new',
+      );
+      (mockRepository.update as jest.Mock).mockImplementation((student) =>
+        Promise.resolve(student),
+      );
+
+      const partialData: PatchStudentCommand = { password: 'newpassword123' };
+      const result = await service.patchStudent(mockStudent.id, partialData);
+
+      expect(result.password).toBe('hashedPassword-new');
+      expect(mockHashService.hash).toHaveBeenCalledWith('newpassword123');
       expect(mockRepository.update).toHaveBeenCalled();
     });
   });

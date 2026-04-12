@@ -10,6 +10,9 @@ import {
   UpdateCompanyCommand,
   PatchCompanyCommand,
 } from '../../src/core/command/company.command';
+import { IUserRepository } from '../../src/core/ports/user.repository.interface';
+import { IHashService } from '../../src/core/ports/hash.service.interface';
+import { UserAlreadyExistsException } from '../../src/core/exceptions/user-already-exists.exception';
 
 describe('CompanyService', () => {
   let service: CompanyService;
@@ -21,6 +24,16 @@ describe('CompanyService', () => {
     findByCnpj: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+  };
+
+  const mockUserRepository: IUserRepository = {
+    findById: jest.fn(),
+    findByEmail: jest.fn(),
+  };
+
+  const mockHashService: IHashService = {
+    hash: jest.fn(),
+    compare: jest.fn(),
   };
 
   let mockContact: Contact;
@@ -43,14 +56,18 @@ describe('CompanyService', () => {
     mockCompany = new Company(
       '123e4567-e89b-12d3-a456-426614174000',
       'contato@techcorp.com',
-      'password123',
+      'hashedPassword',
       'Tech Corp LTDA',
       '12345678000199',
       'João da Silva',
       mockContact,
     );
 
-    service = new CompanyService(mockRepository);
+    service = new CompanyService(
+      mockRepository,
+      mockUserRepository,
+      mockHashService,
+    );
   });
 
   describe('createCompany', () => {
@@ -73,6 +90,8 @@ describe('CompanyService', () => {
       };
 
       (mockRepository.findByCnpj as jest.Mock).mockResolvedValue(null);
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
+      (mockHashService.hash as jest.Mock).mockResolvedValue('hashedPassword');
       (mockRepository.create as jest.Mock).mockImplementation((company) =>
         Promise.resolve(company),
       );
@@ -81,6 +100,7 @@ describe('CompanyService', () => {
 
       expect(result.id).toBeDefined();
       expect(result.cnpj).toBe(mockCompany.cnpj);
+      expect(result.password).toBe('hashedPassword');
       expect(mockRepository.create).toHaveBeenCalledTimes(1);
     });
 
@@ -98,6 +118,26 @@ describe('CompanyService', () => {
 
       await expect(service.createCompany(command)).rejects.toThrow(
         CompanyAlreadyExistsException,
+      );
+    });
+
+    it('should throw UserAlreadyExistsException if email already exists', async () => {
+      const command: CreateCompanyCommand = {
+        name: mockCompany.name,
+        cnpj: mockCompany.cnpj,
+        email: mockCompany.email,
+        password: 'password123',
+        ownerName: mockCompany.ownerName,
+        contact: { phone: '11999999999' },
+      };
+
+      (mockRepository.findByCnpj as jest.Mock).mockResolvedValue(null);
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(
+        mockCompany,
+      );
+
+      await expect(service.createCompany(command)).rejects.toThrow(
+        UserAlreadyExistsException,
       );
     });
   });
@@ -152,6 +192,9 @@ describe('CompanyService', () => {
 
     it('should update and return the company', async () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(mockCompany);
+      (mockHashService.hash as jest.Mock).mockResolvedValue(
+        'hashedPassword-new',
+      );
       (mockRepository.update as jest.Mock).mockImplementation((company) =>
         Promise.resolve(company),
       );
@@ -186,6 +229,23 @@ describe('CompanyService', () => {
 
       expect(result.name).toBe(partialData.name);
       expect(result.email).toBe(mockCompany.email);
+      expect(mockRepository.update).toHaveBeenCalled();
+    });
+
+    it('should partially update password and return the company', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockCompany);
+      (mockHashService.hash as jest.Mock).mockResolvedValue(
+        'hashedPassword-new',
+      );
+      (mockRepository.update as jest.Mock).mockImplementation((company) =>
+        Promise.resolve(company),
+      );
+
+      const partialData: PatchCompanyCommand = { password: 'newpassword123' };
+      const result = await service.patchCompany(mockCompany.id, partialData);
+
+      expect(result.password).toBe('hashedPassword-new');
+      expect(mockHashService.hash).toHaveBeenCalledWith('newpassword123');
       expect(mockRepository.update).toHaveBeenCalled();
     });
   });

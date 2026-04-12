@@ -55,7 +55,7 @@ async function seed() {
   console.log(' Conectado ao banco de dados.');
 
   await AppDataSource.query(`TRUNCATE TABLE
-    skills_job, skills_curriculum, jobs, curriculums,
+    skills_job, skills_curriculum, skills, jobs, curriculums,
     person_courses, courses, disabilities,
     social_benefits, accessibility_resources,
     students, admins, companies, contacts, users
