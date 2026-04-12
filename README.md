@@ -28,9 +28,9 @@ Para rodar este projeto, você precisará ter instalado em sua máquina:
    docker-compose up -d --build
    ```
 
-A API estará rodando na porta definida no `.env` (por padrão `http://localhost:3000`).
+A API estará rodando na porta definida no `.env` (por padrão `http://localhost:3001`).
 
-**Acesse a documentação Swagger em:** `http://localhost:3000/api`
+**Acesse a documentação Swagger em:** `http://localhost:3001/api`
 
 ## Comandos Disponíveis
 
@@ -56,9 +56,31 @@ Para os detalhes arquiteturais, veja os arquivos README dentro de cada diretóri
 - `src/adapters/`: Controladores, Repositórios ORM e implementações concretas das portas.
 
 ## Credenciais documentadas
-Admin:        email: admin@fatilab.com         | senha: Admin@123
-Empresa 1:    email: tech@innovatech.com       | senha: Empresa@123
-Empresa 2:    email: rh@solucoesdigitais.com   | senha: Empresa@123
-Empresa 3:    email: vagas@nextera.com         | senha: Empresa@123
-Alunos:       email: aluno01~15@fatilab.com    | senha: Aluno@123
+
+```
+ADMIN
+- Admin:        email: admin@fatilab.com         | senha: Admin@123
+
+EMPRESAS
+- Empresa 1:    email: tech@innovatech.com       | senha: Empresa@123
+- Empresa 2:    email: rh@solucoesdigitais.com   | senha: Empresa@123
+- Empresa 3:    email: vagas@nextera.com         | senha: Empresa@123
+
+ALUNOS
+- Aluno 1:      email: aluno01@fatilab.com       | senha: Aluno@123
+- Aluno 2:      email: aluno02@fatilab.com       | senha: Aluno@123
+- Aluno 3:      email: aluno03@fatilab.com       | senha: Aluno@123
+- Aluno 4:      email: aluno04@fatilab.com       | senha: Aluno@123
+- Aluno 5:      email: aluno05@fatilab.com       | senha: Aluno@123
+- Aluno 6:      email: aluno06@fatilab.com       | senha: Aluno@123
+- Aluno 7:      email: aluno07@fatilab.com       | senha: Aluno@123
+- Aluno 8:      email: aluno08@fatilab.com       | senha: Aluno@123
+- Aluno 9:      email: aluno09@fatilab.com       | senha: Aluno@123
+- Aluno 10:     email: aluno10@fatilab.com       | senha: Aluno@123
+- Aluno 11:     email: aluno11@fatilab.com       | senha: Aluno@123
+- Aluno 12:     email: aluno12@fatilab.com       | senha: Aluno@123
+- Aluno 13:     email: aluno13@fatilab.com       | senha: Aluno@123
+- Aluno 14:     email: aluno14@fatilab.com       | senha: Aluno@123
+- Aluno 15:     email: aluno15@fatilab.com       | senha: Aluno@123
+```
 

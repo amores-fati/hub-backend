@@ -45,6 +45,7 @@ import { SocialBenefitOrmEntity } from './adapters/out/orm/social-benefit.orm-en
 import { AccessibilityResourceOrmEntity } from './adapters/out/orm/accessibility-resource.orm-entity';
 
 // Student Adapters & Core
+import { HealthController } from './adapters/in/controllers/health.controller';
 import { StudentController } from './adapters/in/controllers/student.controller';
 import { StudentService } from './core/services/student.service';
 import { StudentRepository } from './adapters/out/repository/student.repository';
@@ -100,6 +101,7 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
     CourseController,
     CompanyController,
     StudentController,
+    HealthController,
   ],
   providers: [
     {

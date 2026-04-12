@@ -7,7 +7,15 @@ Os adaptadores de saída são implementações concretas das interfaces definida
 - Comunicação com Banco de Dados (ex: Repositórios TypeORM).
 - Comunicação com APIs externas (ex: cliente HTTP para a API do GitHub ou uma API de pagamentos).
 - Envio de mensagens para filas ou sistemas de email.
-
+ 
+## Estrutura
+ 
+- `/auth`: Implementações concretas de segurança e tokens (Bcrypt, JWT).
+- `/migrations`: Histórico de evolução do esquema do banco de dados.
+- `/orm`: Entidades físicas do TypeORM que definem as tabelas.
+- `/repository`: Implementações reais dos repositórios que persistem no banco.
+- `/seeds`: Scripts para popular o banco de dados com dados de exemplo.
+ 
 ## Boas Práticas
 
 - Crie "Entidades de Banco de Dados" (`@Entity()` do TypeORM) estritamente dentro desta pasta.
