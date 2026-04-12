@@ -12,6 +12,7 @@ import {
   ConflictException,
   NotFoundException,
   ParseUUIDPipe,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -24,10 +25,14 @@ import {
   ApiConflictResponse,
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
-import { CreateCompanyDto } from './create-company.dto';
-import { UpdateCompanyDto } from './update-company.dto';
-import { PatchCompanyDto } from './patch-company.dto';
+import { CreateCompanyDto } from '../dtos/company/create-company.dto';
+import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
+import { PatchCompanyDto } from '../dtos/company/patch-company.dto';
 import { CompanyService } from '../../../core/services/company.service';
+import {
+  CreateCompanyCommand,
+  UpdateCompanyCommand,
+} from 'src/core/command/company.command';
 
 @ApiTags('Companies')
 @Controller('companies')
@@ -47,20 +52,8 @@ export class CompanyController {
   @ApiConflictResponse({ description: 'CNPJ já cadastrado na plataforma.' })
   async register(@Body() createCompanyDto: CreateCompanyDto) {
     try {
-      return await this.companyService.createCompany(
-        createCompanyDto.name,
-        createCompanyDto.cnpj,
-        createCompanyDto.email,
-        createCompanyDto.city,
-        createCompanyDto.state,
-        createCompanyDto.street,
-        createCompanyDto.neighborhood,
-        createCompanyDto.cep,
-        createCompanyDto.number,
-        createCompanyDto.responsibleName,
-        createCompanyDto.phone,
-        createCompanyDto.password,
-      );
+      const command: CreateCompanyCommand = { ...createCompanyDto };
+      return await this.companyService.createCompany(command);
     } catch (error) {
       if (
         error instanceof Error &&
@@ -68,6 +61,11 @@ export class CompanyController {
       ) {
         throw new ConflictException(error.message);
       }
+
+      if (error instanceof Error && error.name === 'DomainException') {
+        throw new BadRequestException(error.message);
+      }
+
       throw error;
     }
   }
@@ -122,11 +120,17 @@ export class CompanyController {
     @Body() updateCompanyDto: UpdateCompanyDto,
   ) {
     try {
-      return await this.companyService.updateCompany(id, updateCompanyDto);
+      const command: UpdateCompanyCommand = { ...updateCompanyDto };
+      return await this.companyService.updateCompany(id, command);
     } catch (error) {
       if (error instanceof Error && error.name === 'CompanyNotFoundException') {
         throw new NotFoundException(error.message);
       }
+
+      if (error instanceof Error && error.name === 'DomainException') {
+        throw new BadRequestException(error.message);
+      }
+
       throw error;
     }
   }
@@ -147,6 +151,11 @@ export class CompanyController {
       if (error instanceof Error && error.name === 'CompanyNotFoundException') {
         throw new NotFoundException(error.message);
       }
+
+      if (error instanceof Error && error.name === 'DomainException') {
+        throw new BadRequestException(error.message);
+      }
+
       throw error;
     }
   }
@@ -163,6 +172,11 @@ export class CompanyController {
       if (error instanceof Error && error.name === 'CompanyNotFoundException') {
         throw new NotFoundException(error.message);
       }
+
+      if (error instanceof Error && error.name === 'DomainException') {
+        throw new BadRequestException(error.message);
+      }
+
       throw error;
     }
   }

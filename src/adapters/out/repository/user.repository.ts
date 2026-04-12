@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IUserRepository } from '../../../core/ports/user.repository.interface';
 import { User } from '../../../core/domain/user.entity';
-import { UserOrmEntity } from './user.orm-entity';
+import { UserOrmEntity } from '../orm/user.orm-entity';
 
 @Injectable()
 export class UserRepository implements IUserRepository {
@@ -29,12 +29,6 @@ export class UserRepository implements IUserRepository {
   }
 
   private mapToDomain(ormEntity: UserOrmEntity): User {
-    return new User(
-      ormEntity.id,
-      ormEntity.name,
-      ormEntity.email,
-      ormEntity.createdAt,
-      ormEntity.updatedAt,
-    );
+    return new User(ormEntity.id, ormEntity.email, ormEntity.password);
   }
 }

@@ -15,7 +15,7 @@ import {
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { CourseService } from '../../../core/services/course.service';
-import { CreateCourseDto } from './create-course.dto';
+import { CreateCourseDto } from '../dtos/course/create-course.dto';
 
 @ApiTags('Courses')
 @Controller('courses')

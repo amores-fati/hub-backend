@@ -1,8 +1,10 @@
 import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
 
-import { UserOrmEntity } from '../adapters/out/user/user.orm-entity';
-import { CourseOrmEntity } from '../adapters/out/course/course.orm-entity';
+import { UserOrmEntity } from '../adapters/out/orm/user.orm-entity';
+import { CourseOrmEntity } from '../adapters/out/orm/course.orm-entity';
+import { CompanyOrmEntity } from '../adapters/out/orm/company.orm-entity';
+import { ContactOrmEntity } from '../adapters/out/orm/contact.orm-entity';
 
 dotenv.config();
 
@@ -13,7 +15,12 @@ export default new DataSource({
   username: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  entities: [UserOrmEntity, CourseOrmEntity],
+  entities: [
+    UserOrmEntity,
+    CourseOrmEntity,
+    CompanyOrmEntity,
+    ContactOrmEntity,
+  ],
   migrations: ['src/adapters/out/migrations/*.ts'],
   synchronize: false,
 });

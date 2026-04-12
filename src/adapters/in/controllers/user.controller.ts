@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -15,7 +16,7 @@ import {
   ApiCreatedResponse,
 } from '@nestjs/swagger';
 import { UserService } from '../../../core/services/user.service';
-import { CreateUserDto } from './create-user.dto';
+import { CreateUserDto } from '../dtos/user/create-user.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -39,10 +40,8 @@ export class UserController {
     schema: {
       example: {
         id: '123e4567-e89b-12d3-a456-426614174000',
-        name: 'John Doe',
         email: 'john@example.com',
-        createdAt: '2023-10-01T12:00:00Z',
-        updatedAt: '2023-10-01T12:00:00Z',
+        password: 'hashedPassword',
       },
     },
   })
@@ -57,8 +56,8 @@ export class UserController {
   async create(@Body() createUserDto: CreateUserDto) {
     try {
       const user = await this.userService.createUser(
-        createUserDto.name,
         createUserDto.email,
+        createUserDto.password,
       );
       return user;
     } catch (error) {
@@ -68,6 +67,11 @@ export class UserController {
       ) {
         throw new ConflictException(error.message);
       }
+
+      if (error instanceof Error && error.name === 'DomainException') {
+        throw new BadRequestException(error.message);
+      }
+
       throw error;
     }
   }
