@@ -1,10 +1,10 @@
 import { DomainException } from '../exceptions/domain.exception';
 
-export class User {
+export abstract class User {
   constructor(
-    private readonly _id: string,
-    private _email: string,
-    private _password: string,
+    protected readonly _id: string,
+    protected _email: string,
+    protected _password: string,
   ) {
     this.validateUser();
   }
@@ -12,9 +12,11 @@ export class User {
   get id(): string {
     return this._id;
   }
+  
   get email(): string {
     return this._email;
   }
+  
   get password(): string {
     return this._password;
   }
@@ -39,9 +41,7 @@ export class User {
       throw new DomainException('A senha é obrigatória.');
     }
     if (password.length > 100) {
-      throw new DomainException(
-        'A senha não pode ter mais que 100 caracteres.',
-      );
+      throw new DomainException('A senha não pode ter mais que 100 caracteres.');
     }
   }
 
@@ -50,9 +50,7 @@ export class User {
       throw new DomainException('O e-mail é obrigatório.');
     }
     if (email.length > 100) {
-      throw new DomainException(
-        'O e-mail não pode ter mais que 100 caracteres.',
-      );
+      throw new DomainException('O e-mail não pode ter mais que 100 caracteres.');
     }
   }
 

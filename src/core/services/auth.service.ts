@@ -2,10 +2,10 @@ import { IUserRepository } from '../ports/user.repository.interface';
 import { IHashService } from '../ports/hash.service.interface';
 import { ITokenService } from '../ports/token.service.interface';
 import { InvalidCredentialsException } from '../exceptions/invalid-credentials.exception';
+import { LoginCommand } from '../command/auth.command';
 
 export interface LoginResult {
   accessToken: string;
-  role: string;
 }
 
 export class AuthService {
@@ -15,16 +15,16 @@ export class AuthService {
     private readonly tokenService: ITokenService,
   ) {}
 
-  async login(email: string, password: string): Promise<LoginResult> {
-    const user = await this.userRepository.findByEmail(email);
+  async login(command: LoginCommand): Promise<LoginResult> {
+    const user = await this.userRepository.findByEmail(command.email);
 
     if (!user) {
       throw new InvalidCredentialsException();
     }
 
     const passwordMatch = await this.hashService.compare(
-      password,
-      user.passwordHash,
+      command.password,
+      user.password,
     );
 
     if (!passwordMatch) {
@@ -33,9 +33,9 @@ export class AuthService {
 
     const accessToken = this.tokenService.generate({
       sub: user.id,
-      role: user.role,
+      email: user.email,
     });
 
-    return { accessToken, role: user.role };
+    return { accessToken };
   }
 }

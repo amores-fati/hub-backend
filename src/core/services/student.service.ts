@@ -12,9 +12,16 @@ import {
   UpdateStudentCommand,
 } from '../command/student.command';
 import { StudentNotFoundException } from '../exceptions/student-not-found.exception';
+import { IHashService } from '../ports/hash.service.interface';
+import { IUserRepository } from '../ports/user.repository.interface';
+import { UserAlreadyExistsException } from '../exceptions/user-already-exists.exception';
 
 export class StudentService {
-  constructor(private readonly studentRepository: IStudentRepository) {}
+  constructor(
+    private readonly studentRepository: IStudentRepository,
+    private readonly userRepository: IUserRepository,
+    private readonly hashService: IHashService
+  ) {}
 
   async createStudent(command: CreateStudentCommand): Promise<Student> {
     const existingStudent = await this.studentRepository.findByCpf(command.cpf);
@@ -23,7 +30,13 @@ export class StudentService {
       throw new StudentAlreadyExistsException(command.cpf);
     }
 
+    const existingUser = await this.userRepository.findByEmail(command.email);
+    if (existingUser) {
+      throw new UserAlreadyExistsException(command.email);
+    }
+
     const studentId = randomUUID();
+    const hashedPassword = await this.hashService.hash(command.password);
 
     const contact = new Contact(
       randomUUID(),
@@ -70,7 +83,7 @@ export class StudentService {
 
     const student = new Student(
       studentId,
-      command.password,
+      hashedPassword,
       command.email,
       command.cpf,
       contact,
@@ -130,7 +143,12 @@ export class StudentService {
     const student = await this.getStudentById(id);
 
     student.changeEmail(command.email);
-    student.changePassword(command.password);
+
+    if (command.password) {
+      const hashedPassword = await this.hashService.hash(command.password);
+      student.changePassword(hashedPassword);
+    }
+
     student.changeSocialName(command.socialName);
 
     student.changeAcademicData({
@@ -212,8 +230,10 @@ export class StudentService {
     const student = await this.getStudentById(id);
 
     if (command.email !== undefined) student.changeEmail(command.email);
-    if (command.password !== undefined)
-      student.changePassword(command.password);
+    if (command.password !== undefined) {
+      const hashedPassword = await this.hashService.hash(command.password);
+      student.changePassword(hashedPassword);
+    }
     if (command.socialName !== undefined) {
       student.changeSocialName(command.socialName);
     }

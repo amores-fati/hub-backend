@@ -34,6 +34,7 @@ import {
   UpdateStudentCommand,
   PatchStudentCommand,
 } from '../../../core/command/student.command';
+import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 
 @ApiTags('Students')
 @Controller('students')
@@ -70,7 +71,8 @@ export class StudentController {
       throw error;
     }
   }
-
+  
+  @RequireAuth()
   @Get()
   @ApiOperation({ summary: 'Lista todos os alunos' })
   @ApiOkResponse({
@@ -80,6 +82,7 @@ export class StudentController {
     return this.studentService.findAllStudents();
   }
 
+  @RequireAuth()
   @Get(':id')
   @ApiOperation({ summary: 'Busca um aluno por ID' })
   @ApiOkResponse({ description: 'Aluno encontrado com sucesso.' })
@@ -95,6 +98,7 @@ export class StudentController {
     }
   }
 
+  @RequireAuth()
   @Get('cpf/:cpf')
   @ApiOperation({ summary: 'Busca um aluno por CPF' })
   @ApiOkResponse({ description: 'Aluno encontrado com sucesso.' })
@@ -110,6 +114,7 @@ export class StudentController {
     }
   }
 
+  @RequireAuth()
   @Put(':id')
   @ApiOperation({ summary: 'Atualiza completamente os dados de um aluno' })
   @ApiBody({ type: UpdateStudentDto })
@@ -136,6 +141,7 @@ export class StudentController {
     }
   }
 
+  @RequireAuth()
   @Patch(':id')
   @ApiOperation({ summary: 'Atualiza parcialmente os dados de um aluno' })
   @ApiBody({ type: PatchStudentDto })
@@ -162,6 +168,7 @@ export class StudentController {
     }
   }
 
+  @RequireAuth()
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Deleta um aluno pelo ID' })
