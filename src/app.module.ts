@@ -3,23 +3,28 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 // User Adapters & Core
-import { UserController } from './adapters/in/user/user.controller';
+import { UserController } from './adapters/in/controllers/user.controller';
 import { UserService } from './core/services/user.service';
-import { UserRepository } from './adapters/out/user/user.repository';
-import { UserOrmEntity } from './adapters/out/user/user.orm-entity';
+import { UserRepository } from './adapters/out/repository/user.repository';
+import { UserOrmEntity } from './adapters/out/orm/user.orm-entity';
 import { IUserRepository } from './core/ports/user.repository.interface';
 
 // Course Adapters & Core
-import { CourseController } from './adapters/in/course/course.controller';
+import { CourseController } from './adapters/in/controllers/course.controller';
 import { CourseService } from './core/services/course.service';
-import { CourseRepository } from './adapters/out/course/course.repository';
-import { CourseOrmEntity } from './adapters/out/course/course.orm-entity';
+import { CourseRepository } from './adapters/out/repository/course.repository';
+import { CourseOrmEntity } from './adapters/out/orm/course.orm-entity';
 import { ICourseRepository } from './core/ports/course.repository.interface';
-import { CompanyOrmEntity } from './adapters/out/company/company.orm-entity';
-import { CompanyController } from './adapters/in/company/company.controller';
+
+// Company Adapters & Core
+import { CompanyOrmEntity } from './adapters/out/orm/company.orm-entity';
+import { CompanyController } from './adapters/in/controllers/company.controller';
 import { CompanyService } from './core/services/company.service';
 import { ICompanyRepository } from './core/ports/company.repository.interface';
-import { CompanyRepository } from './adapters/out/company/company.repository';
+import { CompanyRepository } from './adapters/out/repository/company.repository';
+
+// Additional ORM Entities
+import { ContactOrmEntity } from './adapters/out/orm/contact.orm-entity';
 
 @Module({
   imports: [
@@ -37,7 +42,7 @@ import { CompanyRepository } from './adapters/out/company/company.repository';
         username: configService.get<string>('DB_USER'),
         password: configService.get<string>('DB_PASS'),
         database: configService.get<string>('DB_NAME'),
-        entities: [UserOrmEntity, CourseOrmEntity, CompanyOrmEntity],
+        autoLoadEntities: true,
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
       }),
     }),
@@ -45,6 +50,7 @@ import { CompanyRepository } from './adapters/out/company/company.repository';
       UserOrmEntity,
       CourseOrmEntity,
       CompanyOrmEntity,
+      ContactOrmEntity,
     ]),
   ],
   controllers: [UserController, CourseController, CompanyController],

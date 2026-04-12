@@ -24,7 +24,7 @@ describe('UserController (e2e)', () => {
     const uniqueEmail = `test-${Date.now()}@example.com`;
     return request(app.getHttpServer() as Server)
       .post('/users')
-      .send({ name: 'E2E User', email: uniqueEmail })
+      .send({ email: uniqueEmail, password: 'password123' })
       .expect(201)
       .expect((res) => {
         const body = res.body as { id: string; email: string };
