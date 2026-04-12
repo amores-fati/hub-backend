@@ -7,9 +7,10 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ContactOrmEntity } from './contact.orm-entity';
-import { AccessibilityResourceOrmEntity } from './accessibility_resourses.orm-entity';
-import { SocialBenefitOrmEntity } from './social_benefits';
+import { AccessibilityResourceOrmEntity } from './accessibility-resource.orm-entity';
+import { SocialBenefitOrmEntity } from './social-benefit.orm-entity';
 import { UserOrmEntity } from './user.orm-entity';
+import { DisabilityOrmEntity } from './disability.orm-entity';
 
 @Entity('students')
 export class StudentOrmEntity {
@@ -27,66 +28,74 @@ export class StudentOrmEntity {
   @Column()
   cpf: string;
 
-  @Column({ nullable: true })
-  social_name: string;
+  @Column({ name: 'social_name', type: 'varchar', nullable: true })
+  socialName?: string | null;
 
-  @Column({ nullable: true })
-  date_of_birth: Date;
+  @Column({ name: 'date_of_birth', type: 'timestamp', nullable: true })
+  birthDate?: Date | null;
 
-  @Column({ nullable: true })
-  gender: string;
+  @Column({ type: 'varchar', nullable: true })
+  gender?: string | null;
 
-  @Column({ nullable: true })
-  gender_other: string;
+  @Column({ name: 'gender_other', type: 'varchar', nullable: true })
+  genderOther?: string | null;
 
-  @Column({ nullable: true })
-  color: string;
+  @Column({ name: 'color', type: 'varchar', nullable: true })
+  race: string | null;
 
-  @Column({ nullable: true })
-  education: string;
+  @Column({ type: 'varchar', nullable: true })
+  education: string | null;
 
-  @Column({ nullable: true })
-  course: string;
+  @Column({ name: 'course', type: 'varchar', nullable: true })
+  courseName: string | null;
 
-  @Column({ nullable: true })
-  institution: string;
+  @Column({ type: 'varchar', nullable: true })
+  institution: string | null;
 
-  @Column({ nullable: true })
-  area_activity: string;
+  @Column({ name: 'area_activity', type: 'varchar', nullable: true })
+  activityArea: string | null;
 
-  @Column({ nullable: true })
-  programming_exp: boolean;
+  @Column({ name: 'programming_exp', type: 'boolean', nullable: true })
+  hasProgrammingExperience: boolean | null;
 
-  @Column({ nullable: true })
-  tecnology_course: boolean;
+  @Column({ name: 'tecnology_course', type: 'boolean', nullable: true })
+  hasTechCourses: boolean | null;
 
-  @Column({ type: 'text', nullable: true })
-  which_courses: string;
+  @Column({ name: 'which_courses', type: 'text', nullable: true })
+  techCoursesList: string | null;
 
-  @Column({ nullable: true })
-  send_curriculum: boolean;
+  @Column({ name: 'send_curriculum', type: 'boolean', nullable: true })
+  sendCurriculum: boolean | null;
 
-  @Column({ type: 'text', nullable: true })
-  motivation: string;
+  @Column({ name: 'motivation', type: 'text', nullable: true })
+  fatilabMotivation: string | null;
 
-  @Column({ nullable: true })
-  how_know: string;
+  @Column({ name: 'how_know', type: 'varchar', nullable: true })
+  howHeard: string | null;
 
-  @Column({ nullable: true })
-  has_computer: boolean;
+  @Column({ name: 'has_computer', type: 'boolean', nullable: true })
+  hasComputer: boolean | null;
 
-  @Column({ nullable: true })
-  has_internet: boolean;
+  @Column({ name: 'has_internet', type: 'boolean', nullable: true })
+  hasInternet: boolean | null;
 
-  @Column({ nullable: true })
-  compromisse: boolean;
+  @Column({ name: 'compromisse', type: 'boolean', nullable: true })
+  committedToParticipate: boolean | null;
+
+  @OneToOne(() => DisabilityOrmEntity, (disability) => disability.student, {
+    cascade: true,
+  })
+  disability: DisabilityOrmEntity | null;
 
   @OneToMany(
     () => AccessibilityResourceOrmEntity,
     (resource) => resource.student,
+    { cascade: true },
   )
   accessibilityResources: AccessibilityResourceOrmEntity[];
 
-  @OneToMany(() => SocialBenefitOrmEntity, (benefit) => benefit.student)
+  @OneToMany(() => SocialBenefitOrmEntity, (benefit) => benefit.student, {
+    cascade: true,
+  })
   socialBenefits: SocialBenefitOrmEntity[];
 }

@@ -6,7 +6,7 @@ import {
   Length,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsCep } from 'src/utils/validators/cep.validator';
+import { IsCep } from '../../../../utils/validators/cep.validator';
 
 export class CreateContactDto {
   @ApiProperty({ example: '5511999999999', description: 'Telefone de contato' })

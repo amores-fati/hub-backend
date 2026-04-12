@@ -2,24 +2,21 @@ import { Entity, PrimaryGeneratedColumn, Column, JoinColumn, ManyToOne } from 't
 import { StudentOrmEntity } from './student.orm-entity';
 import { SocialBenefitType } from '../../../core/domain/enums/social-benefit.enum';
 
-@Entity('social_benefit')
+@Entity('social_benefits')
 export class SocialBenefitOrmEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar' })
+  @Column({ name: 'student_id', type: 'uuid' })
   studentId: string;
 
   @Column({ type: 'varchar' })
   benefit: SocialBenefitType;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ name: 'benefit_other', type: 'varchar', length: 100, nullable: true })
   benefitOther: string | null;
 
-  @ManyToOne(
-    () => StudentOrmEntity,
-    (student) => student.socialBenefits,
-  )
+  @ManyToOne(() => StudentOrmEntity, (student) => student.socialBenefits)
   @JoinColumn({ name: 'student_id' })
-  student!: StudentOrmEntity;
+  student: StudentOrmEntity;
 }

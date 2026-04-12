@@ -1,19 +1,19 @@
 import { Entity, PrimaryGeneratedColumn, Column, JoinColumn, ManyToOne } from 'typeorm';
-import { AccessibilityResourceType } from 'src/core/domain/enums/accessibility-resource.enum';
+import { AccessibilityResourceType } from '../../../core/domain/enums/accessibility-resource.enum';
 import { StudentOrmEntity } from './student.orm-entity';
 
-@Entity('accessibility_resource')
+@Entity('accessibility_resources')
 export class AccessibilityResourceOrmEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar' })
+  @Column({ name: 'student_id', type: 'uuid' })
   studentId: string;
 
   @Column({ type: 'varchar'})
   resource: AccessibilityResourceType;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ name: 'resource_other', type: 'varchar', length: 100, nullable: true })
   resourceOther: string | null;
 
   @ManyToOne(
@@ -21,5 +21,5 @@ export class AccessibilityResourceOrmEntity {
     (student) => student.accessibilityResources,
   )
   @JoinColumn({ name: 'student_id' })
-  student!: StudentOrmEntity;
+  student: StudentOrmEntity;
 }

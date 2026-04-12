@@ -277,7 +277,7 @@ export class StudentRepository implements IStudentRepository {
       ormEntity.hasProgrammingExperience ?? undefined,
       ormEntity.hasTechCourses ?? undefined,
       ormEntity.techCoursesList || undefined,
-      ormEntity.sendCurriculum,
+      ormEntity.sendCurriculum ?? false,
       ormEntity.fatilabMotivation || undefined,
       ormEntity.howHeard || undefined,
       ormEntity.hasComputer ?? undefined,

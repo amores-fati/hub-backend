@@ -32,7 +32,7 @@ import { CompanyService } from '../../../core/services/company.service';
 import {
   CreateCompanyCommand,
   UpdateCompanyCommand,
-} from 'src/core/command/company.command';
+} from '../../../core/command/company.command';
 
 @ApiTags('Companies')
 @Controller('companies')

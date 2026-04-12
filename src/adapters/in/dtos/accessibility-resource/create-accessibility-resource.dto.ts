@@ -1,4 +1,4 @@
-import { AccessibilityResourceType } from 'src/core/domain/enums/accessibility-resource.enum';
+import { AccessibilityResourceType } from '../../../../core/domain/enums/accessibility-resource.enum';
 
 import {
   IsString,

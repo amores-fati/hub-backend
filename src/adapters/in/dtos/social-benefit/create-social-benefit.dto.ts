@@ -1,6 +1,6 @@
 import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SocialBenefitType } from 'src/core/domain/enums/social-benefit.enum';
+import { SocialBenefitType } from '../../../../core/domain/enums/social-benefit.enum';
 
 export class CreateSocialBenefitDto {
   @ApiProperty({

@@ -31,7 +31,7 @@ export class InitialSchema1775858784315 implements MigrationInterface {
     );
 
     await queryRunner.query(
-      `CREATE TABLE "disabilities" ("student_id" uuid NOT NULL, "has_disability" boolean NOT NULL DEFAULT false, "description" text, "has_report" character varying, CONSTRAINT "PK_802683ebba1754e8bd9b1cb0555" PRIMARY KEY ("student_id"))`,
+      `CREATE TABLE "disabilities" ("student_id" uuid NOT NULL, "has_disability" boolean NOT NULL DEFAULT false, "description" text, "has_report" character varying, "type" character varying, CONSTRAINT "PK_802683ebba1754e8bd9b1cb0555" PRIMARY KEY ("student_id"))`,
     );
 
     await queryRunner.query(
