@@ -426,7 +426,7 @@ async function seed() {
       const benefit = AppDataSource.getRepository(
         SocialBenefitOrmEntity,
       ).create({
-        student: { id: userId } as any,
+        student: student,
         benefit: ['bolsa_familia', 'bpc', 'auxilio_brasil'][i % 3],
       });
       await AppDataSource.getRepository(SocialBenefitOrmEntity).save(benefit);
@@ -434,7 +434,7 @@ async function seed() {
     if (a.has_disability) {
       const resource = AppDataSource.getRepository(
         AccessibilityResourceOrmEntity,
-      ).create({ student: { id: userId } as any, resource: a.disability });
+      ).create({ student: student, resource: a.disability });
       await AppDataSource.getRepository(AccessibilityResourceOrmEntity).save(
         resource,
       );

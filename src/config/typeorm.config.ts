@@ -17,7 +17,6 @@ import { SkillOrmEntity } from '../adapters/out/orm/skill.orm-entity';
 import { CompanyOrmEntity } from '../adapters/out/orm/company.orm-entity';
 import { PersonCourseOrmEntity } from '../adapters/out/orm/person_course.orm-entity';
 
-
 dotenv.config();
 
 export default new DataSource({
@@ -27,11 +26,23 @@ export default new DataSource({
   username: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  entities: [UserOrmEntity, CourseOrmEntity, StudentOrmEntity, DisabilityOrmEntity,
-    CurriculumOrmEntity, SocialBenefitOrmEntity, AccessibilityResourceOrmEntity,
-    SkillsJobOrmEntity, SkillsCurriculumOrmEntity, ContactOrmEntity, JobOrmEntity,
-    AdminOrmEntity, CompanyOrmEntity, SkillOrmEntity, PersonCourseOrmEntity],
+  entities: [
+    UserOrmEntity,
+    CourseOrmEntity,
+    StudentOrmEntity,
+    DisabilityOrmEntity,
+    CurriculumOrmEntity,
+    SocialBenefitOrmEntity,
+    AccessibilityResourceOrmEntity,
+    SkillsJobOrmEntity,
+    SkillsCurriculumOrmEntity,
+    ContactOrmEntity,
+    JobOrmEntity,
+    AdminOrmEntity,
+    CompanyOrmEntity,
+    SkillOrmEntity,
+    PersonCourseOrmEntity,
+  ],
   migrations: ['src/adapters/out/migrations/*.ts'],
   synchronize: false,
-
 });
