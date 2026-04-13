@@ -22,7 +22,6 @@ export class UserRepository implements IUserRepository {
   async findById(id: string): Promise<User | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { id },
-      relations: ['student', 'company', 'admin'],
     });
     return ormEntity ? this.mapToDomain(ormEntity) : null;
   }
