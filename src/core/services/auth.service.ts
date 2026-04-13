@@ -34,6 +34,7 @@ export class AuthService {
     const accessToken = this.tokenService.generate({
       sub: user.id,
       email: user.email,
+      role: user.role,
     });
 
     return { accessToken };
