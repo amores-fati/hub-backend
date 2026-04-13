@@ -3,6 +3,7 @@ import { AccessibilityResource } from './accessibility-resource.entity';
 import { Contact } from './contact.entity';
 import { Disability } from './disability.entity';
 import { SocialBenefit } from './social-benefit.entity';
+import { UserRoleEnum } from './enums/user-role.enum';
 import { User } from './user.entity';
 
 export class Student extends User {
@@ -33,7 +34,7 @@ export class Student extends User {
     private _socialBenefits: SocialBenefit[] = [],
     private _accessibilityResources: AccessibilityResource[] = [],
   ) {
-    super(id, email, password);
+    super(id, email, password, UserRoleEnum.STUDENT);
     this.validateStudent();
   }
 
@@ -268,6 +269,7 @@ export class Student extends User {
       disability: this.disability,
       socialBenefits: this.socialBenefits,
       accessibilityResources: this.accessibilityResources,
+      role: this.role,
     };
   }
 }
