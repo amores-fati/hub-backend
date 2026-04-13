@@ -3,7 +3,7 @@ import { AccessibilityResource } from './accessibility-resource.entity';
 import { Contact } from './contact.entity';
 import { Disability } from './disability.entity';
 import { SocialBenefit } from './social-benefit.entity';
-import { UserRoleEnum } from './user-role.enum';
+import { UserRoleEnum } from './enums/user-role.enum';
 import { User } from './user.entity';
 
 export class Student extends User {

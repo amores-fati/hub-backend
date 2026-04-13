@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { IUserRepository } from '../../../core/ports/user.repository.interface';
 import { User } from '../../../core/domain/user.entity';
 import { UserOrmEntity } from '../orm/user.orm-entity';
-import { UserRoleEnum } from '../../../core/domain/user-role.enum';
+import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 class BaseUser extends User {
   constructor(id: string, email: string, password: string, role: UserRoleEnum) {

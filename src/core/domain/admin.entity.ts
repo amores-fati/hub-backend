@@ -1,5 +1,5 @@
 import { User } from './user.entity';
-import { UserRoleEnum } from './user-role.enum';
+import { UserRoleEnum } from './enums/user-role.enum';
 
 export class Admin extends User {
   constructor(id: string, email: string, password: string) {

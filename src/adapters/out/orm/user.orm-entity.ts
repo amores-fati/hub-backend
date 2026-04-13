@@ -2,7 +2,7 @@ import { Entity, PrimaryColumn, Column, OneToOne } from 'typeorm';
 import { StudentOrmEntity } from './student.orm-entity';
 import { CompanyOrmEntity } from './company.orm-entity';
 import { AdminOrmEntity } from './admin.orm-entity';
-import { UserRoleEnum } from '../../../core/domain/user-role.enum';
+import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @Entity('users')
 export class UserOrmEntity {

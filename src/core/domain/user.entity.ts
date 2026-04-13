@@ -1,5 +1,5 @@
 import { DomainException } from '../exceptions/domain.exception';
-import { UserRoleEnum } from './user-role.enum';
+import { UserRoleEnum } from './enums/user-role.enum';
 
 export abstract class User {
   constructor(
