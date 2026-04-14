@@ -127,10 +127,27 @@ import { AdminOrmEntity } from './adapters/out/orm/admin.orm-entity';
         userRepository: IUserRepository,
         hashService: IHashService,
         tokenService: ITokenService,
+        studentRepository: IStudentRepository,
+        companyRepository: ICompanyRepository,
+        adminRepository: IAdminRepository,
       ) => {
-        return new AuthService(userRepository, hashService, tokenService);
+        return new AuthService(
+          userRepository,
+          hashService,
+          tokenService,
+          studentRepository,
+          companyRepository,
+          adminRepository,
+        );
       },
-      inject: [IUserRepository, IHashService, ITokenService],
+      inject: [
+        IUserRepository,
+        IHashService,
+        ITokenService,
+        IStudentRepository,
+        ICompanyRepository,
+        IAdminRepository,
+      ],
     },
     {
       provide: IHashService,

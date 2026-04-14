@@ -1,12 +1,10 @@
 import { DomainException } from '../exceptions/domain.exception';
-import { UserRoleEnum } from './enums/user-role.enum';
 
 export abstract class User {
   constructor(
     protected readonly _id: string,
     protected _email: string,
     protected _password: string,
-    protected readonly _role: UserRoleEnum,
   ) {
     this.validateUser();
   }
@@ -17,10 +15,6 @@ export abstract class User {
 
   get email(): string {
     return this._email;
-  }
-
-  get role(): string {
-    return this._role;
   }
 
   get password(): string {
@@ -68,7 +62,6 @@ export abstract class User {
     return {
       id: this.id,
       email: this.email,
-      role: this.role,
     };
   }
 }
