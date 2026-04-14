@@ -17,6 +17,7 @@ describe('AdminService', () => {
 
   const mockAdminRepository: IAdminRepository = {
     create: jest.fn(),
+    existsById: jest.fn(),
   };
 
   const mockHashService: IHashService = {

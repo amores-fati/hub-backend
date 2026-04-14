@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IAdminRepository } from '../../../core/ports/admin.repository.interface';
 import { UserOrmEntity } from '../orm/user.orm-entity';
+import { AdminOrmEntity } from '../orm/admin.orm-entity';
 import { Admin } from 'src/core/domain/admin.entity';
 
 @Injectable()
@@ -10,7 +11,13 @@ export class AdminRepository implements IAdminRepository {
   constructor(
     @InjectRepository(UserOrmEntity)
     private readonly ormRepository: Repository<UserOrmEntity>,
+    @InjectRepository(AdminOrmEntity)
+    private readonly adminOrmRepository: Repository<AdminOrmEntity>,
   ) {}
+
+  async existsById(id: string): Promise<boolean> {
+    return this.adminOrmRepository.exists({ where: { id } });
+  }
 
   async create(admin: Admin): Promise<Admin> {
     const ormEntity = this.ormRepository.create({

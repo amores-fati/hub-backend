@@ -24,6 +24,7 @@ describe('CompanyService', () => {
     findByCnpj: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    existsById: jest.fn(),
   };
 
   const mockUserRepository: IUserRepository = {

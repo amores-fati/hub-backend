@@ -5,9 +5,16 @@ import { IHashService } from '../../src/core/ports/hash.service.interface';
 import { ITokenService } from '../../src/core/ports/token.service.interface';
 import { InvalidCredentialsException } from '../../src/core/exceptions/invalid-credentials.exception';
 import { LoginCommand } from '../../src/core/command/auth.command';
+import { UserRoleEnum } from '../../src/core/domain/enums/user-role.enum';
+import { IStudentRepository } from '../../src/core/ports/student.repository.interface';
+import { ICompanyRepository } from '../../src/core/ports/company.repository.interface';
+import { IAdminRepository } from '../../src/core/ports/admin.repository.interface';
 
 describe('AuthService', () => {
   let service: AuthService;
+  let mockStudentRepository: IStudentRepository;
+  let mockCompanyRepository: ICompanyRepository;
+  let mockAdminRepository: IAdminRepository;
 
   const mockUserRepository: IUserRepository = {
     findById: jest.fn(),
@@ -25,10 +32,24 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    mockStudentRepository = {
+      existsById: jest.fn(),
+    } as unknown as IStudentRepository;
+    mockCompanyRepository = {
+      existsById: jest.fn(),
+    } as unknown as ICompanyRepository;
+    mockAdminRepository = {
+      existsById: jest.fn(),
+    } as unknown as IAdminRepository;
+
     service = new AuthService(
       mockUserRepository,
       mockHashService,
       mockTokenService,
+      mockStudentRepository,
+      mockCompanyRepository,
+      mockAdminRepository,
     );
   });
 
@@ -49,12 +70,17 @@ describe('AuthService', () => {
       (mockHashService.compare as jest.Mock).mockResolvedValue(true);
       (mockTokenService.generate as jest.Mock).mockReturnValue('access-token');
 
+      (mockStudentRepository.existsById as jest.Mock).mockResolvedValue(true);
+      (mockCompanyRepository.existsById as jest.Mock).mockResolvedValue(false);
+      (mockAdminRepository.existsById as jest.Mock).mockResolvedValue(false);
+
       const result = await service.login(command);
 
       expect(result.accessToken).toBe('access-token');
       expect(mockTokenService.generate).toHaveBeenCalledWith({
         sub: mockUser.id,
         email: mockUser.email,
+        role: UserRoleEnum.STUDENT,
       });
     });
 

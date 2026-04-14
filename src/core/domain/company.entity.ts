@@ -1,6 +1,5 @@
 import { DomainException } from '../exceptions/domain.exception';
 import { Contact } from './contact.entity';
-import { UserRoleEnum } from './enums/user-role.enum';
 import { User } from './user.entity';
 
 export class Company extends User {
@@ -13,7 +12,7 @@ export class Company extends User {
     private _ownerName: string,
     private _contact: Contact,
   ) {
-    super(id, email, password, UserRoleEnum.COMPANY);
+    super(id, email, password);
     this.validateCompany();
   }
 
@@ -86,7 +85,6 @@ export class Company extends User {
       cnpj: this.cnpj,
       ownerName: this.ownerName,
       contact: this.contact,
-      role: this.role,
     };
   }
 }

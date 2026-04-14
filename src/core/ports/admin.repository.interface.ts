@@ -4,4 +4,5 @@ export const IAdminRepository = Symbol('IAdminRepository');
 
 export interface IAdminRepository {
   create(admin: User): Promise<User>;
+  existsById(id: string): Promise<boolean>;
 }
