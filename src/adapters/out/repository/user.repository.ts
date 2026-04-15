@@ -1,0 +1,38 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { IUserRepository } from '../../../core/ports/user.repository.interface';
+import { User } from '../../../core/domain/user.entity';
+import { UserOrmEntity } from '../orm/user.orm-entity';
+
+class BaseUser extends User {
+  constructor(id: string, email: string, password: string) {
+    super(id, email, password);
+  }
+}
+
+@Injectable()
+export class UserRepository implements IUserRepository {
+  constructor(
+    @InjectRepository(UserOrmEntity)
+    private readonly ormRepository: Repository<UserOrmEntity>,
+  ) {}
+
+  async findById(id: string): Promise<User | null> {
+    const ormEntity = await this.ormRepository.findOne({
+      where: { id },
+    });
+    return ormEntity ? this.mapToDomain(ormEntity) : null;
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    const ormEntity = await this.ormRepository.findOne({
+      where: { email },
+    });
+    return ormEntity ? this.mapToDomain(ormEntity) : null;
+  }
+
+  private mapToDomain(ormEntity: UserOrmEntity): User {
+    return new BaseUser(ormEntity.id, ormEntity.email, ormEntity.password);
+  }
+}

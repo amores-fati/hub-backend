@@ -6,13 +6,7 @@ export class CourseService {
   constructor(private readonly courseRepository: ICourseRepository) {}
 
   async createCourse(title: string, description: string): Promise<Course> {
-    const course = new Course(
-      randomUUID(),
-      title,
-      description,
-      new Date(),
-      new Date(),
-    );
+    const course = new Course(randomUUID(), title, description);
     return this.courseRepository.create(course);
   }
 
