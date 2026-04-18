@@ -22,7 +22,7 @@ O compose de feature sobe:
 ## Portas e banco
 
 - API feature: `http://localhost:3004`
-- Swagger feature: `http://localhost:3004/api`
+- Swagger feature: `http://localhost:3004/docs`
 - Postgres feature: `localhost:5435`
 - banco: `api_db_feature`
 - host interno da API: `postgres-feature`

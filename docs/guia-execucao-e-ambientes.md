@@ -147,7 +147,7 @@ Bootstrap real do container `api`:
 Endpoints locais:
 
 - API: `http://localhost:3001`
-- Swagger: `http://localhost:3001/api`
+- Swagger: `http://localhost:3001/docs`
 
 ## API na maquina com banco em container
 
@@ -283,7 +283,7 @@ docker compose -f docker-compose.feature.yml -p hub-backend-feature up -d --buil
 1. `npm.cmd install`
 2. revisar `.env`
 3. `docker compose up -d --build`
-4. abrir `http://localhost:3001/api`
+4. abrir `http://localhost:3001/docs`
 
 ### API fora do Docker
 

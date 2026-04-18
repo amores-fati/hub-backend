@@ -51,7 +51,7 @@ npm run start:dev
 Endpoints locais:
 
 - API: `http://localhost:3001`
-- Swagger: `http://localhost:3001/api`
+- Swagger: `http://localhost:3001/docs`
 
 ## Comandos principais
 

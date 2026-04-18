@@ -36,7 +36,7 @@ No bootstrap Docker atual, o container da API executa:
 ## Acessos
 
 - API: `http://localhost:3001`
-- Swagger: `http://localhost:3001/api`
+- Swagger: `http://localhost:3001/docs`
 
 ## E2E
 
