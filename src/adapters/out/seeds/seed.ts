@@ -35,7 +35,6 @@ dotenv.config({
 });
 
 const shouldReset = process.argv.includes('--reset');
-const AppDataSource = new DataSource(buildDatabaseOptions());
 const studentBirthDates = [
   '1998-03-15',
   '1996-07-22',
@@ -97,8 +96,8 @@ function normalizeRace(value: string): Race {
   }
 }
 
-async function ensureSeedMode(): Promise<boolean> {
-  const userCount = await AppDataSource.getRepository(UserOrmEntity).count();
+async function ensureSeedMode(appDataSource: DataSource): Promise<boolean> {
+  const userCount = await appDataSource.getRepository(UserOrmEntity).count();
 
   if (!shouldReset && userCount > 0) {
     console.log(
@@ -108,7 +107,7 @@ async function ensureSeedMode(): Promise<boolean> {
   }
 
   if (shouldReset) {
-    await AppDataSource.query(`TRUNCATE TABLE
+    await appDataSource.query(`TRUNCATE TABLE
       job_skills, curriculum_skills, skills, job_openings, curriculum,
       in_person_course_details, courses, disabilities,
       social_benefits, accessibility_resources,
@@ -125,13 +124,14 @@ async function ensureSeedMode(): Promise<boolean> {
 }
 
 export async function seed(): Promise<void> {
-  await AppDataSource.initialize();
+  const appDataSource = new DataSource(buildDatabaseOptions());
+  await appDataSource.initialize();
   console.log(' Conectado ao banco de dados.');
 
-  const shouldContinue = await ensureSeedMode();
+  const shouldContinue = await ensureSeedMode(appDataSource);
 
   if (!shouldContinue) {
-    await AppDataSource.destroy();
+    await appDataSource.destroy();
     return;
   }
 
@@ -142,17 +142,17 @@ export async function seed(): Promise<void> {
 
   // 1. ADMIN
   const adminUserId = uuidv4();
-  const adminUser = AppDataSource.getRepository(UserOrmEntity).create({
+  const adminUser = appDataSource.getRepository(UserOrmEntity).create({
     id: adminUserId,
     email: 'admin@fatilab.com',
     password: senhaAdmin,
     role: UserRoleEnum.ADMIN,
   });
-  await AppDataSource.getRepository(UserOrmEntity).save(adminUser);
-  const admin = AppDataSource.getRepository(AdminOrmEntity).create({
+  await appDataSource.getRepository(UserOrmEntity).save(adminUser);
+  const admin = appDataSource.getRepository(AdminOrmEntity).create({
     id: adminUserId,
   });
-  await AppDataSource.getRepository(AdminOrmEntity).save(admin);
+  await appDataSource.getRepository(AdminOrmEntity).save(admin);
   console.log('Admin criado.');
 
   // 2. EMPRESAS
@@ -189,28 +189,28 @@ export async function seed(): Promise<void> {
   const empresas: CompanyOrmEntity[] = [];
   for (const e of empresasData) {
     const userId = uuidv4();
-    const user = AppDataSource.getRepository(UserOrmEntity).create({
+    const user = appDataSource.getRepository(UserOrmEntity).create({
       id: userId,
       email: e.email,
       password: senhaEmpresa,
       role: UserRoleEnum.COMPANY,
     });
-    await AppDataSource.getRepository(UserOrmEntity).save(user);
-    const contact = AppDataSource.getRepository(ContactOrmEntity).create({
+    await appDataSource.getRepository(UserOrmEntity).save(user);
+    const contact = appDataSource.getRepository(ContactOrmEntity).create({
       id: userId,
       phone: e.phone,
       city: e.city,
       state: e.state,
     });
-    await AppDataSource.getRepository(ContactOrmEntity).save(contact);
-    const company = AppDataSource.getRepository(CompanyOrmEntity).create({
+    await appDataSource.getRepository(ContactOrmEntity).save(contact);
+    const company = appDataSource.getRepository(CompanyOrmEntity).create({
       id: userId,
       cnpj: e.cnpj,
       name: e.name,
       responsibleName: e.responsibleName,
       contact: contact,
     });
-    await AppDataSource.getRepository(CompanyOrmEntity).save(company);
+    await appDataSource.getRepository(CompanyOrmEntity).save(company);
     empresas.push(company);
   }
   console.log('3 empresas criadas.');
@@ -276,11 +276,11 @@ export async function seed(): Promise<void> {
 
   const cursos: CourseOrmEntity[] = [];
   for (const c of cursosData) {
-    const curso = AppDataSource.getRepository(CourseOrmEntity).create({
+    const curso = appDataSource.getRepository(CourseOrmEntity).create({
       id: uuidv4(),
       ...c,
     });
-    await AppDataSource.getRepository(CourseOrmEntity).save(curso);
+    await appDataSource.getRepository(CourseOrmEntity).save(curso);
     cursos.push(curso);
   }
   console.log('5 cursos criados.');
@@ -474,21 +474,21 @@ export async function seed(): Promise<void> {
     const a = normalizedAlunosData[i];
     const userId = uuidv4();
     const numero = String(i + 1).padStart(2, '0');
-    const user = AppDataSource.getRepository(UserOrmEntity).create({
+    const user = appDataSource.getRepository(UserOrmEntity).create({
       id: userId,
       email: `aluno${numero}@fatilab.com`,
       password: senhaAluno,
       role: UserRoleEnum.STUDENT,
     });
-    await AppDataSource.getRepository(UserOrmEntity).save(user);
-    const contact = AppDataSource.getRepository(ContactOrmEntity).create({
+    await appDataSource.getRepository(UserOrmEntity).save(user);
+    const contact = appDataSource.getRepository(ContactOrmEntity).create({
       id: userId,
       phone: `(51) 90000-${numero}00`,
       city: a.city,
       state: a.state,
     });
-    await AppDataSource.getRepository(ContactOrmEntity).save(contact);
-    const student = AppDataSource.getRepository(StudentOrmEntity).create({
+    await appDataSource.getRepository(ContactOrmEntity).save(contact);
+    const student = appDataSource.getRepository(StudentOrmEntity).create({
       id: userId,
       contact: contact,
       cpf: `${100000000 + i * 11111111}`.slice(0, 11),
@@ -506,40 +506,40 @@ export async function seed(): Promise<void> {
       motivation: `Quero desenvolver habilidades em ${a.area} para ingressar no mercado de trabalho.`,
       howHeard: a.howHeard,
     });
-    await AppDataSource.getRepository(StudentOrmEntity).save(student);
+    await appDataSource.getRepository(StudentOrmEntity).save(student);
 
-    const disability = AppDataSource.getRepository(DisabilityOrmEntity).create({
+    const disability = appDataSource.getRepository(DisabilityOrmEntity).create({
       studentId: userId,
       hasDisability: a.hasDisability,
       description: a.hasDisability ? a.disability : null,
       hasReport: a.hasDisability ? 'sim' : null,
       type: a.hasDisability ? a.disability : null,
     });
-    await AppDataSource.getRepository(DisabilityOrmEntity).save(disability);
+    await appDataSource.getRepository(DisabilityOrmEntity).save(disability);
 
     if (i % 3 === 0) {
-      const benefit = AppDataSource.getRepository(
-        SocialBenefitOrmEntity,
-      ).create({
-        student: student,
-        benefit: [
-          SocialBenefitType.bolsaFamilia,
-          SocialBenefitType.bpc,
-          SocialBenefitType.auxilioDoenca,
-        ][i % 3],
-      });
-      await AppDataSource.getRepository(SocialBenefitOrmEntity).save(benefit);
+      const benefit = appDataSource
+        .getRepository(SocialBenefitOrmEntity)
+        .create({
+          student: student,
+          benefit: [
+            SocialBenefitType.bolsaFamilia,
+            SocialBenefitType.bpc,
+            SocialBenefitType.auxilioDoenca,
+          ][i % 3],
+        });
+      await appDataSource.getRepository(SocialBenefitOrmEntity).save(benefit);
     }
     if (a.hasDisability) {
-      const resource = AppDataSource.getRepository(
-        AccessibilityResourceOrmEntity,
-      ).create({
-        student: student,
-        resource: AccessibilityResourceType.other,
-      });
-      await AppDataSource.getRepository(AccessibilityResourceOrmEntity).save(
-        resource,
-      );
+      const resource = appDataSource
+        .getRepository(AccessibilityResourceOrmEntity)
+        .create({
+          student: student,
+          resource: AccessibilityResourceType.other,
+        });
+      await appDataSource
+        .getRepository(AccessibilityResourceOrmEntity)
+        .save(resource);
     }
     alunos.push(student);
   }
@@ -548,20 +548,20 @@ export async function seed(): Promise<void> {
   // CURSOS PRESENCIAIS
   const cursosPresenciais = [cursos[0], cursos[1]];
   for (let pc = 0; pc < cursosPresenciais.length; pc++) {
-    const personCourse = AppDataSource.getRepository(
-      InPersonCourseDetailOrmEntity,
-    ).create({
-      id: uuidv4(),
-      course: cursosPresenciais[pc],
-      address: ['Porto Alegre', 'Canoas'][pc],
-      startDate: cursosPresenciais[pc].startDate,
-      shift: ['manha', 'tarde'][pc],
-      room: `Sala ${pc + 1}`,
-      vacancies: 30,
-    });
-    await AppDataSource.getRepository(InPersonCourseDetailOrmEntity).save(
-      personCourse,
-    );
+    const personCourse = appDataSource
+      .getRepository(InPersonCourseDetailOrmEntity)
+      .create({
+        id: uuidv4(),
+        course: cursosPresenciais[pc],
+        address: ['Porto Alegre', 'Canoas'][pc],
+        startDate: cursosPresenciais[pc].startDate,
+        shift: ['manha', 'tarde'][pc],
+        room: `Sala ${pc + 1}`,
+        vacancies: 30,
+      });
+    await appDataSource
+      .getRepository(InPersonCourseDetailOrmEntity)
+      .save(personCourse);
   }
   console.log('2 cursos presenciais criados.');
 
@@ -580,11 +580,11 @@ export async function seed(): Promise<void> {
   ];
   const skills: SkillOrmEntity[] = [];
   for (const name of skillNames) {
-    const skill = AppDataSource.getRepository(SkillOrmEntity).create({
+    const skill = appDataSource.getRepository(SkillOrmEntity).create({
       id: uuidv4(),
       name,
     });
-    await AppDataSource.getRepository(SkillOrmEntity).save(skill);
+    await appDataSource.getRepository(SkillOrmEntity).save(skill);
     skills.push(skill);
   }
   console.log('Skills criadas.');
@@ -593,7 +593,7 @@ export async function seed(): Promise<void> {
   const curriculoAlunos = [alunos[0], alunos[1]];
   for (let i = 0; i < curriculoAlunos.length; i++) {
     const aluno = curriculoAlunos[i];
-    const curriculo = AppDataSource.getRepository(CurriculumOrmEntity).create({
+    const curriculo = appDataSource.getRepository(CurriculumOrmEntity).create({
       id: uuidv4(),
       student: aluno,
       isAvailable: true,
@@ -602,13 +602,13 @@ export async function seed(): Promise<void> {
       github: `https://github.com/aluno0${i + 1}`,
       videoPresentation: `https://fatilab.com/videos/aluno0${i + 1}`,
     });
-    await AppDataSource.getRepository(CurriculumOrmEntity).save(curriculo);
+    await appDataSource.getRepository(CurriculumOrmEntity).save(curriculo);
     for (let j = 0; j < 3; j++) {
-      const sc = AppDataSource.getRepository(CurriculumSkillOrmEntity).create({
+      const sc = appDataSource.getRepository(CurriculumSkillOrmEntity).create({
         curriculumId: curriculo.id,
         skillId: skills[j + i * 3].id,
       });
-      await AppDataSource.getRepository(CurriculumSkillOrmEntity).save(sc);
+      await appDataSource.getRepository(CurriculumSkillOrmEntity).save(sc);
     }
   }
   console.log('2 currículos com skills criados.');
@@ -653,20 +653,20 @@ export async function seed(): Promise<void> {
   ];
   for (let i = 0; i < vagasData.length; i++) {
     const v = vagasData[i];
-    const job = AppDataSource.getRepository(JobOpeningOrmEntity).create({
+    const job = appDataSource.getRepository(JobOpeningOrmEntity).create({
       name: v.name,
       description: v.description,
       openingsCount: v.openingsCount,
       isPcd: v.isPcd,
       company: v.company,
     });
-    await AppDataSource.getRepository(JobOpeningOrmEntity).save(job);
+    await appDataSource.getRepository(JobOpeningOrmEntity).save(job);
     for (let j = 0; j < 2; j++) {
-      const sj = AppDataSource.getRepository(JobSkillOrmEntity).create({
+      const sj = appDataSource.getRepository(JobSkillOrmEntity).create({
         jobId: job.id,
         skillId: skills[(i + j) % skills.length].id,
       });
-      await AppDataSource.getRepository(JobSkillOrmEntity).save(sj);
+      await appDataSource.getRepository(JobSkillOrmEntity).save(sj);
     }
   }
   console.log('5 vagas com skills criadas.');
@@ -710,7 +710,7 @@ export async function seed(): Promise<void> {
   );
 
   console.log('\nSeed concluído com sucesso!');
-  await AppDataSource.destroy();
+  await appDataSource.destroy();
 }
 
 function isSeedEntrypoint(): boolean {

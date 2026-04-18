@@ -2,6 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as dotenv from 'dotenv';
 import { existsSync, readFileSync } from 'fs';
+import { createRequire } from 'module';
 import { DataSource } from 'typeorm';
 import { buildDatabaseOptions } from '../../src/config/database.config';
 
@@ -15,6 +16,8 @@ interface IntegrationEnvironment {
   primaryDbName?: string;
   targetDbName: string;
 }
+
+const requireModule = createRequire(__filename);
 
 function readRecordValue(
   source: Record<string, string | undefined>,
@@ -142,17 +145,13 @@ async function prepareIntegrationDatabase(
   await dataSource.destroy();
 }
 
-async function loadAppModule(): Promise<typeof import('../../src/app.module')> {
-  const modulePath = '../../src/app.module';
-
-  return import(modulePath) as Promise<typeof import('../../src/app.module')>;
-}
-
 export async function createIntegrationApp(
   options: CreateIntegrationAppOptions = {},
 ): Promise<INestApplication> {
   await prepareIntegrationDatabase(options);
-  const { AppModule } = await loadAppModule();
+  const { AppModule } = requireModule(
+    '../../src/app.module',
+  ) as typeof import('../../src/app.module');
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
