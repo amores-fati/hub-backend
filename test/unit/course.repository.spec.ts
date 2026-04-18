@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { Repository } from 'typeorm';
 
 import { CourseRepository } from '../../src/adapters/out/repository/course.repository';

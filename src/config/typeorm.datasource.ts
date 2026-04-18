@@ -8,4 +8,3 @@ dotenv.config({
 });
 
 export default new DataSource(buildDatabaseOptions());
-

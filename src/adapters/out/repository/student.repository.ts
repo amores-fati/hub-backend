@@ -336,7 +336,8 @@ export class StudentRepository implements IStudentRepository {
       : undefined;
 
     const socialBenefits = ormEntity.socialBenefits.map(
-      (benefit) => new SocialBenefit(benefit.id, benefit.studentId, benefit.benefit),
+      (benefit) =>
+        new SocialBenefit(benefit.id, benefit.studentId, benefit.benefit),
     );
 
     const accessibilityResources = ormEntity.accessibilityResources.map(
@@ -354,9 +355,9 @@ export class StudentRepository implements IStudentRepository {
       ormEntity.user.email,
       ormEntity.cpf,
       contact,
-      this.coerceOptionalDate(ormEntity.birthDate),
-      ormEntity.gender || undefined,
-      ormEntity.race || undefined,
+      this.coerceRequiredDate(ormEntity.birthDate),
+      ormEntity.gender,
+      ormEntity.race,
       ormEntity.education || undefined,
       ormEntity.institution || undefined,
       ormEntity.activityArea || undefined,
@@ -418,13 +419,7 @@ export class StudentRepository implements IStudentRepository {
     return orm;
   }
 
-  private coerceOptionalDate(
-    value: Date | string | null | undefined,
-  ): Date | undefined {
-    if (!value) {
-      return undefined;
-    }
-
+  private coerceRequiredDate(value: Date | string): Date {
     return value instanceof Date ? value : new Date(value);
   }
 }

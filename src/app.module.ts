@@ -53,7 +53,6 @@ import { StudentService } from './core/services/student.service';
 import { StudentRepository } from './adapters/out/repository/student.repository';
 import { StudentOrmEntity } from './adapters/out/orm/student.orm-entity';
 import { IStudentRepository } from './core/ports/student.repository.interface';
-import { AdminOrmEntity } from './adapters/out/orm/admin.orm-entity';
 
 @Module({
   imports: [
@@ -82,7 +81,6 @@ import { AdminOrmEntity } from './adapters/out/orm/admin.orm-entity';
       AdminOrmEntity,
       CourseOrmEntity,
       CompanyOrmEntity,
-      AdminOrmEntity,
       StudentOrmEntity,
       ContactOrmEntity,
       DisabilityOrmEntity,

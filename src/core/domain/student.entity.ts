@@ -63,7 +63,8 @@ export class Student extends User {
     super(id, email, password);
     this.#cpf = cpf;
     this.#contact = contact;
-    this.#birthDate = birthDate instanceof Date ? birthDate : new Date(birthDate);
+    this.#birthDate =
+      birthDate instanceof Date ? birthDate : new Date(birthDate);
     this.#gender = gender;
     this.#race = race;
     this.#education = education;
@@ -91,7 +92,6 @@ export class Student extends User {
     return this.#contact;
   }
 
-
   get birthDate(): Date {
     return this.#birthDate;
   }
@@ -108,7 +108,6 @@ export class Student extends User {
     return this.#education;
   }
 
-
   get institution(): string | undefined {
     return this.#institution;
   }
@@ -124,7 +123,6 @@ export class Student extends User {
   get hasTechnologyCourse(): boolean | undefined {
     return this.#hasTechnologyCourse;
   }
-
 
   get sendCurriculum(): boolean {
     return this.#sendCurriculum;
@@ -167,7 +165,6 @@ export class Student extends User {
     this.validateContact();
   }
 
-
   public changeProfileData(data: {
     birthDate?: Date;
     gender?: Gender;
@@ -178,8 +175,6 @@ export class Student extends User {
     if (data.race !== undefined) this.#race = data.race;
     this.validateProfileData();
   }
-
-
 
   public changeParticipationData(data: {
     sendCurriculum?: boolean;

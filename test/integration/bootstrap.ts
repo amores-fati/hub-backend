@@ -142,11 +142,17 @@ async function prepareIntegrationDatabase(
   await dataSource.destroy();
 }
 
+async function loadAppModule(): Promise<typeof import('../../src/app.module')> {
+  const modulePath = '../../src/app.module';
+
+  return import(modulePath) as Promise<typeof import('../../src/app.module')>;
+}
+
 export async function createIntegrationApp(
   options: CreateIntegrationAppOptions = {},
 ): Promise<INestApplication> {
   await prepareIntegrationDatabase(options);
-  const { AppModule } = require('../../src/app.module') as typeof import('../../src/app.module');
+  const { AppModule } = await loadAppModule();
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],

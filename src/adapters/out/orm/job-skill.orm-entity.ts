@@ -1,10 +1,4 @@
-import {
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  PrimaryColumn,
-} from 'typeorm';
+import { Entity, Index, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { JobOpeningOrmEntity } from './job-opening.orm-entity';
 import { SkillOrmEntity } from './skill.orm-entity';
 

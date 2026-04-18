@@ -14,10 +14,7 @@ const SOCIAL_BENEFIT_SQL = Object.values(SocialBenefitType)
   .map((value) => `'${value.replace(/'/g, "''")}'`)
   .join(', ');
 
-@Check(
-  'ck_social_benefits__benefit',
-  `"benefit" IN (${SOCIAL_BENEFIT_SQL})`,
-)
+@Check('ck_social_benefits__benefit', `"benefit" IN (${SOCIAL_BENEFIT_SQL})`)
 @Entity('social_benefits')
 export class SocialBenefitOrmEntity {
   @PrimaryGeneratedColumn()

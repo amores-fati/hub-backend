@@ -124,7 +124,7 @@ async function ensureSeedMode(): Promise<boolean> {
   return true;
 }
 
-async function seed() {
+export async function seed(): Promise<void> {
   await AppDataSource.initialize();
   console.log(' Conectado ao banco de dados.');
 
@@ -713,7 +713,15 @@ async function seed() {
   await AppDataSource.destroy();
 }
 
-seed().catch((err) => {
-  console.error('Erro no seed:', err);
-  process.exit(1);
-});
+function isSeedEntrypoint(): boolean {
+  const entryFile = process.argv[1] ?? '';
+
+  return /(?:^|[\\/])seed\.(ts|js)$/.test(entryFile);
+}
+
+if (isSeedEntrypoint()) {
+  void seed().catch((err) => {
+    console.error('Erro no seed:', err);
+    process.exit(1);
+  });
+}

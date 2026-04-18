@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class HardenProfilesAndRemoveStudentGenderOther1776643200000
-  implements MigrationInterface
-{
+export class HardenProfilesAndRemoveStudentGenderOther1776643200000 implements MigrationInterface {
   name = 'HardenProfilesAndRemoveStudentGenderOther1776643200000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

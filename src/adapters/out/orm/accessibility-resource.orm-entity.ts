@@ -37,7 +37,8 @@ export class AccessibilityResourceOrmEntity {
   )
   @JoinColumn({
     name: 'student_id',
-    foreignKeyConstraintName: 'fk_accessibility_resources__student_id__students',
+    foreignKeyConstraintName:
+      'fk_accessibility_resources__student_id__students',
   })
   student: StudentOrmEntity;
 }

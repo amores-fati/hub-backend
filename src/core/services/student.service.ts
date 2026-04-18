@@ -68,10 +68,11 @@ export class StudentService {
           new AccessibilityResource(-(index + 1), studentId, resource.resource),
       ) || [];
 
-    let birthDate: Date | undefined = undefined;
-    if (command.birthDate) {
-      birthDate = command.birthDate instanceof Date ? command.birthDate : new Date(command.birthDate);
-    }
+    const birthDate =
+      command.birthDate instanceof Date
+        ? command.birthDate
+        : new Date(command.birthDate);
+
     const student = new Student(
       studentId,
       hashedPassword,

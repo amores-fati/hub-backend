@@ -11,9 +11,9 @@ import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 export class AdminRepository implements IAdminRepository {
   constructor(
     @InjectRepository(UserOrmEntity)
-  private readonly userRepository: Repository<UserOrmEntity>,
-  @InjectRepository(AdminOrmEntity)
-  private readonly adminRepository: Repository<AdminOrmEntity>,
+    private readonly userRepository: Repository<UserOrmEntity>,
+    @InjectRepository(AdminOrmEntity)
+    private readonly adminRepository: Repository<AdminOrmEntity>,
   ) {}
 
   async existsById(id: string): Promise<boolean> {

@@ -35,16 +35,19 @@ export class CourseController {
   })
   @ApiBody({
     type: CreateCourseDto,
-    description: 'Payload contendo os campos obrigatorios persistidos em courses.',
+    description:
+      'Payload contendo os campos obrigatorios persistidos em courses.',
   })
   @ApiCreatedResponse({
-    description: 'O curso foi criado e persistido no banco de dados com sucesso.',
+    description:
+      'O curso foi criado e persistido no banco de dados com sucesso.',
     schema: {
       example: {
         id: '123e4567-e89b-12d3-a456-426614174000',
         name: 'Desenvolvimento Web Full Stack',
         banner: 'https://fatilab.com/banners/web.jpg',
-        description: 'Curso completo de desenvolvimento web com React e Node.js.',
+        description:
+          'Curso completo de desenvolvimento web com React e Node.js.',
         courseLoad: '120h',
         startDate: '2025-02-01T00:00:00.000Z',
         endDate: '2025-06-30T00:00:00.000Z',

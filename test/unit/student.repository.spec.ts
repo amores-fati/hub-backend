@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { Repository } from 'typeorm';
 
 import { AccessibilityResource } from '../../src/core/domain/accessibility-resource.entity';
@@ -17,6 +16,15 @@ import { UserOrmEntity } from '../../src/adapters/out/orm/user.orm-entity';
 import { UserRoleEnum } from '../../src/core/domain/enums/user-role.enum';
 
 describe('StudentRepository', () => {
+  type TransactionManagerMock = {
+    delete: jest.Mock;
+    save: jest.Mock;
+    update: jest.Mock;
+  };
+  type TransactionCallback = (
+    manager: TransactionManagerMock,
+  ) => Promise<unknown>;
+
   let transactionalEntityManager: {
     delete: jest.Mock;
     save: jest.Mock;
@@ -34,7 +42,7 @@ describe('StudentRepository', () => {
 
     ormRepository = {
       manager: {
-        transaction: jest.fn(async (callback) =>
+        transaction: jest.fn((callback: TransactionCallback) =>
           callback(transactionalEntityManager),
         ),
       },
@@ -47,9 +55,15 @@ describe('StudentRepository', () => {
 
   it('should replace child collections when update receives new items', async () => {
     const student = buildStudent({
-      socialBenefits: [new SocialBenefit(-1, 'student-id', SocialBenefitType.other)],
+      socialBenefits: [
+        new SocialBenefit(-1, 'student-id', SocialBenefitType.other),
+      ],
       accessibilityResources: [
-        new AccessibilityResource(-1, 'student-id', AccessibilityResourceType.other),
+        new AccessibilityResource(
+          -1,
+          'student-id',
+          AccessibilityResourceType.other,
+        ),
       ],
     });
 
@@ -138,7 +152,7 @@ function buildStudent({
     undefined, // activityArea
     undefined, // hasProgrammingExperience
     undefined, // hasTechnologyCourse
-    false,     // sendCurriculum
+    false, // sendCurriculum
     undefined, // motivation
     undefined, // howHeard
     undefined, // hasComputer
