@@ -45,6 +45,10 @@ export class CompanyRepository implements ICompanyRepository {
     return ormEntity ? this.mapToDomain(ormEntity) : null;
   }
 
+  async existsById(id: string): Promise<boolean> {
+    return this.ormRepository.exists({ where: { id } });
+  }
+
   async findByCnpj(cnpj: string): Promise<Company | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { cnpj },

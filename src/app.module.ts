@@ -53,6 +53,7 @@ import { StudentService } from './core/services/student.service';
 import { StudentRepository } from './adapters/out/repository/student.repository';
 import { StudentOrmEntity } from './adapters/out/orm/student.orm-entity';
 import { IStudentRepository } from './core/ports/student.repository.interface';
+import { AdminOrmEntity } from './adapters/out/orm/admin.orm-entity';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
       AdminOrmEntity,
       CourseOrmEntity,
       CompanyOrmEntity,
+      AdminOrmEntity,
       StudentOrmEntity,
       ContactOrmEntity,
       DisabilityOrmEntity,
@@ -118,10 +120,27 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
         userRepository: IUserRepository,
         hashService: IHashService,
         tokenService: ITokenService,
+        studentRepository: IStudentRepository,
+        companyRepository: ICompanyRepository,
+        adminRepository: IAdminRepository,
       ) => {
-        return new AuthService(userRepository, hashService, tokenService);
+        return new AuthService(
+          userRepository,
+          hashService,
+          tokenService,
+          studentRepository,
+          companyRepository,
+          adminRepository,
+        );
       },
-      inject: [IUserRepository, IHashService, ITokenService],
+      inject: [
+        IUserRepository,
+        IHashService,
+        ITokenService,
+        IStudentRepository,
+        ICompanyRepository,
+        IAdminRepository,
+      ],
     },
     {
       provide: IHashService,

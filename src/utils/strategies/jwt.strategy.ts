@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IUserRepository } from '../../core/ports/user.repository.interface';
+import { UserRoleEnum } from '../../core/domain/enums/user-role.enum';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -21,13 +22,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; email: string }) {
+  async validate(payload: { sub: string; email: string; role: UserRoleEnum }) {
     const user = await this.userRepository.findById(payload.sub);
 
     if (!user) {
       throw new UnauthorizedException('Usuário não encontrado.');
     }
 
-    return { id: payload.sub, email: payload.email };
+    return {
+      id: payload.sub,
+      email: payload.email,
+      role: payload.role,
+    };
   }
 }

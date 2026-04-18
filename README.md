@@ -30,13 +30,14 @@ Para rodar este projeto, você precisará ter instalado em sua máquina:
    ```bash
    docker-compose up -d --build
    ```
+
 4. No fluxo atual do Docker Compose, a API sobe com este bootstrap:
    ```bash
    npm run migration:run
    npm run seed:dev
    npm run start:dev
    ```
-   O `seed:dev` e idempotente: ele popula apenas banco vazio.
+   O `seed:dev` é idempotente: ele popula apenas banco vazio.
 5. Se quiser popular a base manualmente fora do Docker, execute explicitamente:
    ```bash
    npm run seed:dev
@@ -46,7 +47,7 @@ Para rodar este projeto, você precisará ter instalado em sua máquina:
    npm run seed:dev:reset
    ```
 
-A API estará rodando na porta definida no `.env` (por padrão `http://localhost:3001`).
+A API estará rodando na porta definida no `.env` (por padrão `http://localhost:3000`).
 
 **Acesse a documentação Swagger em:** `http://localhost:3001/api`
 

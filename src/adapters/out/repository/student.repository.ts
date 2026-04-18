@@ -94,6 +94,10 @@ export class StudentRepository implements IStudentRepository {
     return ormEntity ? this.mapToDomain(ormEntity) : null;
   }
 
+  async existsById(id: string): Promise<boolean> {
+    return this.ormRepository.exists({ where: { id } });
+  }
+
   async findByCpf(cpf: string): Promise<Student | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { cpf },

@@ -29,6 +29,7 @@ describe('StudentService', () => {
     findByCpf: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    existsById: jest.fn(),
   };
 
   const mockUserRepository: IUserRepository = {

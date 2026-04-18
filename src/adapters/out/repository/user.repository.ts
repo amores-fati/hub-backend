@@ -19,12 +19,16 @@ export class UserRepository implements IUserRepository {
   ) {}
 
   async findById(id: string): Promise<User | null> {
-    const ormEntity = await this.ormRepository.findOne({ where: { id } });
+    const ormEntity = await this.ormRepository.findOne({
+      where: { id },
+    });
     return ormEntity ? this.mapToDomain(ormEntity) : null;
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const ormEntity = await this.ormRepository.findOne({ where: { email } });
+    const ormEntity = await this.ormRepository.findOne({
+      where: { email },
+    });
     return ormEntity ? this.mapToDomain(ormEntity) : null;
   }
 
