@@ -1,89 +1,59 @@
-# Ambiente isolado para a branch de migrations
+# Ambiente Feature DB
 
 ## Objetivo
 
-Este arquivo descreve como subir um ambiente Docker isolado para a branch
-`feature/type-orm-migrations-bd`, sem reutilizar o banco principal atual.
+Descrever o ambiente isolado definido em `docker-compose.feature.yml` para validar mudancas de banco sem tocar na stack principal.
 
-Isto e recomendado porque hoje o bootstrap Docker da API roda:
+## Quando usar
 
-1. `migration:run`
-2. `seed`
-3. `start:dev`
+Use esse ambiente quando voce precisar:
 
-E o seed atual executa `TRUNCATE ... RESTART IDENTITY CASCADE`.
+- testar migrations novas sem reaproveitar o volume principal
+- validar refatoracoes de schema em um banco limpo
+- debugar uma branch com alteracoes estruturais mais invasivas
 
-Usar o mesmo banco/container principal neste momento aumenta o risco de:
+## Servicos
 
-- sobrescrever dados do ambiente atual
-- misturar schema antigo com schema em migracao
-- mascarar problemas de integridade
-
-## Decisao recomendada
-
-Para esta fase, use outro container e outro volume.
-
-Isso nao muda a estrategia futura do projeto.
-Pelo contrario: permite validar as migrations e a modelagem em um ambiente
-limpo antes de aplicar as mudancas na stack principal.
-
-## Arquivo criado
-
-- `docker-compose.feature.yml`
-
-Ele sobe:
+O compose de feature sobe:
 
 - `postgres-feature`
 - `api-feature`
 
-Configuracao desse ambiente:
+## Portas e banco
 
-- API: `http://localhost:3004`
-- Swagger: `http://localhost:3004/api`
-- Postgres feature: `localhost:5434`
-- Banco usado pela API feature: `api_db_feature`
-- Host interno da API para o banco: `postgres-feature`
+- API feature: `http://localhost:3004`
+- Swagger feature: `http://localhost:3004/api`
+- Postgres feature: `localhost:5435`
+- banco: `api_db_feature`
+- host interno da API: `postgres-feature`
 
-## Como subir
+## Subida
 
-Na raiz do projeto:
-
-```bash
+```powershell
 docker compose -f docker-compose.feature.yml -p hub-backend-feature up -d --build
 ```
 
-## Como verificar
+## Verificacao
 
-```bash
+```powershell
 docker compose -f docker-compose.feature.yml -p hub-backend-feature ps
 docker compose -f docker-compose.feature.yml -p hub-backend-feature logs -f api-feature
 ```
 
-## Como parar
+## Encerramento
 
-```bash
+```powershell
 docker compose -f docker-compose.feature.yml -p hub-backend-feature down
 ```
 
-## Como apagar tambem o volume desse ambiente
+## Reset completo
 
-Use apenas se quiser resetar totalmente o banco isolado:
-
-```bash
+```powershell
 docker compose -f docker-compose.feature.yml -p hub-backend-feature down -v
 ```
 
-## Quando usar a stack principal
+## Observacoes
 
-So faz sentido voltar a aplicar essas mudancas no container principal quando:
-
-- as migrations estiverem consistentes
-- o drift principal de modelagem estiver resolvido
-- o bootstrap estiver menos dependente de seed destrutivo
-- o `synchronize` puder ser desligado com seguranca
-
-## Observacao importante
-
-Esse ambiente isolado reutiliza o codigo da branch atual via volume.
-Entao ele serve para validar exatamente o estado corrente da branch sem tocar no
-banco principal.
+- o ambiente feature existe para manter o banco principal fora do experimento
+- a API feature segue o mesmo fluxo estrutural do projeto: migration, seed e subida do Nest
+- para o estado oficial do schema, continue usando `docs/esquema-banco-atual.md`

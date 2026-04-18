@@ -20,7 +20,10 @@ export class CompanyOrmEntity {
     eager: true,
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'id' })
+  @JoinColumn({
+    name: 'id',
+    foreignKeyConstraintName: 'fk_companies__id__users',
+  })
   user: UserOrmEntity;
 
   @OneToOne(() => ContactOrmEntity, {
@@ -28,6 +31,9 @@ export class CompanyOrmEntity {
     onDelete: 'NO ACTION',
     nullable: false,
   })
-  @JoinColumn({ name: 'contact_id' })
+  @JoinColumn({
+    name: 'contact_id',
+    foreignKeyConstraintName: 'fk_companies__contact_id__contacts',
+  })
   contact: ContactOrmEntity;
 }

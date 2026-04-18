@@ -53,11 +53,6 @@ export class CreateStudentDto {
   @MaxLength(14)
   cpf: string;
 
-  @ApiPropertyOptional({ example: 'Joao social' })
-  @IsString()
-  @IsOptional()
-  socialName?: string;
-
   @ApiProperty({ example: '1995-05-20' })
   @IsDateString()
   @IsNotEmpty()
@@ -81,11 +76,6 @@ export class CreateStudentDto {
   @IsOptional()
   education?: EducationLevel;
 
-  @ApiPropertyOptional({ example: 'Tecnico em Informatica' })
-  @IsString()
-  @IsOptional()
-  courseName?: string;
-
   @ApiPropertyOptional({ example: 'ETEC' })
   @IsString()
   @IsOptional()
@@ -105,11 +95,6 @@ export class CreateStudentDto {
   @IsBoolean()
   @IsOptional()
   hasTechnologyCourse?: boolean;
-
-  @ApiPropertyOptional({ example: 'Excel, Informatica Basica' })
-  @IsString()
-  @IsOptional()
-  technologyCoursesList?: string;
 
   @ApiPropertyOptional({ example: false })
   @IsBoolean()

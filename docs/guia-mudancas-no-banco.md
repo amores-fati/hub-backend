@@ -2,66 +2,64 @@
 
 ## Objetivo
 
-Este documento explica, com base no fluxo atual do projeto, como fazer uma nova mudanca de banco sem inventar etapa e sem depender de ajuste manual direto no PostgreSQL.
+Este guia descreve o fluxo atual para alterar schema sem drift entre:
+
+- entidades ORM
+- migrations
+- banco real
+- services, DTOs e repositories
+- testes
+- documentacao
 
 ## Fontes auditadas
 
+- `package.json`
 - `src/config/database.config.ts`
 - `src/config/typeorm.datasource.ts`
-- `package.json`
 - `docker-compose.yml`
 - `test/integration/bootstrap.ts`
-- `src/adapters/out/migrations/1776384000000-InitialSchema.ts`
 - `src/adapters/out/orm/*.ts`
+- `src/adapters/out/migrations/*.ts`
 - `src/adapters/out/repository/*.ts`
-- `src/adapters/out/seeds/seed.ts`
 
-## Regras estruturais do projeto hoje
+## Regras do projeto hoje
 
 ### 1. O schema e versionado por migration
 
-Em `src/config/database.config.ts`, `synchronize` esta configurado como `false`.
+`synchronize` esta em `false`.
 
-Na pratica isso significa:
+Consequencia pratica:
 
-- alterar uma entidade ORM nao muda o banco sozinha
+- mudar entidade ORM nao muda banco sozinho
 - toda mudanca estrutural precisa virar migration
 
-### 2. Runtime e CLI usam a mesma base de configuracao
+### 2. Runtime e CLI usam a mesma base
 
-O `DataSource` da CLI fica em:
+O runtime e a CLI do TypeORM usam `buildDatabaseOptions()` em `src/config/database.config.ts`.
 
-- `src/config/typeorm.datasource.ts`
+### 3. A stack Docker ja roda migration e seed
 
-E ele usa o mesmo builder de configuracao do runtime:
-
-- `src/config/database.config.ts`
-
-### 3. O Docker da API ja roda migrations e seed no startup
-
-O script `start:docker:dev` do `package.json` faz:
+`start:docker:dev` executa:
 
 1. `migration:run`
 2. `seed:dev`
-3. `start:dev`
+3. `bootstrap:test:dev`
+4. `start:dev`
 
-Ou seja, se voce subir a API pelo Compose, o container tenta aplicar as migrations pendentes, popular o banco vazio com o dataset de desenvolvimento e so depois iniciar o Nest.
+### 4. O bootstrap E2E tambem depende de migration
 
-### 4. O teste E2E tambem depende de migration
+`test/integration/bootstrap.ts`:
 
-O bootstrap de `test/integration/bootstrap.ts`:
-
-1. prepara o ambiente de teste
-2. executa `runMigrations()`
+1. resolve o alvo E2E
+2. aplica migrations
 3. limpa as tabelas
+4. monta o `AppModule`
 
-Entao mudar banco sem atualizar migration vai quebrar o fluxo real do projeto.
+Se o banco e o metadata estiverem desalinhados, o E2E e o primeiro lugar onde isso aparece.
 
-## Quando uma mudanca de banco exige mexer em mais de um lugar
+## Quando uma mudanca de banco exige mais de um ajuste
 
-Nem toda mudanca termina na entidade ORM.
-
-Se a coluna nova passar pelo fluxo HTTP e negocio, normalmente voce tambem precisa revisar:
+Revise tambem:
 
 - DTOs em `src/adapters/in/dtos`
 - comandos em `src/core/command`
@@ -69,281 +67,199 @@ Se a coluna nova passar pelo fluxo HTTP e negocio, normalmente voce tambem preci
 - repositories em `src/adapters/out/repository`
 - seed em `src/adapters/out/seeds/seed.ts`
 - testes unitarios e E2E
-- documentacao do schema
+- docs de schema e operacao
 
 ## Passo a passo recomendado
 
-## Passo 1. Entenda exatamente o que muda
+### 1. Defina a mudanca com precisao
 
-Antes de alterar codigo, responda estas perguntas:
+Antes de editar:
 
-1. a mudanca e nova tabela, nova coluna, rename, ajuste de tipo, indice ou constraint?
-2. ela afeta o banco principal, o banco de teste ou os dois?
-3. a regra precisa ser garantida no banco, na aplicacao ou nos dois?
-4. existe dado antigo que precisa de backfill?
+1. e nova coluna, nova tabela, rename, ajuste de tipo, indice ou constraint?
+2. exige backfill?
+3. muda nullability?
+4. a regra deve ser garantida no banco, na aplicacao ou nos dois?
 
-Exemplos:
+### 2. Ajuste a entidade ORM
 
-- nova coluna opcional: costuma ser simples
-- rename de coluna: quase sempre exige migration manual
-- mudar `NULL` para `NOT NULL`: exige avaliar dados existentes
-- novo `UNIQUE`: exige verificar se ja existem duplicados
+Arquivos em `src/adapters/out/orm`.
 
-## Passo 2. Ajuste a entidade ORM
-
-As entidades ficam em:
-
-- `src/adapters/out/orm`
-
-Exemplo hipotetico: adicionar `application_deadline` em `job_openings`.
+Exemplo: adicionar `application_deadline` em `job_openings`:
 
 ```ts
 @Column({ name: 'application_deadline', type: 'date', nullable: true })
 applicationDeadline: Date | null;
 ```
 
-Se a mudanca afetar relacoes, ajuste tambem:
+Se a mudanca tocar relacoes, revise tambem:
 
 - `@JoinColumn`
 - `@ManyToOne`
 - `@OneToOne`
+- `nullable`
 - `onDelete`
-- `unique`
+- `foreignKeyConstraintName`
+- `@Index`
+- `@Check`
 
-## Passo 3. Gere ou crie a migration
+### 3. Gere ou crie a migration
 
-### Comandos equivalentes por shell
-
-| Acao | PowerShell | Git Bash |
-| --- | --- | --- |
-| gerar migration | `node_modules\.bin\typeorm-ts-node-commonjs.cmd -d src/config/typeorm.datasource.ts migration:generate src/adapters/out/migrations/NomeDaMigration` | `./node_modules/.bin/typeorm-ts-node-commonjs -d src/config/typeorm.datasource.ts migration:generate src/adapters/out/migrations/NomeDaMigration` |
-| criar migration vazia | `node_modules\.bin\typeorm-ts-node-commonjs.cmd -d src/config/typeorm.datasource.ts migration:create src/adapters/out/migrations/NomeDaMigration` | `./node_modules/.bin/typeorm-ts-node-commonjs -d src/config/typeorm.datasource.ts migration:create src/adapters/out/migrations/NomeDaMigration` |
-| aplicar migrations | `node_modules\.bin\typeorm-ts-node-commonjs.cmd -d src/config/typeorm.datasource.ts migration:run` | `./node_modules/.bin/typeorm-ts-node-commonjs -d src/config/typeorm.datasource.ts migration:run` |
-| reverter ultima migration | `node_modules\.bin\typeorm-ts-node-commonjs.cmd -d src/config/typeorm.datasource.ts migration:revert` | `./node_modules/.bin/typeorm-ts-node-commonjs -d src/config/typeorm.datasource.ts migration:revert` |
-
-### Opcao A: gerar a migration a partir da diferenca ORM x banco
-
-Comando validado localmente:
+#### PowerShell
 
 ```powershell
 node_modules\.bin\typeorm-ts-node-commonjs.cmd -d src/config/typeorm.datasource.ts migration:generate src/adapters/out/migrations/AddApplicationDeadline
-```
-
-Comportamento real da CLI:
-
-- o comando e `migration:generate <path>`
-- o primeiro argumento depois de `migration:generate` e o caminho base da migration
-- o arquivo final recebe timestamp automaticamente
-
-Exemplo de resultado:
-
-- `src/adapters/out/migrations/1777000000000-AddApplicationDeadline.ts`
-
-### Opcao B: criar uma migration vazia
-
-Use isso quando a mudanca for sensivel e voce quiser escrever o SQL manualmente.
-
-Comando validado localmente:
-
-```powershell
 node_modules\.bin\typeorm-ts-node-commonjs.cmd -d src/config/typeorm.datasource.ts migration:create src/adapters/out/migrations/AddApplicationDeadline
 ```
 
-Quando preferir `migration:create` em vez de `migration:generate`:
+#### Git Bash
 
-- rename de tabela
-- rename de coluna
-- backfill de dados
-- mudanca destrutiva
+```bash
+./node_modules/.bin/typeorm-ts-node-commonjs -d src/config/typeorm.datasource.ts migration:generate src/adapters/out/migrations/AddApplicationDeadline
+./node_modules/.bin/typeorm-ts-node-commonjs -d src/config/typeorm.datasource.ts migration:create src/adapters/out/migrations/AddApplicationDeadline
+```
+
+Use `migration:create` quando houver:
+
+- rename de coluna ou tabela
+- backfill
 - SQL especifico de Postgres
-- ajuste fino de indice ou constraint
+- mudanca destrutiva
 
-## Passo 4. Revise a migration linha por linha
+### 4. Revise a migration linha por linha
 
-Nao trate migration gerada como verdade final.
+Confira pelo menos:
 
-Revise pelo menos:
-
-- nome das tabelas e colunas
-- tipo SQL correto
-- `NULL` versus `NOT NULL`
+- tipos SQL
+- `NULL` vs `NOT NULL`
 - `DEFAULT`
 - `UNIQUE`
 - `FOREIGN KEY`
 - `ON DELETE`
+- nomes de constraints
 - indices
-- `down()` realmente reversivel
+- `down()` reversivel
 
-Perguntas obrigatorias na revisao:
+### 5. Aplique no banco local
 
-1. a migration preserva a cardinalidade correta?
-2. a constraint esta nomeada de forma coerente com o padrao do projeto?
-3. o `down()` desfaz so o que o `up()` fez?
-4. existe risco de apagar dados sem querer?
-
-## Passo 5. Aplique a migration no banco principal local
-
-Se voce estiver usando so o Postgres em container:
+Se estiver usando apenas o banco principal:
 
 ```powershell
 docker compose up -d postgres
-```
-
-Depois rode:
-
-```powershell
 npm.cmd run migration:run
 ```
 
-Se o wrapper do TypeORM falhar no Windows, use a forma direta:
+### 6. Verifique drift ORM x banco
+
+Depois de aplicar a migration, valide:
 
 ```powershell
-node_modules\.bin\typeorm-ts-node-commonjs.cmd -d src/config/typeorm.datasource.ts migration:run
+npm.cmd run migration:show
+npm.cmd run typeorm -- schema:log
 ```
 
-## Passo 6. Valide a aplicacao
+O esperado para `schema:log` e:
 
-Depois da migration, valide os pontos que mudaram:
+```text
+Your schema is up to date - there are no queries to be executed by schema synchronization.
+```
 
-1. suba a API
-2. exercite os endpoints afetados
-3. confira seed, se a tabela ou coluna fizer parte dos dados de desenvolvimento
-4. rode testes
+Se aparecer SQL pendente, o metadata do TypeORM ainda nao bate com o banco real.
 
-Comandos comuns:
+### 7. Revise repositories, services e DTOs
+
+No projeto atual, os pontos mais sensiveis sao:
+
+- `StudentRepository`
+- `CompanyRepository`
+- DTOs em `src/adapters/in/dtos`
+- comandos em `src/core/command`
+- entidades de dominio em `src/core/domain`
+
+Exemplo real:
+
+- remover uma coluna do banco sem limpar DTOs e repositories deixa o schema certo, mas quebra persistencia e E2E
+
+### 8. Revise o seed
+
+Atualize `src/adapters/out/seeds/seed.ts` quando:
+
+- a nova coluna for `NOT NULL`
+- a nova tabela precisar de dados de exemplo
+- uma FK nova mudar a ordem de insercao
+
+### 9. Rode testes
+
+Fluxo minimo:
 
 ```powershell
-npm.cmd run start:dev
-npm.cmd run test
+npm.cmd run test -- --runInBand
 npm.cmd run test:e2e
 ```
 
-Se quiser isolar o teste E2E no Docker:
+Se quiser o runner Docker isolado:
 
 ```powershell
 npm.cmd run test:e2e:docker
 ```
 
-## Passo 7. Atualize as camadas que mapeiam a persistencia
+### 10. Atualize a documentacao
 
-No projeto atual isso costuma aparecer nestes pontos:
-
-- repositories: `src/adapters/out/repository`
-- DTOs: `src/adapters/in/dtos`
-- dominio: `src/core/domain`
-- comandos: `src/core/command`
-
-Exemplos reais do repositorio:
-
-- `StudentRepository` monta `UserOrmEntity`, `ContactOrmEntity`, `DisabilityOrmEntity`, `SocialBenefitOrmEntity` e `AccessibilityResourceOrmEntity`
-- `CompanyRepository` monta `UserOrmEntity`, `ContactOrmEntity` e `CompanyOrmEntity`
-- `CourseRepository` precisa refletir exatamente as colunas de `courses`
-
-Ou seja: se voce adicionar uma coluna numa entidade e esquecer o repository, a migration pode rodar, mas o dado nao vai trafegar pela aplicacao.
-
-## Passo 8. Atualize seed e documentacao quando fizer sentido
-
-Revise `src/adapters/out/seeds/seed.ts` quando:
-
-- a nova coluna for `NOT NULL`
-- a nova tabela precisar de dados de exemplo
-- uma FK nova exigir ordem diferente de insercao
-- a stack Docker principal passar a quebrar na subida por causa do novo schema
-
-Atualize tambem:
+Arquivos minimos:
 
 - `docs/esquema-banco-atual.md`
+- `docs/modelo-alvo-banco.md`
 - qualquer guia operacional impactado
 
-## Passo 9. Saiba como desfazer
+## Exemplo completo
 
-Se a ultima migration ainda nao deveria ter sido aplicada:
+Exemplo: adicionar `application_deadline` em `job_openings`.
 
-```powershell
-npm.cmd run migration:revert
-```
+### 1. Ajustar entidade
 
-Alternativa direta validada localmente:
+- arquivo: `src/adapters/out/orm/job-opening.orm-entity.ts`
 
-```powershell
-node_modules\.bin\typeorm-ts-node-commonjs.cmd -d src/config/typeorm.datasource.ts migration:revert
-```
-
-Use rollback com cuidado.
-
-Se a migration fez backfill ou alteracao destrutiva, o `down()` precisa ter sido planejado de antemao.
-
-## Exemplo completo de fluxo
-
-Exemplo: adicionar uma coluna opcional `application_deadline` em `job_openings`.
-
-### 1. Ajustar a entidade
-
-- arquivo: `src/adapters/out/orm/jobs.orm-entity.ts`
-- adicionar a coluna com `nullable: true`
-
-### 2. Gerar a migration
+### 2. Gerar migration
 
 ```powershell
 node_modules\.bin\typeorm-ts-node-commonjs.cmd -d src/config/typeorm.datasource.ts migration:generate src/adapters/out/migrations/AddApplicationDeadline
 ```
 
-### 3. Revisar o SQL gerado
+### 3. Revisar SQL esperado
 
-Esperado no `up()`:
-
-- `ALTER TABLE "job_openings" ADD "application_deadline" date`
-
-Esperado no `down()`:
-
+- `ALTER TABLE "job_openings" ADD COLUMN "application_deadline" date`
 - `ALTER TABLE "job_openings" DROP COLUMN "application_deadline"`
 
-### 4. Aplicar
+### 4. Aplicar e validar
 
 ```powershell
 docker compose up -d postgres
-node_modules\.bin\typeorm-ts-node-commonjs.cmd -d src/config/typeorm.datasource.ts migration:run
+npm.cmd run migration:run
+npm.cmd run typeorm -- schema:log
 ```
 
-### 5. Validar
+### 5. Rodar testes
 
-- criar ou listar vaga, se o fluxo HTTP existir
-- revisar seed se essa coluna passar a ser obrigatoria
-- rodar `test:e2e` se a mudanca tocar regras compartilhadas
+```powershell
+npm.cmd run test -- --runInBand
+npm.cmd run test:e2e
+```
 
 ## O que nao fazer
 
-- nao editar o banco manualmente e depois fingir a migration com `--fake` sem necessidade real
-- nao apontar `.env.test` para o mesmo banco de `.env`
-- nao confiar que a entidade ORM sozinha vai atualizar o schema
+- nao editar o banco manualmente e fingir migration sem motivo real
+- nao confiar que a entidade ORM sozinha atualiza o schema
 - nao usar seed para criar schema
-- nao misturar mudanca de schema com varios refactors sem relacao na mesma migration
+- nao apontar `.env.test` ou `.env.e2e` para o mesmo banco de `.env`
+- nao fechar PR com `schema:log` pendente
 
-## Checklist final antes de fechar a mudanca
+## Checklist final
 
 1. entidade ORM ajustada
 2. migration criada
-3. migration revisada manualmente
-4. migration aplicada no banco principal local
-5. repository e mapeamentos ajustados
-6. DTO, comando e dominio revisados, se a mudanca sobe para a API
+3. migration revisada
+4. migration aplicada
+5. `schema:log` sem queries pendentes
+6. repositories, DTOs, comandos e dominio revisados
 7. seed revisado, se necessario
 8. testes executados
-9. documentacao do schema atualizada
-
-## Observacao importante sobre Windows
-
-Neste ambiente foi possivel validar diretamente os comandos:
-
-- `migration:create`
-- `migration:generate`
-- `migration:run`
-- `migration:revert`
-
-pela forma:
-
-```powershell
-node_modules\.bin\typeorm-ts-node-commonjs.cmd -d src/config/typeorm.datasource.ts <comando>
-```
-
-Se o seu PowerShell bloquear `npm.ps1` ou se o wrapper do script falhar, essa forma direta e a mais previsivel no Windows.
+9. docs atualizadas

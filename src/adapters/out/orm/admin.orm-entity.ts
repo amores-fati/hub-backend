@@ -7,6 +7,9 @@ export class AdminOrmEntity {
   id: string;
 
   @OneToOne(() => UserOrmEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'id' })
+  @JoinColumn({
+    name: 'id',
+    foreignKeyConstraintName: 'fk_admins__id__users',
+  })
   user: UserOrmEntity;
 }

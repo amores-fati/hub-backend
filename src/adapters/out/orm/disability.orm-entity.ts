@@ -9,7 +9,10 @@ export class DisabilityOrmEntity {
   @OneToOne(() => StudentOrmEntity, (student) => student.disability, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'student_id' })
+  @JoinColumn({
+    name: 'student_id',
+    foreignKeyConstraintName: 'fk_disabilities__student_id__students',
+  })
   student: StudentOrmEntity;
 
   @Column({ name: 'has_disability', type: 'boolean', default: false })

@@ -10,7 +10,10 @@ export class CurriculumOrmEntity {
     onDelete: 'CASCADE',
     nullable: false,
   })
-  @JoinColumn({ name: 'student_id' })
+  @JoinColumn({
+    name: 'student_id',
+    foreignKeyConstraintName: 'fk_curriculum__student_id__students',
+  })
   student: StudentOrmEntity;
 
   @Column({ name: 'is_available' })

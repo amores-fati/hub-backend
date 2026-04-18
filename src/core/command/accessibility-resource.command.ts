@@ -2,7 +2,6 @@ import { AccessibilityResourceType } from '../domain/enums/accessibility-resourc
 
 export interface CreateAccessibilityResourceCommand {
   resource: AccessibilityResourceType;
-  resourceOther?: string;
 }
 
 export type UpdateAccessibilityResourceCommand =

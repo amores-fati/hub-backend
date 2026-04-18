@@ -1,4 +1,5 @@
 import {
+  Check,
   Column,
   CreateDateColumn,
   Entity,
@@ -10,6 +11,11 @@ import { CompanyOrmEntity } from './company.orm-entity';
 import { StudentOrmEntity } from './student.orm-entity';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
+const USER_ROLE_SQL = Object.values(UserRoleEnum)
+  .map((value) => `'${value.replace(/'/g, "''")}'`)
+  .join(', ');
+
+@Check('ck_users__role', `"role" IN (${USER_ROLE_SQL})`)
 @Entity('users')
 export class UserOrmEntity {
   @PrimaryColumn('uuid')

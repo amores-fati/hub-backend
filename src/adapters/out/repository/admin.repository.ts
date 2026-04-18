@@ -17,7 +17,7 @@ export class AdminRepository implements IAdminRepository {
   ) {}
 
   async existsById(id: string): Promise<boolean> {
-    return this.adminOrmRepository.exists({ where: { id } });
+    return this.adminRepository.exists({ where: { id } });
   }
 
   async create(admin: Admin): Promise<Admin> {

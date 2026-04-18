@@ -1,97 +1,84 @@
-# Guia Rápido: Como Subir uma Migration/Alteração no Banco
+# Guia Rapido de Migration
 
-Este guia mostra apenas o passo a passo essencial para criar e aplicar uma migration no banco de dados via código.
+## Objetivo
 
----
+Registrar o fluxo minimo para alterar schema sem drift entre banco, ORM e aplicacao.
 
-## 1. Gere a migration
+## Passo 1. Ajuste a entidade ORM
 
-Crie uma nova migration com o comando:
+Edite os arquivos em `src/adapters/out/orm/`.
 
-```
-npm run typeorm migration:generate -- -n NomeDescritivoDaMigration
-```
+Se a mudanca tocar relacoes ou integridade, revise tambem:
 
-- Substitua `NomeDescritivoDaMigration` por um nome que explique a alteração.
+- `@JoinColumn`
+- `nullable`
+- `foreignKeyConstraintName`
+- `@Index`
+- `@Check`
 
+## Passo 2. Gere ou crie a migration
 
-## Exemplos reais de operações
+### PowerShell
 
-### Criar uma nova tabela
-
-Altere ou crie a entidade (exemplo: `User`) e gere a migration normalmente. O arquivo gerado terá algo como:
-
-```typescript
-public async up(queryRunner: QueryRunner): Promise<void> {
-	await queryRunner.query(`CREATE TABLE "users" ("id" uuid NOT NULL, "email" varchar(100) NOT NULL, PRIMARY KEY ("id"))`);
-}
-
-public async down(queryRunner: QueryRunner): Promise<void> {
-	await queryRunner.query(`DROP TABLE "users"`);
-}
+```powershell
+node_modules\.bin\typeorm-ts-node-commonjs.cmd -d src/config/typeorm.datasource.ts migration:generate src/adapters/out/migrations/NomeDaMigration
 ```
 
-### Adicionar uma coluna
+### Git Bash
 
-```typescript
-await queryRunner.query(`ALTER TABLE "users" ADD "role" varchar(20) NOT NULL DEFAULT 'STUDENT'`);
+```bash
+./node_modules/.bin/typeorm-ts-node-commonjs -d src/config/typeorm.datasource.ts migration:generate src/adapters/out/migrations/NomeDaMigration
 ```
 
-### Alterar tipo de coluna
+Use `migration:create` em vez de `migration:generate` quando houver rename, backfill ou SQL manual.
 
-```typescript
-await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "email" TYPE varchar(150)`);
+## Passo 3. Revise a migration
+
+Confira pelo menos:
+
+- tipos SQL
+- `NULL` vs `NOT NULL`
+- `DEFAULT`
+- FKs e `ON DELETE`
+- nomes de constraints
+- indices
+- `down()` reversivel
+
+## Passo 4. Aplique
+
+```powershell
+docker compose up -d postgres
+npm.cmd run migration:run
 ```
 
-### Remover coluna
+## Passo 5. Valide o alinhamento
 
-```typescript
-await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "role"`);
+```powershell
+npm.cmd run migration:show
+npm.cmd run typeorm -- schema:log
 ```
 
-### Adicionar uma constraint CHECK
+O resultado esperado de `schema:log` e:
 
-```typescript
-await queryRunner.query(`ALTER TABLE "users" ADD CONSTRAINT "ck_users__role" CHECK (role IN ('ADMIN', 'STUDENT', 'COMPANY'))`);
+```text
+Your schema is up to date - there are no queries to be executed by schema synchronization.
 ```
 
-### Exemplo de uso completo (CRUD)
+## Passo 6. Rode testes
 
-```typescript
-// Inserir
-await queryRunner.query(`INSERT INTO "users" ("id", "email", "role") VALUES ('uuid', 'email@exemplo.com', 'STUDENT')`);
-
-// Atualizar
-await queryRunner.query(`UPDATE "users" SET "role" = 'ADMIN' WHERE "id" = 'uuid'`);
-
-// Deletar
-await queryRunner.query(`DELETE FROM "users" WHERE "id" = 'uuid'`);
+```powershell
+npm.cmd run test -- --runInBand
+npm.cmd run test:e2e
 ```
 
-> Sempre revise o código gerado pela migration antes de rodar em produção.
+## Passo 7. Atualize docs
 
-## 2. Revise o código gerado
+Revise no minimo:
 
-- Abra o arquivo criado em `src/adapters/out/migrations/`.
-- Confirme se as alterações estão corretas.
+- `docs/esquema-banco-atual.md`
+- `docs/modelo-alvo-banco.md`
+- `docs/guia-mudancas-no-banco.md`
 
-## 3. Execute a migration
+## Referencia completa
 
-Rode as migrations para aplicar as mudanças no banco:
-
-```
-npm run typeorm migration:run
-```
-
-## 4. Valide a alteração
-
-- Verifique se o banco foi atualizado como esperado.
-- Teste a aplicação, se necessário.
-
-## 5. Versione o código
-
-- Faça commit dos arquivos alterados (migration, entidades, etc).
-
----
-
-Para detalhes e boas práticas, consulte os outros guias na pasta `docs/`.
+Use `docs/guia-mudancas-no-banco.md` para o fluxo detalhado.

@@ -47,16 +47,9 @@ describe('StudentRepository', () => {
 
   it('should replace child collections when update receives new items', async () => {
     const student = buildStudent({
-      socialBenefits: [
-        new SocialBenefit(-1, 'student-id', SocialBenefitType.other, 'Outro'),
-      ],
+      socialBenefits: [new SocialBenefit(-1, 'student-id', SocialBenefitType.other)],
       accessibilityResources: [
-        new AccessibilityResource(
-          -1,
-          'student-id',
-          AccessibilityResourceType.other,
-          'Outro',
-        ),
+        new AccessibilityResource(-1, 'student-id', AccessibilityResourceType.other),
       ],
     });
 
@@ -185,17 +178,14 @@ function buildStudentOrmEntity(
   ormEntity.user = user;
   ormEntity.contact = contact;
   ormEntity.cpf = student.cpf;
-  ormEntity.socialName = student.socialName ?? null;
   ormEntity.birthDate = student.birthDate ?? null;
   ormEntity.gender = student.gender ?? null;
   ormEntity.race = student.race ?? null;
   ormEntity.education = student.education ?? null;
-  ormEntity.courseName = student.courseName ?? null;
   ormEntity.institution = student.institution ?? null;
   ormEntity.activityArea = student.activityArea ?? null;
   ormEntity.hasProgrammingExperience = student.hasProgrammingExperience ?? null;
   ormEntity.hasTechnologyCourse = student.hasTechnologyCourse ?? null;
-  ormEntity.technologyCoursesList = student.technologyCoursesList ?? null;
   ormEntity.sendCurriculum = student.sendCurriculum;
   ormEntity.motivation = student.motivation ?? null;
   ormEntity.howHeard = student.howHeard ?? null;
@@ -208,7 +198,6 @@ function buildStudentOrmEntity(
     benefit.id = id;
     benefit.studentId = student.id;
     benefit.benefit = SocialBenefitType.other;
-    benefit.benefitOther = 'Outro';
     return benefit;
   });
   ormEntity.accessibilityResources = (
@@ -218,7 +207,6 @@ function buildStudentOrmEntity(
     resource.id = id;
     resource.studentId = student.id;
     resource.resource = AccessibilityResourceType.other;
-    resource.resourceOther = 'Outro';
     return resource;
   });
 

@@ -1,10 +1,11 @@
 import {
-  Entity,
+  Check,
   Column,
-  PrimaryColumn,
-  OneToOne,
+  Entity,
   JoinColumn,
   OneToMany,
+  OneToOne,
+  PrimaryColumn,
 } from 'typeorm';
 import { ContactOrmEntity } from './contact.orm-entity';
 import { AccessibilityResourceOrmEntity } from './accessibility-resource.orm-entity';
@@ -18,25 +19,49 @@ import {
   Race,
 } from '../../../core/domain/enums/student-profile.enum';
 
+function toSqlList(values: string[]): string {
+  return values.map((value) => `'${value.replace(/'/g, "''")}'`).join(', ');
+}
+
+const GENDER_SQL = toSqlList(Object.values(Gender));
+const RACE_SQL = toSqlList(Object.values(Race));
+const EDUCATION_SQL = toSqlList(Object.values(EducationLevel));
+const HOW_HEARD_SQL = toSqlList(Object.values(HowHeardChannel));
+
+@Check('ck_students__gender', `"gender" IN (${GENDER_SQL})`)
+@Check('ck_students__race', `"race" IN (${RACE_SQL})`)
+@Check(
+  'ck_students__education',
+  `"education" IS NULL OR "education" IN (${EDUCATION_SQL})`,
+)
+@Check(
+  'ck_students__how_heard',
+  `"how_heard" IS NULL OR "how_heard" IN (${HOW_HEARD_SQL})`,
+)
 @Entity('students')
 export class StudentOrmEntity {
   @PrimaryColumn('uuid')
   id: string;
 
   @OneToOne(() => UserOrmEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'id' })
+  @JoinColumn({
+    name: 'id',
+    foreignKeyConstraintName: 'fk_students__id__users',
+  })
   user: UserOrmEntity;
 
   @OneToOne(() => ContactOrmEntity, {
     onDelete: 'NO ACTION',
     nullable: false,
   })
-  @JoinColumn({ name: 'contact_id' })
+  @JoinColumn({
+    name: 'contact_id',
+    foreignKeyConstraintName: 'fk_students__contact_id__contacts',
+  })
   contact: ContactOrmEntity;
 
   @Column({ unique: true })
   cpf: string;
-
 
   @Column({ name: 'date_of_birth', type: 'date' })
   birthDate: Date;
@@ -49,7 +74,6 @@ export class StudentOrmEntity {
 
   @Column({ type: 'varchar', nullable: true })
   education: EducationLevel | null;
-
 
   @Column({ type: 'varchar', nullable: true })
   institution: string | null;
@@ -66,7 +90,6 @@ export class StudentOrmEntity {
 
   @Column({ name: 'has_technology_course', type: 'boolean', nullable: true })
   hasTechnologyCourse: boolean | null;
-
 
   @Column({
     name: 'send_curriculum',

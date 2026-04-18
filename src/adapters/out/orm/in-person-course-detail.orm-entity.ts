@@ -10,7 +10,10 @@ export class InPersonCourseDetailOrmEntity {
     onDelete: 'CASCADE',
     nullable: false,
   })
-  @JoinColumn({ name: 'course_id' })
+  @JoinColumn({
+    name: 'course_id',
+    foreignKeyConstraintName: 'fk_in_person_course_details__course_id__courses',
+  })
   course: CourseOrmEntity;
 
   @Column()

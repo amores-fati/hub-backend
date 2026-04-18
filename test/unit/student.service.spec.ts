@@ -237,7 +237,7 @@ describe('StudentService', () => {
 
       const result = await service.updateStudent(mockStudent.id, updateCommand);
 
-      expect(result.socialName).toBe(updateCommand.socialName);
+      expect(result.email).toBe(updateCommand.email);
       expect(result.contact.city).toBe(updateCommand.contact.city);
       expect(result.gender).toBe(Gender.FEMALE);
       expect(result.race).toBe(Race.BROWN);
@@ -294,7 +294,6 @@ describe('StudentService', () => {
       };
       const result = await service.patchStudent(mockStudent.id, partialData);
 
-      expect(result.socialName).toBe(partialData.socialName);
       expect(result.gender).toBe(Gender.NON_BINARY);
       expect(result.email).toBe(mockStudent.email);
       expect(mockRepository.update).toHaveBeenCalled();

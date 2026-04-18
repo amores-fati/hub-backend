@@ -7,7 +7,8 @@ import { createIntegrationApp } from './bootstrap';
 interface StudentResponse {
   id: string;
   cpf: string;
-  socialName: string;
+  activityArea?: string;
+  motivation?: string;
   contact: {
     city: string;
     phone: string;
@@ -41,7 +42,6 @@ describe('StudentController (e2e)', () => {
           email: studentEmail,
           password: studentPassword,
           cpf: dynamicCpf,
-          socialName: 'Student E2E',
           birthDate: '1995-05-20',
           gender: 'MALE',
           race: 'BROWN',
@@ -81,7 +81,7 @@ describe('StudentController (e2e)', () => {
       return request(app.getHttpServer() as Server)
         .post('/students')
         .send({
-          socialName: 'Incomplete Student',
+          contact: {},
         })
         .expect(400);
     });
@@ -93,7 +93,6 @@ describe('StudentController (e2e)', () => {
           email: `anotherstudent-${Date.now()}@test.com`,
           password: 'securepassword123',
           cpf: dynamicCpf,
-          socialName: 'Duplicate Student',
           birthDate: '1995-05-20',
           gender: 'FEMALE',
           race: 'WHITE',
@@ -171,7 +170,6 @@ describe('StudentController (e2e)', () => {
         .send({
           email: `updatedstudent-${Date.now()}@test.com`,
           password: 'newpassword123',
-          socialName: 'Updated Student E2E',
           birthDate: '1995-05-20',
           gender: 'MALE',
           race: 'BROWN',
@@ -187,7 +185,6 @@ describe('StudentController (e2e)', () => {
         .expect(200)
         .expect((res) => {
           const body = res.body as unknown as StudentResponse;
-          expect(body.socialName).toBe('Updated Student E2E');
           expect(body.contact.city).toBe('Rio de Janeiro');
         });
     });
@@ -199,12 +196,12 @@ describe('StudentController (e2e)', () => {
         .patch(`/students/${createdStudentId}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          socialName: 'Patched Student E2E',
+          motivation: 'Patched Student Motivation',
         })
         .expect(200)
         .expect((res) => {
           const body = res.body as unknown as StudentResponse;
-          expect(body.socialName).toBe('Patched Student E2E');
+          expect(body.motivation).toBe('Patched Student Motivation');
         });
     });
   });

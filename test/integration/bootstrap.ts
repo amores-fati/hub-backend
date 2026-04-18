@@ -1,8 +1,8 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as dotenv from 'dotenv';
+import { existsSync, readFileSync } from 'fs';
 import { DataSource } from 'typeorm';
-import { AppModule } from '../../src/app.module';
 import { buildDatabaseOptions } from '../../src/config/database.config';
 
 type SeedIntegrationDatabase = (dataSource: DataSource) => Promise<void>;
@@ -35,9 +35,17 @@ function readProcessValue(...names: string[]): string | undefined {
   return readRecordValue(process.env, ...names);
 }
 
+function readEnvFile(path: string): Record<string, string | undefined> {
+  if (!existsSync(path)) {
+    return {};
+  }
+
+  return dotenv.parse(readFileSync(path));
+}
+
 function configureIntegrationEnvironment(): IntegrationEnvironment {
-  const baseEnv = dotenv.config({ path: '.env', quiet: true }).parsed ?? {};
-  const e2eEnv = dotenv.config({ path: '.env.e2e', quiet: true }).parsed ?? {};
+  const baseEnv = readEnvFile('.env');
+  const e2eEnv = readEnvFile('.env.e2e');
 
   const primaryDbName = readRecordValue(baseEnv, 'DB_DATABASE');
   const targetDbName =
@@ -138,6 +146,7 @@ export async function createIntegrationApp(
   options: CreateIntegrationAppOptions = {},
 ): Promise<INestApplication> {
   await prepareIntegrationDatabase(options);
+  const { AppModule } = require('../../src/app.module') as typeof import('../../src/app.module');
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],

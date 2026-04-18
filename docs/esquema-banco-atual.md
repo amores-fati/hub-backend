@@ -2,51 +2,62 @@
 
 ## Objetivo
 
-Este documento registra o schema atual versionado no repositorio e serve como referencia fiel para:
+Este documento descreve o schema vigente do projeto com base em:
 
-- tabelas
-- colunas
-- constraints
-- relacionamentos
-- responsabilidades de cada tabela
+- migrations versionadas no repositorio
+- entidades ORM ativas
+- banco validado com `schema:log`
+- consulta direta ao `information_schema`
 
 ## Fontes auditadas
-
-As informacoes abaixo foram extraidas destes arquivos do projeto:
 
 - `src/adapters/out/migrations/1776384000000-InitialSchema.ts`
 - `src/adapters/out/migrations/1776470400000-AddUserCreatedAtAndStudentControlledValues.ts`
 - `src/adapters/out/migrations/1776556800000-TrimLegacyContactColumnsAndProtectStudentLists.ts`
+- `src/adapters/out/migrations/1776643200000-HardenProfilesAndRemoveStudentGenderOther.ts`
+- `src/adapters/out/migrations/1776758400000-RemoveLegacyFields.ts`
 - `src/adapters/out/orm/*.ts`
 - `src/config/database.config.ts`
-- `src/app.module.ts`
-- `src/adapters/out/repository/*.ts`
-- `src/adapters/out/seeds/seed.ts`
 
-## Importante
+## Status da validacao
 
-Este documento descreve o schema atual resultante da cadeia de migrations presente no repositorio.
+Validado em `api_db_e2e` com:
 
-Ele nao usa como fonte primaria alguns documentos antigos da pasta `docs`, porque ha arquivos ali que descrevem um estado anterior do banco.
+- todas as migrations aplicadas
+- `npm run typeorm -- schema:log` sem queries pendentes
 
 ## Resumo executivo
 
-- banco principal esperado: `api_db`
-- banco de teste esperado: `api_db_test`
-- extensao SQL criada pela migration: `uuid-ossp`
+- banco principal: `api_db`
+- banco manual de teste: `api_db_test`
+- banco automatizado de E2E: `api_db_e2e`
+- extensao usada: `uuid-ossp`
 - tabelas de negocio: `15`
 - tabela tecnica: `migrations`
-- tabela raiz de identidade: `users`
-- especializacoes de identidade por PK compartilhada: `admins`, `students`, `companies`
-- relacoes `N:N`: `job_skills`, `curriculum_skills`
-- `CHECK` constraints de dominio atuais:
-  - `ck_users__role`
-  - `ck_students__gender`
-  - `ck_students__race`
-  - `ck_students__education`
-  - `ck_students__how_heard`
-  - `ck_accessibility_resources__resource`
-  - `ck_social_benefits__benefit`
+- raiz de identidade: `users`
+- especializacoes por PK compartilhada: `admins`, `students`, `companies`
+- tabelas `N:N`: `job_skills`, `curriculum_skills`
+
+## Campos legados removidos
+
+As colunas abaixo nao existem mais no schema atual:
+
+- `students.social_name`
+- `students.course_name`
+- `students.technology_courses_list`
+- `students.gender_other`
+- `social_benefits.benefit_other`
+- `accessibility_resources.resource_other`
+
+## CHECK constraints ativas
+
+- `ck_users__role`
+- `ck_students__gender`
+- `ck_students__race`
+- `ck_students__education`
+- `ck_students__how_heard`
+- `ck_social_benefits__benefit`
+- `ck_accessibility_resources__resource`
 
 ## Mapa de relacionamentos
 
@@ -73,692 +84,381 @@ courses
 `- in_person_course_details
 ```
 
-## Regras estruturais consolidadas
+## Tabelas
 
-### Identidade
+### `users`
 
-- `users` guarda credenciais e papel do usuario
-- `admins.id`, `students.id` e `companies.id` apontam para `users.id`
-- esses tres perfis usam PK compartilhada com `users`
-
-### Contato
-
-- `contacts` e uma tabela separada
-- `students.contact_id` e `companies.contact_id` apontam para `contacts.id`
-- as duas FKs sao `UNIQUE`, entao cada aluno ou empresa pode apontar para no maximo um contato exclusivo
-
-### Complementos do aluno
-
-- `disabilities` e `1:1` com `students`
-- `accessibility_resources` e `1:N` com `students`
-- `social_benefits` e `1:N` com `students`
-- `curriculum` e `1:1` com `students`, via `student_id UNIQUE`
-
-### Vagas e skills
-
-- `job_openings` pertence a `companies`
-- `job_skills` resolve o `N:N` entre `job_openings` e `skills`
-
-### Curriculos e skills
-
-- `curriculum_skills` resolve o `N:N` entre `curriculum` e `skills`
-
-### Cursos presenciais
-
-- `in_person_course_details.course_id` aponta para `courses.id`
-- `course_id` e `UNIQUE`, entao o desenho atual e `1:1`
-
-## Inventario detalhado
-
-## `users`
-
-Responsabilidade:
-
-- raiz de autenticacao
-- guarda email, senha hash e papel do usuario
+Responsabilidade: autenticacao e autorizacao.
 
 Colunas:
 
-| Coluna          | Tipo SQL       | Nulo | Default | Observacoes                          |
-| --------------- | -------------- | ---- | ------- | ------------------------------------ |
-| `id`            | `uuid`         | nao  | nenhum  | PK; valor e fornecido pela aplicacao |
-| `email`         | `varchar(100)` | nao  | nenhum  | unico                                |
-| `password_hash` | `varchar(255)` | nao  | nenhum  | senha persistida em formato hash     |
-| `role`          | `varchar(20)`  | nao  | nenhum  | limitado por `CHECK`                 |
-| `created_at`    | `timestamptz`  | nao  | `now()` | timestamp tecnico de criacao         |
+- `id uuid not null`
+- `email varchar(100) not null`
+- `password_hash varchar(255) not null`
+- `role varchar(20) not null`
+- `created_at timestamptz not null default now()`
 
 Constraints:
 
-- `pk_users` primary key em `id`
-- `uq_users__email` unique em `email`
-- `ck_users__role` com valores permitidos: `ADMIN`, `STUDENT`, `COMPANY`
-
-Relacionamentos:
-
-- `admins.id -> users.id` (`ON DELETE CASCADE`)
-- `students.id -> users.id` (`ON DELETE CASCADE`)
-- `companies.id -> users.id` (`ON DELETE CASCADE`)
+- `pk_users`
+- `uq_users__email`
+- `ck_users__role`
 
 Observacoes:
 
-- nao ha `DEFAULT` para `id`; o UUID nasce na aplicacao
-- `created_at` foi incluido por migration complementar
+- `role` aceita `ADMIN`, `STUDENT`, `COMPANY`
+- `id` e gerado pela aplicacao
 
-## `admins`
+### `admins`
 
-Responsabilidade:
-
-- marcar um usuario como perfil administrativo
+Responsabilidade: especializacao administrativa de `users`.
 
 Colunas:
 
-| Coluna | Tipo SQL | Nulo | Default | Observacoes             |
-| ------ | -------- | ---- | ------- | ----------------------- |
-| `id`   | `uuid`   | nao  | nenhum  | PK e FK para `users.id` |
+- `id uuid not null`
 
 Constraints:
 
-- `pk_admins` primary key em `id`
-- `fk_admins__id__users` foreign key para `users(id)` com `ON DELETE CASCADE`
+- `pk_admins`
+- `fk_admins__id__users`
 
-Relacionamentos:
+### `contacts`
 
-- `1:1` com `users`
-
-## `contacts`
-
-Responsabilidade:
-
-- armazenar telefone e endereco
-- servir como entidade de contato para `students` e `companies`
+Responsabilidade: telefone e endereco reutilizados por aluno e empresa.
 
 Colunas:
 
-| Coluna          | Tipo SQL       | Nulo | Default | Observacoes                         |
-| --------------- | -------------- | ---- | ------- | ----------------------------------- |
-| `id`            | `uuid`         | nao  | nenhum  | PK; sem geracao automatica no banco |
-| `phone`         | `varchar(20)`  | nao  | nenhum  | campo obrigatorio                   |
-| `neighbourhood` | `varchar`      | sim  | nenhum  | bairro                              |
-| `state`         | `char(2)`      | sim  | nenhum  | UF                                  |
-| `city`          | `varchar(100)` | sim  | nenhum  | cidade                              |
-| `address`       | `varchar(255)` | sim  | nenhum  | endereco                            |
-| `cep`           | `varchar(9)`   | sim  | nenhum  | CEP                                 |
-| `complement`    | `varchar(255)` | sim  | nenhum  | complemento                         |
+- `id uuid not null`
+- `phone varchar(20) not null`
+- `neighbourhood varchar null`
+- `state char(2) null`
+- `city varchar(100) null`
+- `address varchar(255) null`
+- `cep varchar(9) null`
+- `complement varchar(255) null`
 
 Constraints:
 
-- `pk_contacts` primary key em `id`
-
-Relacionamentos recebidos:
-
-- `students.contact_id -> contacts.id`
-- `companies.contact_id -> contacts.id`
+- `pk_contacts`
 
 Observacoes:
 
-- `name` e `country` foram removidos do schema por migration corretiva
-- o contato atual guarda apenas telefone e endereco
+- `name` e `country` nao fazem mais parte do schema atual
 
-## `students`
+### `students`
 
-Responsabilidade:
-
-- perfil de aluno
-- dados cadastrais, academicos e de participacao
+Responsabilidade: perfil de aluno e dados de participacao.
 
 Colunas:
 
-| Coluna                       | Tipo SQL  | Nulo | Default | Observacoes                            |
-| ---------------------------- | --------- | ---- | ------- | -------------------------------------- |
-| `id`                         | `uuid`    | nao  | nenhum  | PK e FK para `users.id`                |
-| `contact_id`                 | `uuid`    | sim  | nenhum  | FK para `contacts.id`; unico           |
-| `cpf`                        | `varchar` | nao  | nenhum  | unico                                  |
-| `social_name`                | `varchar` | sim  | nenhum  | nome social                            |
-| `date_of_birth`              | `date`    | sim  | nenhum  | data de nascimento                     |
-| `gender`                     | `varchar` | sim  | nenhum  | limitado por `CHECK` quando preenchido |
-| `gender_other`               | `varchar` | sim  | nenhum  | campo complementar                     |
-| `race`                       | `varchar` | sim  | nenhum  | limitado por `CHECK` quando preenchido |
-| `education`                  | `varchar` | sim  | nenhum  | limitado por `CHECK` quando preenchido |
-| `course_name`                | `varchar` | sim  | nenhum  | curso informado pelo aluno             |
-| `institution`                | `varchar` | sim  | nenhum  | instituicao                            |
-| `activity_area`              | `varchar` | sim  | nenhum  | area de interesse/atuacao              |
-| `has_programming_experience` | `boolean` | sim  | nenhum  | experiencia previa                     |
-| `has_technology_course`      | `boolean` | sim  | nenhum  | curso de tecnologia                    |
-| `technology_courses_list`    | `text`    | sim  | nenhum  | lista textual de cursos                |
-| `send_curriculum`            | `boolean` | nao  | `false` | envio de curriculo                     |
-| `motivation`                 | `text`    | sim  | nenhum  | motivacao para o programa              |
-| `how_heard`                  | `varchar` | sim  | nenhum  | limitado por `CHECK` quando preenchido |
-| `has_computer`               | `boolean` | sim  | nenhum  | possui computador                      |
-| `has_internet`               | `boolean` | sim  | nenhum  | possui internet                        |
-| `committed_to_participate`   | `boolean` | sim  | nenhum  | compromisso de participacao            |
+- `id uuid not null`
+- `contact_id uuid not null`
+- `cpf varchar not null`
+- `date_of_birth date not null`
+- `gender varchar not null`
+- `race varchar not null`
+- `education varchar null`
+- `institution varchar null`
+- `activity_area varchar null`
+- `has_programming_experience boolean null`
+- `has_technology_course boolean null`
+- `send_curriculum boolean not null default false`
+- `motivation text null`
+- `how_heard varchar null`
+- `has_computer boolean null`
+- `has_internet boolean null`
+- `committed_to_participate boolean null`
 
 Constraints:
 
-- `pk_students` primary key em `id`
-- `uq_students__contact_id` unique em `contact_id`
-- `uq_students__cpf` unique em `cpf`
-- `fk_students__id__users` foreign key para `users(id)` com `ON DELETE CASCADE`
-- `fk_students__contact_id__contacts` foreign key para `contacts(id)` com `ON DELETE NO ACTION`
+- `pk_students`
+- `uq_students__contact_id`
+- `uq_students__cpf`
+- `fk_students__id__users`
+- `fk_students__contact_id__contacts`
 - `ck_students__gender`
 - `ck_students__race`
 - `ck_students__education`
 - `ck_students__how_heard`
 
-Relacionamentos:
-
-- `1:1` com `users` por PK compartilhada
-- `1:1` opcional com `contacts`
-- `1:1` com `disabilities`
-- `1:N` com `accessibility_resources`
-- `1:N` com `social_benefits`
-- `1:1` opcional com `curriculum`
-
 Observacoes:
 
-- no fluxo atual de criacao de aluno, `birthDate`, `gender` e `race` sao obrigatorios no `CreateStudentDto`, mas no banco `date_of_birth`, `gender` e `race` ainda aceitam `NULL`
-- `gender`, `race`, `education` e `how_heard` ja possuem `CHECK` para os valores aceitos quando preenchidos
-- a obrigatoriedade desses campos ainda esta mais forte na API do que no schema
+- `students.contact_id` e obrigatorio e exclusivo
+- nao existem mais campos legados de nome social, curso ou lista textual de cursos
 
-## `companies`
+### `companies`
 
-Responsabilidade:
-
-- perfil de empresa
-- dados institucionais e vinculo de contato
+Responsabilidade: perfil de empresa.
 
 Colunas:
 
-| Coluna             | Tipo SQL       | Nulo | Default | Observacoes                  |
-| ------------------ | -------------- | ---- | ------- | ---------------------------- |
-| `id`               | `uuid`         | nao  | nenhum  | PK e FK para `users.id`      |
-| `contact_id`       | `uuid`         | sim  | nenhum  | FK para `contacts.id`; unico |
-| `cnpj`             | `varchar(18)`  | nao  | nenhum  | unico                        |
-| `name`             | `varchar(100)` | nao  | nenhum  | nome da empresa              |
-| `responsible_name` | `varchar(100)` | nao  | nenhum  | nome do responsavel          |
+- `id uuid not null`
+- `contact_id uuid not null`
+- `cnpj varchar(18) not null`
+- `name varchar(100) not null`
+- `responsible_name varchar(100) not null`
 
 Constraints:
 
-- `pk_companies` primary key em `id`
-- `uq_companies__contact_id` unique em `contact_id`
-- `uq_companies__cnpj` unique em `cnpj`
-- `fk_companies__id__users` foreign key para `users(id)` com `ON DELETE CASCADE`
-- `fk_companies__contact_id__contacts` foreign key para `contacts(id)` com `ON DELETE NO ACTION`
-
-Relacionamentos:
-
-- `1:1` com `users` por PK compartilhada
-- `1:1` opcional com `contacts`
-- `1:N` com `job_openings`
+- `pk_companies`
+- `uq_companies__contact_id`
+- `uq_companies__cnpj`
+- `fk_companies__id__users`
+- `fk_companies__contact_id__contacts`
 
 Observacoes:
 
-- assim como em `students`, o repository atual persiste `contacts.name` e `contacts.country` como `null`
+- `companies.contact_id` tambem e obrigatorio e exclusivo
 
-## `disabilities`
+### `disabilities`
 
-Responsabilidade:
-
-- complemento `1:1` do aluno para informacoes de deficiencia
+Responsabilidade: complemento `1:1` do aluno para informacoes de deficiencia.
 
 Colunas:
 
-| Coluna           | Tipo SQL  | Nulo | Default | Observacoes                |
-| ---------------- | --------- | ---- | ------- | -------------------------- |
-| `student_id`     | `uuid`    | nao  | nenhum  | PK e FK para `students.id` |
-| `has_disability` | `boolean` | nao  | `false` | indicador principal        |
-| `description`    | `text`    | sim  | nenhum  | descricao livre            |
-| `has_report`     | `varchar` | sim  | nenhum  | texto livre                |
-| `type`           | `varchar` | sim  | nenhum  | tipo de deficiencia        |
+- `student_id uuid not null`
+- `has_disability boolean not null default false`
+- `description text null`
+- `has_report varchar null`
+- `type varchar null`
 
 Constraints:
 
-- `pk_disabilities` primary key em `student_id`
-- `fk_disabilities__student_id__students` foreign key para `students(id)` com `ON DELETE CASCADE`
+- `pk_disabilities`
+- `fk_disabilities__student_id__students`
 
-Relacionamentos:
+### `accessibility_resources`
 
-- `1:1` com `students`
-
-Observacoes:
-
-- `has_report` e `type` nao possuem enumeracao no banco
-
-## `accessibility_resources`
-
-Responsabilidade:
-
-- listar recursos de acessibilidade associados a um aluno
+Responsabilidade: recursos de acessibilidade por aluno.
 
 Colunas:
 
-| Coluna           | Tipo SQL       | Nulo | Default  | Observacoes                   |
-| ---------------- | -------------- | ---- | -------- | ----------------------------- |
-| `id`             | `serial`       | nao  | sequence | PK numerica gerada pelo banco |
-| `student_id`     | `uuid`         | nao  | nenhum   | FK para `students.id`         |
-| `resource`       | `varchar`      | nao  | nenhum   | recurso informado             |
-| `resource_other` | `varchar(100)` | sim  | nenhum   | texto complementar            |
+- `id serial not null`
+- `student_id uuid not null`
+- `resource varchar not null`
 
 Constraints:
 
-- `pk_accessibility_resources` primary key em `id`
-- `fk_accessibility_resources__student_id__students` foreign key para `students(id)` com `ON DELETE CASCADE`
+- `pk_accessibility_resources`
+- `fk_accessibility_resources__student_id__students`
 - `ck_accessibility_resources__resource`
 
 Indices:
 
 - `ix_accessibility_resources__student_id`
 
-Relacionamentos:
+Valores aceitos em `resource`:
 
-- `N:1` com `students`
+- `Cadeira de rodas`
+- `Muletas`
+- `Libras`
+- `Leitor de tela`
+- `Interprete`
+- `Outro`
 
-Observacoes:
+### `social_benefits`
 
-- a aplicacao usa o enum `AccessibilityResourceType`
-- o banco possui `CHECK` para limitar os valores de `resource`
-
-## `social_benefits`
-
-Responsabilidade:
-
-- listar beneficios sociais associados a um aluno
+Responsabilidade: beneficios sociais por aluno.
 
 Colunas:
 
-| Coluna          | Tipo SQL       | Nulo | Default  | Observacoes                   |
-| --------------- | -------------- | ---- | -------- | ----------------------------- |
-| `id`            | `serial`       | nao  | sequence | PK numerica gerada pelo banco |
-| `student_id`    | `uuid`         | nao  | nenhum   | FK para `students.id`         |
-| `benefit`       | `varchar`      | nao  | nenhum   | beneficio informado           |
-| `benefit_other` | `varchar(100)` | sim  | nenhum   | texto complementar            |
+- `id serial not null`
+- `student_id uuid not null`
+- `benefit varchar not null`
 
 Constraints:
 
-- `pk_social_benefits` primary key em `id`
-- `fk_social_benefits__student_id__students` foreign key para `students(id)` com `ON DELETE CASCADE`
+- `pk_social_benefits`
+- `fk_social_benefits__student_id__students`
 - `ck_social_benefits__benefit`
 
 Indices:
 
 - `ix_social_benefits__student_id`
 
-Relacionamentos:
+Valores aceitos em `benefit`:
 
-- `N:1` com `students`
+- `BPC`
+- `Bolsa Familia`
+- `Auxilio-doenca`
+- `Nao recebo`
+- `Outro`
+
+### `curriculum`
+
+Responsabilidade: curriculo do aluno.
+
+Colunas:
+
+- `id uuid not null`
+- `is_available boolean not null`
+- `about text null`
+- `linkedin varchar not null`
+- `github varchar not null`
+- `profile_photo varchar null`
+- `video_presentation varchar not null`
+- `student_id uuid not null`
+
+Constraints:
+
+- `pk_curriculum`
+- `uq_curriculum__student_id`
+- `fk_curriculum__student_id__students`
 
 Observacoes:
 
-- a aplicacao usa o enum `SocialBenefitType`
-- o banco possui `CHECK` para limitar os valores de `benefit`
+- o relacionamento com `students` e `1:1` estrito por `student_id unique not null`
 
-## `curriculum`
+### `skills`
 
-Responsabilidade:
-
-- guardar o curriculo de um aluno
-- centralizar links e disponibilidade do candidato
+Responsabilidade: catalogo de habilidades.
 
 Colunas:
 
-| Coluna               | Tipo SQL  | Nulo | Default | Observacoes                      |
-| -------------------- | --------- | ---- | ------- | -------------------------------- |
-| `id`                 | `uuid`    | nao  | nenhum  | PK sem geracao automatica        |
-| `is_available`       | `boolean` | nao  | nenhum  | disponibilidade do curriculo     |
-| `about`              | `text`    | sim  | nenhum  | resumo                           |
-| `linkedin`           | `varchar` | nao  | nenhum  | link obrigatorio no schema atual |
-| `github`             | `varchar` | nao  | nenhum  | link obrigatorio no schema atual |
-| `profile_photo`      | `varchar` | sim  | nenhum  | foto de perfil                   |
-| `video_presentation` | `varchar` | nao  | nenhum  | link de video                    |
-| `student_id`         | `uuid`    | sim  | nenhum  | FK para `students.id`; unico     |
+- `id uuid not null`
+- `name varchar(100) not null`
 
 Constraints:
 
-- `pk_curriculum` primary key em `id`
-- `uq_curriculum__student_id` unique em `student_id`
-- `fk_curriculum__student_id__students` foreign key para `students(id)` com `ON DELETE CASCADE`
+- `pk_skills`
+- `uq_skills__name`
 
-Relacionamentos:
+### `curriculum_skills`
 
-- `1:1` opcional com `students`
-- `N:N` com `skills` via `curriculum_skills`
-
-Observacoes:
-
-- o schema permite `student_id` nulo, mesmo sendo um relacionamento naturalmente dependente de aluno
-- essa tabela existe no ORM, na migration e no seed
-- hoje ela nao possui controller ou repository dedicados expostos na API
-
-## `skills`
-
-Responsabilidade:
-
-- catalogo reutilizavel de habilidades
+Responsabilidade: associacao `N:N` entre `curriculum` e `skills`.
 
 Colunas:
 
-| Coluna | Tipo SQL       | Nulo | Default | Observacoes               |
-| ------ | -------------- | ---- | ------- | ------------------------- |
-| `id`   | `uuid`         | nao  | nenhum  | PK sem geracao automatica |
-| `name` | `varchar(100)` | nao  | nenhum  | nome unico da skill       |
+- `curriculum_id uuid not null`
+- `skill_id uuid not null`
 
 Constraints:
 
-- `pk_skills` primary key em `id`
-- `uq_skills__name` unique em `name`
-
-Relacionamentos recebidos:
-
-- `job_skills.skill_id -> skills.id`
-- `curriculum_skills.skill_id -> skills.id`
-
-## `job_openings`
-
-Responsabilidade:
-
-- armazenar vagas publicadas por empresas
-
-Colunas:
-
-| Coluna             | Tipo SQL       | Nulo | Default              | Observacoes            |
-| ------------------ | -------------- | ---- | -------------------- | ---------------------- |
-| `id`               | `uuid`         | nao  | `uuid_generate_v4()` | PK gerada pelo banco   |
-| `company_id`       | `uuid`         | nao  | nenhum               | FK para `companies.id` |
-| `name`             | `varchar`      | nao  | nenhum               | nome da vaga           |
-| `description`      | `text`         | sim  | nenhum               | descricao da vaga      |
-| `openings_count`   | `integer`      | nao  | `1`                  | quantidade de vagas    |
-| `application_link` | `varchar(255)` | sim  | nenhum               | link de candidatura    |
-| `is_pcd`           | `boolean`      | nao  | `false`              | vaga afirmativa PCD    |
-
-Constraints:
-
-- `pk_job_openings` primary key em `id`
-- `fk_job_openings__company_id__companies` foreign key para `companies(id)` com `ON DELETE CASCADE`
-
-Indices:
-
-- `ix_job_openings__company_id`
-
-Relacionamentos:
-
-- `N:1` com `companies`
-- `N:N` com `skills` via `job_skills`
-
-Observacoes:
-
-- essa tabela existe no schema e no seed
-- hoje nao ha controller ou repository dedicados para vagas no fluxo HTTP principal
-
-## `job_skills`
-
-Responsabilidade:
-
-- tabela de associacao entre `job_openings` e `skills`
-
-Colunas:
-
-| Coluna     | Tipo SQL | Nulo | Default | Observacoes          |
-| ---------- | -------- | ---- | ------- | -------------------- |
-| `job_id`   | `uuid`   | nao  | nenhum  | parte da PK composta |
-| `skill_id` | `uuid`   | nao  | nenhum  | parte da PK composta |
-
-Constraints:
-
-- `pk_job_skills` primary key composta em (`job_id`, `skill_id`)
-- `fk_job_skills__job_id__job_openings` foreign key para `job_openings(id)` com `ON DELETE CASCADE`
-- `fk_job_skills__skill_id__skills` foreign key para `skills(id)` com `ON DELETE NO ACTION`
-
-Indices:
-
-- `ix_job_skills__skill_id`
-
-Relacionamentos:
-
-- `N:1` com `job_openings`
-- `N:1` com `skills`
-
-## `curriculum_skills`
-
-Responsabilidade:
-
-- tabela de associacao entre `curriculum` e `skills`
-
-Colunas:
-
-| Coluna          | Tipo SQL | Nulo | Default | Observacoes          |
-| --------------- | -------- | ---- | ------- | -------------------- |
-| `curriculum_id` | `uuid`   | nao  | nenhum  | parte da PK composta |
-| `skill_id`      | `uuid`   | nao  | nenhum  | parte da PK composta |
-
-Constraints:
-
-- `pk_curriculum_skills` primary key composta em (`curriculum_id`, `skill_id`)
-- `fk_curriculum_skills__curriculum_id__curriculum` foreign key para `curriculum(id)` com `ON DELETE NO ACTION`
-- `fk_curriculum_skills__skill_id__skills` foreign key para `skills(id)` com `ON DELETE NO ACTION`
+- `pk_curriculum_skills`
+- `fk_curriculum_skills__curriculum_id__curriculum`
+- `fk_curriculum_skills__skill_id__skills`
 
 Indices:
 
 - `ix_curriculum_skills__skill_id`
 
-Relacionamentos:
+### `job_openings`
 
-- `N:1` com `curriculum`
-- `N:1` com `skills`
-
-## `courses`
-
-Responsabilidade:
-
-- cadastro de cursos da plataforma
+Responsabilidade: vagas publicadas por empresas.
 
 Colunas:
 
-| Coluna                | Tipo SQL  | Nulo | Default | Observacoes                 |
-| --------------------- | --------- | ---- | ------- | --------------------------- |
-| `id`                  | `uuid`    | nao  | nenhum  | PK sem geracao automatica   |
-| `name`                | `varchar` | nao  | nenhum  | nome do curso               |
-| `banner`              | `varchar` | nao  | nenhum  | URL ou referencia do banner |
-| `description`         | `text`    | sim  | nenhum  | descricao opcional          |
-| `course_load`         | `varchar` | nao  | nenhum  | carga horaria textual       |
-| `start_date`          | `date`    | nao  | nenhum  | inicio do curso             |
-| `end_date`            | `date`    | nao  | nenhum  | fim do curso                |
-| `start_registrations` | `date`    | nao  | nenhum  | inicio das inscricoes       |
-| `end_registrations`   | `date`    | nao  | nenhum  | fim das inscricoes          |
-| `link_access`         | `varchar` | nao  | nenhum  | link de acesso              |
+- `id uuid not null default uuid_generate_v4()`
+- `company_id uuid not null`
+- `name varchar not null`
+- `description text null`
+- `openings_count integer not null default 1`
+- `application_link varchar(255) null`
+- `is_pcd boolean not null default false`
 
 Constraints:
 
-- `pk_courses` primary key em `id`
+- `pk_job_openings`
+- `fk_job_openings__company_id__companies`
 
-Relacionamentos recebidos:
+Indices:
 
-- `in_person_course_details.course_id -> courses.id`
-
-Observacoes:
-
-- essa tabela esta exposta pela API em `CourseController`
-- `course_load` no banco atual e `varchar`, nao inteiro
-
-## `in_person_course_details`
-
-Responsabilidade:
-
-- complemento presencial opcional de um curso
-
-Colunas:
-
-| Coluna       | Tipo SQL  | Nulo | Default | Observacoes                 |
-| ------------ | --------- | ---- | ------- | --------------------------- |
-| `id`         | `uuid`    | nao  | nenhum  | PK sem geracao automatica   |
-| `address`    | `varchar` | nao  | nenhum  | local do curso presencial   |
-| `start_date` | `date`    | nao  | nenhum  | data de inicio presencial   |
-| `shift`      | `varchar` | nao  | nenhum  | turno                       |
-| `room`       | `varchar` | nao  | nenhum  | sala                        |
-| `vacancies`  | `integer` | nao  | nenhum  | numero de vagas             |
-| `course_id`  | `uuid`    | sim  | nenhum  | FK para `courses.id`; unico |
-
-Constraints:
-
-- `pk_in_person_course_details` primary key em `id`
-- `uq_in_person_course_details__course_id` unique em `course_id`
-- `fk_in_person_course_details__course_id__courses` foreign key para `courses(id)` com `ON DELETE CASCADE`
-
-Relacionamentos:
-
-- `1:1` opcional com `courses`
-
-Observacoes:
-
-- o schema atual permite `course_id` nulo
-- essa tabela existe no ORM, na migration e no seed
-- nao ha controller dedicado para esse complemento no fluxo HTTP atual
-
-## `migrations`
-
-Responsabilidade:
-
-- controle tecnico do TypeORM sobre quais migrations ja foram executadas
-
-Colunas:
-
-| Coluna      | Tipo SQL  | Nulo | Default  | Observacoes                 |
-| ----------- | --------- | ---- | -------- | --------------------------- |
-| `id`        | `serial`  | nao  | sequence | PK tecnica                  |
-| `timestamp` | `bigint`  | nao  | nenhum   | timestamp da migration      |
-| `name`      | `varchar` | nao  | nenhum   | nome da classe da migration |
-
-Constraints:
-
-- primary key tecnica criada pelo TypeORM
-
-## Relacionamentos consolidados
-
-### Foreign keys
-
-- `admins.id -> users.id`
-- `students.id -> users.id`
-- `students.contact_id -> contacts.id`
-- `companies.id -> users.id`
-- `companies.contact_id -> contacts.id`
-- `disabilities.student_id -> students.id`
-- `accessibility_resources.student_id -> students.id`
-- `social_benefits.student_id -> students.id`
-- `curriculum.student_id -> students.id`
-- `job_openings.company_id -> companies.id`
-- `job_skills.job_id -> job_openings.id`
-- `job_skills.skill_id -> skills.id`
-- `curriculum_skills.curriculum_id -> curriculum.id`
-- `curriculum_skills.skill_id -> skills.id`
-- `in_person_course_details.course_id -> courses.id`
-
-### Unique keys
-
-- `users.email`
-- `skills.name`
-- `students.contact_id`
-- `students.cpf`
-- `companies.contact_id`
-- `companies.cnpj`
-- `curriculum.student_id`
-- `in_person_course_details.course_id`
-
-### Indices adicionais
-
-- `ix_accessibility_resources__student_id`
-- `ix_social_benefits__student_id`
 - `ix_job_openings__company_id`
+
+### `job_skills`
+
+Responsabilidade: associacao `N:N` entre `job_openings` e `skills`.
+
+Colunas:
+
+- `job_id uuid not null`
+- `skill_id uuid not null`
+
+Constraints:
+
+- `pk_job_skills`
+- `fk_job_skills__job_id__job_openings`
+- `fk_job_skills__skill_id__skills`
+
+Indices:
+
 - `ix_job_skills__skill_id`
-- `ix_curriculum_skills__skill_id`
 
-## O que o banco garante hoje e o que fica na aplicacao
+### `courses`
 
-### Garantido diretamente no banco
+Responsabilidade: catalogo de cursos da plataforma.
+
+Colunas:
+
+- `id uuid not null`
+- `name varchar not null`
+- `banner varchar not null`
+- `description text null`
+- `course_load varchar not null`
+- `start_date date not null`
+- `end_date date not null`
+- `start_registrations date not null`
+- `end_registrations date not null`
+- `link_access varchar not null`
+
+Constraints:
+
+- `pk_courses`
+
+### `in_person_course_details`
+
+Responsabilidade: complemento presencial `1:1` de um curso.
+
+Colunas:
+
+- `id uuid not null`
+- `address varchar not null`
+- `start_date date not null`
+- `shift varchar not null`
+- `room varchar not null`
+- `vacancies integer not null`
+- `course_id uuid not null`
+
+Constraints:
+
+- `pk_in_person_course_details`
+- `uq_in_person_course_details__course_id`
+- `fk_in_person_course_details__course_id__courses`
+
+Observacoes:
+
+- `course_id` e obrigatorio e exclusivo
+
+### `migrations`
+
+Responsabilidade: controle tecnico do TypeORM.
+
+Colunas:
+
+- `id serial not null`
+- `timestamp bigint not null`
+- `name varchar not null`
+
+## O que o banco garante hoje
 
 - unicidade de `users.email`
 - unicidade de `students.cpf`
 - unicidade de `companies.cnpj`
 - unicidade de `skills.name`
-- integridade referencial entre as tabelas ligadas por FK
-- dominio fechado de `users.role`
-- dominio fechado de `students.gender`, `students.race`, `students.education` e `students.how_heard`
-- dominio fechado de `accessibility_resources.resource`
-- dominio fechado de `social_benefits.benefit`
+- integridade referencial das FKs
+- dominios fechados para `users.role`
+- dominios fechados para `students.gender`, `students.race`, `students.education`, `students.how_heard`
+- dominios fechados para `social_benefits.benefit`
+- dominios fechados para `accessibility_resources.resource`
 
-### Validado pela aplicacao, mas nao fechado no banco
+## O que continua na aplicacao
 
 - formato de CPF
 - formato de CNPJ
-- formato de CEP
-- varios campos textuais de `students`
+- validacoes HTTP de DTO
+- regras de negocio que dependem de contexto e nao apenas de estrutura
 
-## Exposicao atual pela API
+## Referencias cruzadas
 
-### Tabelas diretamente usadas por controllers e repositories no fluxo principal
-
-- `users`
-- `admins`
-- `students`
-- `companies`
-- `contacts`
-- `disabilities`
-- `accessibility_resources`
-- `social_benefits`
-- `courses`
-
-### Tabelas presentes no schema, ORM e seed, mas sem controller dedicado hoje
-
-- `curriculum`
-- `skills`
-- `curriculum_skills`
-- `job_openings`
-- `job_skills`
-- `in_person_course_details`
-
-## Exemplos reais do seed por tabela
-
-Os exemplos abaixo nao sao hipoteticos. Eles sao derivados do `src/adapters/out/seeds/seed.ts`.
-
-### `users`
-
-- `admin@fatilab.com` | `ADMIN`
-- `tech@innovatech.com` | `COMPANY`
-- `aluno01@fatilab.com` | `STUDENT`
-
-### `companies`
-
-- `InnovaTech Solucoes` | `12.345.678/0001-99` | `Carlos Mendes`
-- `Solucoes Digitais Ltda` | `98.765.432/0001-11` | `Fernanda Lima`
-
-### `courses`
-
-- `Desenvolvimento Web Full Stack` | `120h` | `2025-02-01`
-- `Ciencia de Dados com Python` | `80h` | `2025-03-01`
-
-### `students`
-
-- `Ana Beatriz Costa` | `design` | `ensino_medio`
-- `Bruno Ferreira` | `desenvolvimento` | `superior`
-- `Carla Souza` | `dados` | `tecnico`
-
-### `job_openings`
-
-- `Desenvolvedor Frontend` | `2` vagas | `is_pcd=true`
-- `Engenheiro DevOps` | `1` vaga | `is_pcd=false`
-
-### `skills`
-
-- `JavaScript`
-- `TypeScript`
-- `Python`
-- `React`
-- `Node.js`
-- `SQL`
-
-## Observacao final
-
-Se voce alterar qualquer tabela descrita aqui:
-
-1. ajuste a entidade ORM correspondente
-2. gere ou crie a migration
-3. valide no banco principal
-4. valide no banco de teste
-5. atualize este documento
+- `docs/modelo-alvo-banco.md`
+- `docs/guia-mudancas-no-banco.md`

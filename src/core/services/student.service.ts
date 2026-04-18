@@ -59,23 +59,13 @@ export class StudentService {
     const socialBenefits =
       command.socialBenefits?.map(
         (benefit, index) =>
-          new SocialBenefit(
-            -(index + 1),
-            studentId,
-            benefit.benefit,
-            benefit.benefitOther,
-          ),
+          new SocialBenefit(-(index + 1), studentId, benefit.benefit),
       ) || [];
 
     const accessibilityResources =
       command.accessibilityResources?.map(
         (resource, index) =>
-          new AccessibilityResource(
-            -(index + 1),
-            studentId,
-            resource.resource,
-            resource.resourceOther,
-          ),
+          new AccessibilityResource(-(index + 1), studentId, resource.resource),
       ) || [];
 
     let birthDate: Date | undefined = undefined;
@@ -187,12 +177,7 @@ export class StudentService {
     if (command.socialBenefits) {
       const benefits = command.socialBenefits.map(
         (benefit, index) =>
-          new SocialBenefit(
-            -(index + 1),
-            student.id,
-            benefit.benefit,
-            benefit.benefitOther,
-          ),
+          new SocialBenefit(-(index + 1), student.id, benefit.benefit),
       );
       student.replaceSocialBenefits(benefits);
     }
@@ -204,7 +189,6 @@ export class StudentService {
             -(index + 1),
             student.id,
             resource.resource,
-            resource.resourceOther,
           ),
       );
       student.replaceAccessibilityResources(resources);
@@ -274,12 +258,7 @@ export class StudentService {
     if (command.socialBenefits) {
       const benefits = command.socialBenefits.map(
         (benefit, index) =>
-          new SocialBenefit(
-            -(index + 1),
-            student.id,
-            benefit.benefit!,
-            benefit.benefitOther,
-          ),
+          new SocialBenefit(-(index + 1), student.id, benefit.benefit!),
       );
       student.replaceSocialBenefits(benefits);
     }
@@ -291,7 +270,6 @@ export class StudentService {
             -(index + 1),
             student.id,
             resource.resource!,
-            resource.resourceOther,
           ),
       );
       student.replaceAccessibilityResources(resources);

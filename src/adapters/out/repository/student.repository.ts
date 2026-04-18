@@ -225,18 +225,15 @@ export class StudentRepository implements IStudentRepository {
 
     ormEntity.id = student.id;
     ormEntity.cpf = student.cpf;
-    ormEntity.socialName = student.socialName || null;
     ormEntity.birthDate = student.birthDate;
     ormEntity.gender = student.gender;
     ormEntity.race = student.race;
     ormEntity.education = student.education || null;
-    ormEntity.courseName = student.courseName || null;
     ormEntity.institution = student.institution || null;
     ormEntity.activityArea = student.activityArea || null;
     ormEntity.hasProgrammingExperience =
       student.hasProgrammingExperience ?? null;
     ormEntity.hasTechnologyCourse = student.hasTechnologyCourse ?? null;
-    ormEntity.technologyCoursesList = student.technologyCoursesList || null;
     ormEntity.sendCurriculum = student.sendCurriculum;
     ormEntity.motivation = student.motivation || null;
     ormEntity.howHeard = student.howHeard || null;
@@ -299,17 +296,14 @@ export class StudentRepository implements IStudentRepository {
   ): Partial<StudentOrmEntity> {
     return {
       cpf: ormEntity.cpf,
-      socialName: ormEntity.socialName,
       birthDate: ormEntity.birthDate,
       gender: ormEntity.gender,
       race: ormEntity.race,
       education: ormEntity.education,
-      courseName: ormEntity.courseName,
       institution: ormEntity.institution,
       activityArea: ormEntity.activityArea,
       hasProgrammingExperience: ormEntity.hasProgrammingExperience,
       hasTechnologyCourse: ormEntity.hasTechnologyCourse,
-      technologyCoursesList: ormEntity.technologyCoursesList,
       sendCurriculum: ormEntity.sendCurriculum,
       motivation: ormEntity.motivation,
       howHeard: ormEntity.howHeard,
@@ -342,13 +336,7 @@ export class StudentRepository implements IStudentRepository {
       : undefined;
 
     const socialBenefits = ormEntity.socialBenefits.map(
-      (benefit) =>
-        new SocialBenefit(
-          benefit.id,
-          benefit.studentId,
-          benefit.benefit,
-          benefit.benefitOther || undefined,
-        ),
+      (benefit) => new SocialBenefit(benefit.id, benefit.studentId, benefit.benefit),
     );
 
     const accessibilityResources = ormEntity.accessibilityResources.map(
@@ -357,7 +345,6 @@ export class StudentRepository implements IStudentRepository {
           resource.id,
           resource.studentId,
           resource.resource,
-          resource.resourceOther || undefined,
         ),
     );
 
@@ -412,7 +399,6 @@ export class StudentRepository implements IStudentRepository {
     }
     orm.studentId = studentId;
     orm.benefit = benefit.benefit;
-    orm.benefitOther = benefit.benefitOther || null;
     orm.student = student;
     return orm;
   }
@@ -428,7 +414,6 @@ export class StudentRepository implements IStudentRepository {
     }
     orm.studentId = studentId;
     orm.resource = resource.resource;
-    orm.resourceOther = resource.resourceOther || null;
     orm.student = student;
     return orm;
   }
