@@ -1,14 +1,14 @@
 import { Entity, PrimaryColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { CurriculumOrmEntity } from './curriculum.orm-entity';
-import { SkillOrmEntity } from '../orm/skill.orm-entity';
+import { SkillOrmEntity } from './skill.orm-entity';
 
-@Entity('skills_curriculum')
-export class SkillsCurriculumOrmEntity {
+@Entity('curriculum_skills')
+export class CurriculumSkillOrmEntity {
   @PrimaryColumn({ name: 'curriculum_id' })
-  curriculum_id: string;
+  curriculumId: string;
 
   @PrimaryColumn({ name: 'skill_id' })
-  skill_id: string;
+  skillId: string;
 
   @ManyToOne(() => CurriculumOrmEntity)
   @JoinColumn({ name: 'curriculum_id' })

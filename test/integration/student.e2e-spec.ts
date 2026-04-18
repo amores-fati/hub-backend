@@ -43,8 +43,8 @@ describe('StudentController (e2e)', () => {
           cpf: dynamicCpf,
           socialName: 'Student E2E',
           birthDate: '1995-05-20',
-          gender: 'Masculino',
-          race: 'Parda',
+          gender: 'MALE',
+          race: 'BROWN',
           contact: {
             city: 'São Paulo',
             state: 'SP',
@@ -95,8 +95,8 @@ describe('StudentController (e2e)', () => {
           cpf: dynamicCpf,
           socialName: 'Duplicate Student',
           birthDate: '1995-05-20',
-          gender: 'Feminino',
-          race: 'Branca',
+          gender: 'FEMALE',
+          race: 'WHITE',
           contact: {
             phone: '11988888888',
           },
@@ -173,8 +173,8 @@ describe('StudentController (e2e)', () => {
           password: 'newpassword123',
           socialName: 'Updated Student E2E',
           birthDate: '1995-05-20',
-          gender: 'Masculino',
-          race: 'Parda',
+          gender: 'MALE',
+          race: 'BROWN',
           contact: {
             city: 'Rio de Janeiro',
             state: 'RJ',

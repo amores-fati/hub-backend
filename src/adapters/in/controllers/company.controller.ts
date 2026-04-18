@@ -1,39 +1,40 @@
 import {
-  Controller,
-  Post,
-  Get,
-  Put,
-  Patch,
-  Delete,
+  BadRequestException,
   Body,
-  Param,
+  ConflictException,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
-  ConflictException,
   NotFoundException,
+  Param,
   ParseUUIDPipe,
-  BadRequestException,
+  Patch,
+  Post,
+  Put,
 } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiBody,
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiNoContentResponse,
   ApiBadRequestResponse,
+  ApiBody,
   ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
 } from '@nestjs/swagger';
-import { CreateCompanyDto } from '../dtos/company/create-company.dto';
-import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
-import { PatchCompanyDto } from '../dtos/company/patch-company.dto';
-import { CompanyService } from '../../../core/services/company.service';
+
 import {
   CreateCompanyCommand,
   UpdateCompanyCommand,
 } from '../../../core/command/company.command';
+import { CompanyService } from '../../../core/services/company.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
+import { CreateCompanyDto } from '../dtos/company/create-company.dto';
+import { PatchCompanyDto } from '../dtos/company/patch-company.dto';
+import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
 
 @ApiTags('Companies')
 @Controller('companies')
@@ -49,8 +50,10 @@ export class CompanyController {
   })
   @ApiBody({ type: CreateCompanyDto })
   @ApiCreatedResponse({ description: 'Empresa registrada com sucesso.' })
-  @ApiBadRequestResponse({ description: 'Erro de validação.' })
-  @ApiConflictResponse({ description: 'CNPJ já cadastrado na plataforma.' })
+  @ApiBadRequestResponse({ description: 'Erro de validacao.' })
+  @ApiConflictResponse({
+    description: 'CNPJ ou e-mail ja cadastrado na plataforma.',
+  })
   async register(@Body() createCompanyDto: CreateCompanyDto) {
     try {
       const command: CreateCompanyCommand = { ...createCompanyDto };
@@ -58,7 +61,8 @@ export class CompanyController {
     } catch (error) {
       if (
         error instanceof Error &&
-        error.name === 'CompanyAlreadyExistsException'
+        (error.name === 'CompanyAlreadyExistsException' ||
+          error.name === 'UserAlreadyExistsException')
       ) {
         throw new ConflictException(error.message);
       }
@@ -85,7 +89,7 @@ export class CompanyController {
   @Get(':id')
   @ApiOperation({ summary: 'Busca uma empresa por ID' })
   @ApiOkResponse({ description: 'Empresa encontrada com sucesso.' })
-  @ApiNotFoundResponse({ description: 'Empresa não encontrada.' })
+  @ApiNotFoundResponse({ description: 'Empresa nao encontrada.' })
   async findById(@Param('id', ParseUUIDPipe) id: string) {
     try {
       return await this.companyService.getCompanyById(id);
@@ -101,7 +105,7 @@ export class CompanyController {
   @Get('cnpj/:cnpj')
   @ApiOperation({ summary: 'Busca uma empresa por CNPJ' })
   @ApiOkResponse({ description: 'Empresa encontrada com sucesso.' })
-  @ApiNotFoundResponse({ description: 'Empresa não encontrada.' })
+  @ApiNotFoundResponse({ description: 'Empresa nao encontrada.' })
   async findByCnpj(@Param('cnpj') cnpj: string) {
     try {
       return await this.companyService.getCompanyByCnpj(cnpj);
@@ -118,8 +122,9 @@ export class CompanyController {
   @ApiOperation({ summary: 'Atualiza completamente os dados de uma empresa' })
   @ApiBody({ type: UpdateCompanyDto })
   @ApiOkResponse({ description: 'Empresa atualizada com sucesso.' })
-  @ApiNotFoundResponse({ description: 'Empresa não encontrada.' })
-  @ApiBadRequestResponse({ description: 'Erro de validação.' })
+  @ApiNotFoundResponse({ description: 'Empresa nao encontrada.' })
+  @ApiBadRequestResponse({ description: 'Erro de validacao.' })
+  @ApiConflictResponse({ description: 'E-mail ja cadastrado na plataforma.' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCompanyDto: UpdateCompanyDto,
@@ -130,6 +135,13 @@ export class CompanyController {
     } catch (error) {
       if (error instanceof Error && error.name === 'CompanyNotFoundException') {
         throw new NotFoundException(error.message);
+      }
+
+      if (
+        error instanceof Error &&
+        error.name === 'UserAlreadyExistsException'
+      ) {
+        throw new ConflictException(error.message);
       }
 
       if (error instanceof Error && error.name === 'DomainException') {
@@ -145,8 +157,9 @@ export class CompanyController {
   @ApiOperation({ summary: 'Atualiza parcialmente os dados de uma empresa' })
   @ApiBody({ type: PatchCompanyDto })
   @ApiOkResponse({ description: 'Empresa atualizada com sucesso.' })
-  @ApiNotFoundResponse({ description: 'Empresa não encontrada.' })
-  @ApiBadRequestResponse({ description: 'Erro de validação.' })
+  @ApiNotFoundResponse({ description: 'Empresa nao encontrada.' })
+  @ApiBadRequestResponse({ description: 'Erro de validacao.' })
+  @ApiConflictResponse({ description: 'E-mail ja cadastrado na plataforma.' })
   async patch(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() patchCompanyDto: PatchCompanyDto,
@@ -156,6 +169,13 @@ export class CompanyController {
     } catch (error) {
       if (error instanceof Error && error.name === 'CompanyNotFoundException') {
         throw new NotFoundException(error.message);
+      }
+
+      if (
+        error instanceof Error &&
+        error.name === 'UserAlreadyExistsException'
+      ) {
+        throw new ConflictException(error.message);
       }
 
       if (error instanceof Error && error.name === 'DomainException') {
@@ -171,7 +191,7 @@ export class CompanyController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Deleta uma empresa pelo ID' })
   @ApiNoContentResponse({ description: 'Empresa deletada com sucesso.' })
-  @ApiNotFoundResponse({ description: 'Empresa não encontrada.' })
+  @ApiNotFoundResponse({ description: 'Empresa nao encontrada.' })
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     try {
       await this.companyService.deleteCompany(id);

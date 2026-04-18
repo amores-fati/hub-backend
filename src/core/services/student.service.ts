@@ -30,10 +30,7 @@ export class StudentService {
       throw new StudentAlreadyExistsException(command.cpf);
     }
 
-    const existingUser = await this.userRepository.findByEmail(command.email);
-    if (existingUser) {
-      throw new UserAlreadyExistsException(command.email);
-    }
+    await this.assertEmailAvailable(command.email);
 
     const studentId = randomUUID();
     const hashedPassword = await this.hashService.hash(command.password);
@@ -63,7 +60,7 @@ export class StudentService {
       command.socialBenefits?.map(
         (benefit, index) =>
           new SocialBenefit(
-            index + 1,
+            -(index + 1),
             studentId,
             benefit.benefit,
             benefit.benefitOther,
@@ -74,32 +71,33 @@ export class StudentService {
       command.accessibilityResources?.map(
         (resource, index) =>
           new AccessibilityResource(
-            index + 1,
+            -(index + 1),
             studentId,
             resource.resource,
             resource.resourceOther,
           ),
       ) || [];
 
+    let birthDate: Date | undefined = undefined;
+    if (command.birthDate) {
+      birthDate = command.birthDate instanceof Date ? command.birthDate : new Date(command.birthDate);
+    }
     const student = new Student(
       studentId,
       hashedPassword,
       command.email,
       command.cpf,
       contact,
-      command.socialName,
-      command.birthDate ? new Date(command.birthDate) : undefined,
+      birthDate,
       command.gender,
       command.race,
       command.education,
-      command.courseName,
       command.institution,
       command.activityArea,
       command.hasProgrammingExperience,
-      command.hasTechCourses,
-      command.techCoursesList,
+      command.hasTechnologyCourse,
       command.sendCurriculum ?? false,
-      command.fatilabMotivation,
+      command.motivation,
       command.howHeard,
       command.hasComputer,
       command.hasInternet,
@@ -142,6 +140,7 @@ export class StudentService {
   ): Promise<Student> {
     const student = await this.getStudentById(id);
 
+    await this.assertEmailAvailable(command.email, student.id);
     student.changeEmail(command.email);
 
     if (command.password) {
@@ -149,24 +148,15 @@ export class StudentService {
       student.changePassword(hashedPassword);
     }
 
-    student.changeSocialName(command.socialName);
-
-    student.changeAcademicData({
-      education: command.education,
-      courseName: command.courseName,
-      institution: command.institution,
-      activityArea: command.activityArea,
-    });
-
-    student.changeTechnologyData({
-      hasProgrammingExperience: command.hasProgrammingExperience,
-      hasTechCourses: command.hasTechCourses,
-      techCoursesList: command.techCoursesList,
+    student.changeProfileData({
+      birthDate: command.birthDate ? new Date(command.birthDate) : undefined,
+      gender: command.gender,
+      race: command.race,
     });
 
     student.changeParticipationData({
       sendCurriculum: command.sendCurriculum,
-      fatilabMotivation: command.fatilabMotivation,
+      motivation: command.motivation,
       howHeard: command.howHeard,
       hasComputer: command.hasComputer,
       hasInternet: command.hasInternet,
@@ -198,7 +188,7 @@ export class StudentService {
       const benefits = command.socialBenefits.map(
         (benefit, index) =>
           new SocialBenefit(
-            index + 1,
+            -(index + 1),
             student.id,
             benefit.benefit,
             benefit.benefitOther,
@@ -211,7 +201,7 @@ export class StudentService {
       const resources = command.accessibilityResources.map(
         (resource, index) =>
           new AccessibilityResource(
-            index + 1,
+            -(index + 1),
             student.id,
             resource.resource,
             resource.resourceOther,
@@ -229,31 +219,26 @@ export class StudentService {
   ): Promise<Student> {
     const student = await this.getStudentById(id);
 
-    if (command.email !== undefined) student.changeEmail(command.email);
+    if (command.email !== undefined) {
+      await this.assertEmailAvailable(command.email, student.id);
+      student.changeEmail(command.email);
+    }
     if (command.password !== undefined) {
       const hashedPassword = await this.hashService.hash(command.password);
       student.changePassword(hashedPassword);
     }
-    if (command.socialName !== undefined) {
-      student.changeSocialName(command.socialName);
-    }
-
-    student.changeAcademicData({
-      education: command.education,
-      courseName: command.courseName,
-      institution: command.institution,
-      activityArea: command.activityArea,
-    });
-
-    student.changeTechnologyData({
-      hasProgrammingExperience: command.hasProgrammingExperience,
-      hasTechCourses: command.hasTechCourses,
-      techCoursesList: command.techCoursesList,
+    student.changeProfileData({
+      birthDate:
+        command.birthDate !== undefined
+          ? new Date(command.birthDate)
+          : undefined,
+      gender: command.gender,
+      race: command.race,
     });
 
     student.changeParticipationData({
       sendCurriculum: command.sendCurriculum,
-      fatilabMotivation: command.fatilabMotivation,
+      motivation: command.motivation,
       howHeard: command.howHeard,
       hasComputer: command.hasComputer,
       hasInternet: command.hasInternet,
@@ -290,7 +275,7 @@ export class StudentService {
       const benefits = command.socialBenefits.map(
         (benefit, index) =>
           new SocialBenefit(
-            index + 1,
+            -(index + 1),
             student.id,
             benefit.benefit!,
             benefit.benefitOther,
@@ -303,7 +288,7 @@ export class StudentService {
       const resources = command.accessibilityResources.map(
         (resource, index) =>
           new AccessibilityResource(
-            index + 1,
+            -(index + 1),
             student.id,
             resource.resource!,
             resource.resourceOther,
@@ -318,5 +303,16 @@ export class StudentService {
   async deleteStudent(id: string): Promise<void> {
     const student = await this.getStudentById(id);
     await this.studentRepository.delete(student.id);
+  }
+
+  private async assertEmailAvailable(
+    email: string,
+    currentUserId?: string,
+  ): Promise<void> {
+    const existingUser = await this.userRepository.findByEmail(email);
+
+    if (existingUser && existingUser.id !== currentUserId) {
+      throw new UserAlreadyExistsException(email);
+    }
   }
 }

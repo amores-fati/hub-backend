@@ -9,14 +9,15 @@ import { DisabilityOrmEntity } from '../adapters/out/orm/disability.orm-entity';
 import { CurriculumOrmEntity } from '../adapters/out/orm/curriculum.orm-entity';
 import { SocialBenefitOrmEntity } from '../adapters/out/orm/social-benefit.orm-entity';
 import { AccessibilityResourceOrmEntity } from '../adapters/out/orm/accessibility-resource.orm-entity';
-import { SkillsJobOrmEntity } from '../adapters/out/orm/skills_job.orm-entity';
-import { SkillsCurriculumOrmEntity } from '../adapters/out/orm/skills_curriculum.orm-entity';
+import { JobSkillOrmEntity } from '../adapters/out/orm/job-skill.orm-entity';
+import { CurriculumSkillOrmEntity } from '../adapters/out/orm/curriculum-skill.orm-entity';
 import { ContactOrmEntity } from '../adapters/out/orm/contact.orm-entity';
-import { JobOrmEntity } from '../adapters/out/orm/jobs.orm-entity';
+import { JobOpeningOrmEntity } from '../adapters/out/orm/job-opening.orm-entity';
 import { AdminOrmEntity } from '../adapters/out/orm/admin.orm-entity';
 import { SkillOrmEntity } from '../adapters/out/orm/skill.orm-entity';
 import { CompanyOrmEntity } from '../adapters/out/orm/company.orm-entity';
-import { PersonCourseOrmEntity } from '../adapters/out/orm/person_course.orm-entity';
+import { InPersonCourseDetailOrmEntity } from '../adapters/out/orm/in-person-course-detail.orm-entity';
+import { SnakeNamingStrategy } from './snake-naming.strategy';
 
 export const ORM_ENTITIES = [
   UserOrmEntity,
@@ -26,32 +27,43 @@ export const ORM_ENTITIES = [
   CurriculumOrmEntity,
   SocialBenefitOrmEntity,
   AccessibilityResourceOrmEntity,
-  SkillsJobOrmEntity,
-  SkillsCurriculumOrmEntity,
+  JobSkillOrmEntity,
+  CurriculumSkillOrmEntity,
   ContactOrmEntity,
-  JobOrmEntity,
+  JobOpeningOrmEntity,
   AdminOrmEntity,
   CompanyOrmEntity,
   SkillOrmEntity,
-  PersonCourseOrmEntity,
+  InPersonCourseDetailOrmEntity,
 ] as const;
 
 type SharedDatabaseOptions = PostgresConnectionOptions;
+
+function readRequiredEnv(name: string): string | undefined {
+  const value = process.env[name];
+
+  if (value && value.trim() !== '') {
+    return value;
+  }
+
+  return undefined;
+}
 
 export function buildDatabaseOptions(
   overrides: Partial<SharedDatabaseOptions> = {},
 ): SharedDatabaseOptions {
   return {
     type: 'postgres',
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT ?? 5432),
-    username: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME,
+    host: readRequiredEnv('DB_HOST'),
+    port: Number(readRequiredEnv('DB_PORT') ?? 5432),
+    username: readRequiredEnv('DB_USERNAME'),
+    password: readRequiredEnv('DB_PASSWORD'),
+    database: readRequiredEnv('DB_DATABASE'),
     entities: [...ORM_ENTITIES],
     migrations: [
       join(__dirname, '..', 'adapters', 'out', 'migrations', '*.{ts,js}'),
     ],
+    namingStrategy: new SnakeNamingStrategy(),
     synchronize: false,
     ...overrides,
   };

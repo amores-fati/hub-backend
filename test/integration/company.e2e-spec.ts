@@ -42,7 +42,7 @@ describe('CompanyController (e2e)', () => {
           cnpj: dynamicCnpj,
           email: companyEmail,
           password: companyPassword,
-          ownerName: 'Admin E2E',
+          responsibleName: 'Admin E2E',
           contact: {
             city: 'São Paulo',
             state: 'SP',
@@ -92,7 +92,7 @@ describe('CompanyController (e2e)', () => {
           cnpj: dynamicCnpj,
           email: `another-${Date.now()}@company.com`,
           password: 'securepassword123',
-          ownerName: 'Admin E2E',
+          responsibleName: 'Admin E2E',
           contact: {
             phone: '11988888888',
           },
@@ -146,7 +146,7 @@ describe('CompanyController (e2e)', () => {
           name: 'Updated E2E Company',
           email: 'updated@company.com',
           password: 'newpassword123',
-          ownerName: 'Admin Updated',
+          responsibleName: 'Admin Updated',
           contact: {
             city: 'Rio de Janeiro',
             state: 'RJ',

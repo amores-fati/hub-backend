@@ -1,14 +1,9 @@
-import { Entity, PrimaryColumn, Column, OneToOne, JoinColumn } from 'typeorm';
-import { UserOrmEntity } from './user.orm-entity';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity('contacts')
 export class ContactOrmEntity {
   @PrimaryColumn('uuid')
   id: string;
-
-  @OneToOne(() => UserOrmEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'id' })
-  user: UserOrmEntity;
 
   @Column({ type: 'varchar', length: 20 })
   phone: string;

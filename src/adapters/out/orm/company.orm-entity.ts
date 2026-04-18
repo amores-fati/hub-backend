@@ -13,11 +13,10 @@ export class CompanyOrmEntity {
   @Column({ type: 'varchar', length: 100 })
   name: string;
 
-  @Column({ type: 'varchar', length: 100 })
-  ownerName: string;
+  @Column({ name: 'responsible_name', type: 'varchar', length: 100 })
+  responsibleName: string;
 
   @OneToOne(() => UserOrmEntity, {
-    cascade: true,
     eager: true,
     onDelete: 'CASCADE',
   })
@@ -25,9 +24,9 @@ export class CompanyOrmEntity {
   user: UserOrmEntity;
 
   @OneToOne(() => ContactOrmEntity, {
-    cascade: true,
     eager: true,
-    onDelete: 'CASCADE',
+    onDelete: 'NO ACTION',
+    nullable: false,
   })
   @JoinColumn({ name: 'contact_id' })
   contact: ContactOrmEntity;

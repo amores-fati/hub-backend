@@ -321,9 +321,9 @@ export function buildDatabaseOptions(): DataSourceOptions {
     type: 'postgres',
     host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT ?? 5432),
-    username: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME,
+    username: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE,
     synchronize: false,
     migrations: [__dirname + '/../adapters/out/migrations/*.{ts,js}'],
   };
@@ -349,7 +349,7 @@ O `AppModule` deve reutilizar a mesma base de configuracao:
 ```ts
 TypeOrmModule.forRootAsync({
   useFactory: async () => buildDatabaseOptions(),
-})
+});
 ```
 
 Se o projeto optar por complementar configuracao em runtime, isso deve acontecer em cima da mesma base, sem duplicar fonte de verdade.

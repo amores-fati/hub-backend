@@ -28,10 +28,7 @@ export class CompanyService {
       throw new CompanyAlreadyExistsException(command.cnpj);
     }
 
-    const existingUser = await this.userRepository.findByEmail(command.email);
-    if (existingUser) {
-      throw new UserAlreadyExistsException(command.email);
-    }
+    await this.assertEmailAvailable(command.email);
 
     const companyId = randomUUID();
 
@@ -54,7 +51,7 @@ export class CompanyService {
       hashedPassword,
       command.name,
       command.cnpj,
-      command.ownerName,
+      command.responsibleName,
       contact,
     );
 
@@ -87,6 +84,7 @@ export class CompanyService {
   ): Promise<Company> {
     const company = await this.getCompanyById(id);
 
+    await this.assertEmailAvailable(command.email, company.id);
     company.changeEmail(command.email);
 
     if (command.password) {
@@ -95,7 +93,7 @@ export class CompanyService {
     }
 
     company.changeName(command.name);
-    company.changeOwnerName(command.ownerName);
+    company.changeResponsibleName(command.responsibleName);
 
     company.contact.changePhone(command.contact.phone);
     company.contact.changeAddress({
@@ -116,14 +114,17 @@ export class CompanyService {
   ): Promise<Company> {
     const company = await this.getCompanyById(id);
 
-    if (command.email !== undefined) company.changeEmail(command.email);
+    if (command.email !== undefined) {
+      await this.assertEmailAvailable(command.email, company.id);
+      company.changeEmail(command.email);
+    }
     if (command.password !== undefined) {
       const hashedPassword = await this.hashService.hash(command.password);
       company.changePassword(hashedPassword);
     }
     if (command.name !== undefined) company.changeName(command.name);
-    if (command.ownerName !== undefined)
-      company.changeOwnerName(command.ownerName);
+    if (command.responsibleName !== undefined)
+      company.changeResponsibleName(command.responsibleName);
 
     if (command.contact) {
       if (command.contact.phone !== undefined)
@@ -152,5 +153,16 @@ export class CompanyService {
   async deleteCompany(id: string): Promise<void> {
     const company = await this.getCompanyById(id);
     await this.companyRepository.delete(company.id);
+  }
+
+  private async assertEmailAvailable(
+    email: string,
+    currentUserId?: string,
+  ): Promise<void> {
+    const existingUser = await this.userRepository.findByEmail(email);
+
+    if (existingUser && existingUser.id !== currentUserId) {
+      throw new UserAlreadyExistsException(email);
+    }
   }
 }

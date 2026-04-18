@@ -18,25 +18,28 @@ import {
   UpdateAccessibilityResourceCommand,
   PatchAccessibilityResourceCommand,
 } from './accessibility-resource.command';
+import {
+  EducationLevel,
+  Gender,
+  HowHeardChannel,
+  Race,
+} from '../domain/enums/student-profile.enum';
 
 export interface CreateStudentCommand {
   email: string;
   password: string;
   cpf: string;
-  socialName?: string;
-  birthDate: string;
-  gender: string;
-  race: string;
-  education?: string;
-  courseName?: string;
+  birthDate: string | Date;
+  gender: Gender;
+  race: Race;
+  education?: EducationLevel;
   institution?: string;
   activityArea?: string;
   hasProgrammingExperience?: boolean;
-  hasTechCourses?: boolean;
-  techCoursesList?: string;
+  hasTechnologyCourse?: boolean;
   sendCurriculum?: boolean;
-  fatilabMotivation?: string;
-  howHeard?: string;
+  motivation?: string;
+  howHeard?: HowHeardChannel;
   hasComputer?: boolean;
   hasInternet?: boolean;
   committedToParticipate?: boolean;

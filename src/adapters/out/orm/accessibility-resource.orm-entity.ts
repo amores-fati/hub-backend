@@ -19,13 +19,6 @@ export class AccessibilityResourceOrmEntity {
   @Column({ type: 'varchar' })
   resource: AccessibilityResourceType;
 
-  @Column({
-    name: 'resource_other',
-    type: 'varchar',
-    length: 100,
-    nullable: true,
-  })
-  resourceOther: string | null;
 
   @ManyToOne(
     () => StudentOrmEntity,

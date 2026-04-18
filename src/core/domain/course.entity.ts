@@ -1,81 +1,102 @@
 import { DomainException } from '../exceptions/domain.exception';
 
 export class Course {
+  readonly #id: string;
+  #name: string;
+  #banner: string;
+  #courseLoad: string;
+  #startDate: Date;
+  #endDate: Date;
+  #startRegistrations: Date;
+  #endRegistrations: Date;
+  #linkAccess: string;
+  #description?: string;
+
   constructor(
-    private readonly _id: string,
-    private _name: string,
-    private _banner: string,
-    private _courseLoad: string,
-    private _startDate: Date,
-    private _endDate: Date,
-    private _startRegistrations: Date,
-    private _endRegistrations: Date,
-    private _linkAccess: string,
-    private _description?: string,
+    id: string,
+    name: string,
+    banner: string,
+    courseLoad: string,
+    startDate: Date,
+    endDate: Date,
+    startRegistrations: Date,
+    endRegistrations: Date,
+    linkAccess: string,
+    description?: string,
   ) {
+    this.#id = id;
+    this.#name = name;
+    this.#banner = banner;
+    this.#courseLoad = courseLoad;
+    this.#startDate = startDate;
+    this.#endDate = endDate;
+    this.#startRegistrations = startRegistrations;
+    this.#endRegistrations = endRegistrations;
+    this.#linkAccess = linkAccess;
+    this.#description = description;
     this.validateCourse();
   }
 
   get id(): string {
-    return this._id;
+    return this.#id;
   }
 
   get name(): string {
-    return this._name;
+    return this.#name;
   }
 
   get banner(): string {
-    return this._banner;
+    return this.#banner;
   }
 
   get description(): string | undefined {
-    return this._description;
+    return this.#description;
   }
 
   get courseLoad(): string {
-    return this._courseLoad;
+    return this.#courseLoad;
   }
 
   get startDate(): Date {
-    return this._startDate;
+    return this.#startDate;
   }
 
   get endDate(): Date {
-    return this._endDate;
+    return this.#endDate;
   }
 
   get startRegistrations(): Date {
-    return this._startRegistrations;
+    return this.#startRegistrations;
   }
 
   get endRegistrations(): Date {
-    return this._endRegistrations;
+    return this.#endRegistrations;
   }
 
   get linkAccess(): string {
-    return this._linkAccess;
+    return this.#linkAccess;
   }
 
   private validateCourse(): void {
-    this.validateRequiredText(this._name, 'O nome do curso e obrigatorio.');
-    this.validateRequiredText(this._banner, 'O banner do curso e obrigatorio.');
+    this.validateRequiredText(this.#name, 'O nome do curso e obrigatorio.');
+    this.validateRequiredText(this.#banner, 'O banner do curso e obrigatorio.');
     this.validateRequiredText(
-      this._courseLoad,
+      this.#courseLoad,
       'A carga horaria do curso e obrigatoria.',
     );
     this.validateRequiredText(
-      this._linkAccess,
+      this.#linkAccess,
       'O link de acesso do curso e obrigatorio.',
     );
-    this.validateOptionalText(this._description);
+    this.validateOptionalText(this.#description);
     this.validateDateRange(
-      this._startDate,
-      this._endDate,
+      this.#startDate,
+      this.#endDate,
       'A data final do curso nao pode ser anterior a data inicial.',
     );
     this.validateDateRange(
-      this._startRegistrations,
-      this._endRegistrations,
+      this.#startRegistrations,
+      this.#endRegistrations,
       'A data final das inscricoes nao pode ser anterior a data inicial.',
     );
   }

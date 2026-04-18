@@ -15,6 +15,7 @@ import { ContactOrmEntity } from '../orm/contact.orm-entity';
 import { DisabilityOrmEntity } from '../orm/disability.orm-entity';
 import { SocialBenefitOrmEntity } from '../orm/social-benefit.orm-entity';
 import { AccessibilityResourceOrmEntity } from '../orm/accessibility-resource.orm-entity';
+import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @Injectable()
 export class StudentRepository implements IStudentRepository {
@@ -25,6 +26,7 @@ export class StudentRepository implements IStudentRepository {
 
   async create(student: Student): Promise<Student> {
     const ormEntity = this.mapToOrm(student);
+    const relatedRecords = this.detachChildRelations(ormEntity);
 
     await this.ormRepository.manager.transaction(
       async (transactionalEntityManager) => {
@@ -33,17 +35,17 @@ export class StudentRepository implements IStudentRepository {
 
         await transactionalEntityManager.save(ormEntity);
 
-        if (ormEntity.disability) {
-          await transactionalEntityManager.save(ormEntity.disability);
+        if (relatedRecords.disability) {
+          await transactionalEntityManager.save(relatedRecords.disability);
         }
 
-        if (ormEntity.socialBenefits.length > 0) {
-          await transactionalEntityManager.save(ormEntity.socialBenefits);
+        if (relatedRecords.socialBenefits.length > 0) {
+          await transactionalEntityManager.save(relatedRecords.socialBenefits);
         }
 
-        if (ormEntity.accessibilityResources.length > 0) {
+        if (relatedRecords.accessibilityResources.length > 0) {
           await transactionalEntityManager.save(
-            ormEntity.accessibilityResources,
+            relatedRecords.accessibilityResources,
           );
         }
       },
@@ -109,24 +111,52 @@ export class StudentRepository implements IStudentRepository {
 
   async update(student: Student): Promise<Student> {
     const ormEntity = this.mapToOrm(student);
+    const relatedRecords = this.detachChildRelations(ormEntity);
+    const shouldReplaceSocialBenefits =
+      relatedRecords.socialBenefits.length === 0 ||
+      relatedRecords.socialBenefits.some((benefit) => benefit.id == null);
+    const shouldReplaceAccessibilityResources =
+      relatedRecords.accessibilityResources.length === 0 ||
+      relatedRecords.accessibilityResources.some(
+        (resource) => resource.id == null,
+      );
 
     await this.ormRepository.manager.transaction(
       async (transactionalEntityManager) => {
         await transactionalEntityManager.save(ormEntity.user);
         await transactionalEntityManager.save(ormEntity.contact);
-        await transactionalEntityManager.save(ormEntity);
+        await transactionalEntityManager.update(
+          StudentOrmEntity,
+          { id: ormEntity.id },
+          this.mapStudentFieldsToUpdate(ormEntity),
+        );
 
-        if (ormEntity.disability) {
-          await transactionalEntityManager.save(ormEntity.disability);
+        if (relatedRecords.disability) {
+          await transactionalEntityManager.save(relatedRecords.disability);
         }
 
-        if (ormEntity.socialBenefits.length > 0) {
-          await transactionalEntityManager.save(ormEntity.socialBenefits);
+        if (shouldReplaceSocialBenefits) {
+          await transactionalEntityManager.delete(SocialBenefitOrmEntity, {
+            studentId: ormEntity.id,
+          });
         }
 
-        if (ormEntity.accessibilityResources.length > 0) {
+        if (relatedRecords.socialBenefits.length > 0) {
+          await transactionalEntityManager.save(relatedRecords.socialBenefits);
+        }
+
+        if (shouldReplaceAccessibilityResources) {
+          await transactionalEntityManager.delete(
+            AccessibilityResourceOrmEntity,
+            {
+              studentId: ormEntity.id,
+            },
+          );
+        }
+
+        if (relatedRecords.accessibilityResources.length > 0) {
           await transactionalEntityManager.save(
-            ormEntity.accessibilityResources,
+            relatedRecords.accessibilityResources,
           );
         }
       },
@@ -192,19 +222,19 @@ export class StudentRepository implements IStudentRepository {
     ormEntity.id = student.id;
     ormEntity.cpf = student.cpf;
     ormEntity.socialName = student.socialName || null;
-    ormEntity.birthDate = student.birthDate || null;
-    ormEntity.gender = student.gender || null;
-    ormEntity.race = student.race || null;
+    ormEntity.birthDate = student.birthDate;
+    ormEntity.gender = student.gender;
+    ormEntity.race = student.race;
     ormEntity.education = student.education || null;
     ormEntity.courseName = student.courseName || null;
     ormEntity.institution = student.institution || null;
     ormEntity.activityArea = student.activityArea || null;
     ormEntity.hasProgrammingExperience =
       student.hasProgrammingExperience ?? null;
-    ormEntity.hasTechCourses = student.hasTechCourses ?? null;
-    ormEntity.techCoursesList = student.techCoursesList || null;
+    ormEntity.hasTechnologyCourse = student.hasTechnologyCourse ?? null;
+    ormEntity.technologyCoursesList = student.technologyCoursesList || null;
     ormEntity.sendCurriculum = student.sendCurriculum;
-    ormEntity.fatilabMotivation = student.fatilabMotivation || null;
+    ormEntity.motivation = student.motivation || null;
     ormEntity.howHeard = student.howHeard || null;
     ormEntity.hasComputer = student.hasComputer ?? null;
     ormEntity.hasInternet = student.hasInternet ?? null;
@@ -214,10 +244,10 @@ export class StudentRepository implements IStudentRepository {
     ormEntity.user.id = student.id;
     ormEntity.user.email = student.email;
     ormEntity.user.password = student.password;
+    ormEntity.user.role = UserRoleEnum.STUDENT;
 
     ormEntity.contact = new ContactOrmEntity();
     ormEntity.contact.id = student.contact.id;
-    ormEntity.contact.user = ormEntity.user;
     ormEntity.contact.phone = student.contact.phone;
     ormEntity.contact.neighbourhood = student.contact.neighbourhood || null;
     ormEntity.contact.state = student.contact.state || null;
@@ -240,6 +270,49 @@ export class StudentRepository implements IStudentRepository {
     );
 
     return ormEntity;
+  }
+
+  private detachChildRelations(ormEntity: StudentOrmEntity): {
+    disability: DisabilityOrmEntity | null;
+    socialBenefits: SocialBenefitOrmEntity[];
+    accessibilityResources: AccessibilityResourceOrmEntity[];
+  } {
+    const relatedRecords = {
+      disability: ormEntity.disability,
+      socialBenefits: ormEntity.socialBenefits,
+      accessibilityResources: ormEntity.accessibilityResources,
+    };
+
+    ormEntity.disability = null;
+    ormEntity.socialBenefits = [];
+    ormEntity.accessibilityResources = [];
+
+    return relatedRecords;
+  }
+
+  private mapStudentFieldsToUpdate(
+    ormEntity: StudentOrmEntity,
+  ): Partial<StudentOrmEntity> {
+    return {
+      cpf: ormEntity.cpf,
+      socialName: ormEntity.socialName,
+      birthDate: ormEntity.birthDate,
+      gender: ormEntity.gender,
+      race: ormEntity.race,
+      education: ormEntity.education,
+      courseName: ormEntity.courseName,
+      institution: ormEntity.institution,
+      activityArea: ormEntity.activityArea,
+      hasProgrammingExperience: ormEntity.hasProgrammingExperience,
+      hasTechnologyCourse: ormEntity.hasTechnologyCourse,
+      technologyCoursesList: ormEntity.technologyCoursesList,
+      sendCurriculum: ormEntity.sendCurriculum,
+      motivation: ormEntity.motivation,
+      howHeard: ormEntity.howHeard,
+      hasComputer: ormEntity.hasComputer,
+      hasInternet: ormEntity.hasInternet,
+      committedToParticipate: ormEntity.committedToParticipate,
+    };
   }
 
   private mapToDomain(ormEntity: StudentOrmEntity): Student {
@@ -290,19 +363,16 @@ export class StudentRepository implements IStudentRepository {
       ormEntity.user.email,
       ormEntity.cpf,
       contact,
-      ormEntity.socialName || undefined,
-      ormEntity.birthDate || undefined,
+      this.coerceOptionalDate(ormEntity.birthDate),
       ormEntity.gender || undefined,
       ormEntity.race || undefined,
       ormEntity.education || undefined,
-      ormEntity.courseName || undefined,
       ormEntity.institution || undefined,
       ormEntity.activityArea || undefined,
       ormEntity.hasProgrammingExperience ?? undefined,
-      ormEntity.hasTechCourses ?? undefined,
-      ormEntity.techCoursesList || undefined,
+      ormEntity.hasTechnologyCourse ?? undefined,
       ormEntity.sendCurriculum ?? false,
-      ormEntity.fatilabMotivation || undefined,
+      ormEntity.motivation || undefined,
       ormEntity.howHeard || undefined,
       ormEntity.hasComputer ?? undefined,
       ormEntity.hasInternet ?? undefined,
@@ -333,7 +403,9 @@ export class StudentRepository implements IStudentRepository {
     student: StudentOrmEntity,
   ): SocialBenefitOrmEntity {
     const orm = new SocialBenefitOrmEntity();
-    orm.id = benefit.id;
+    if (benefit.id > 0) {
+      orm.id = benefit.id;
+    }
     orm.studentId = studentId;
     orm.benefit = benefit.benefit;
     orm.benefitOther = benefit.benefitOther || null;
@@ -347,11 +419,23 @@ export class StudentRepository implements IStudentRepository {
     student: StudentOrmEntity,
   ): AccessibilityResourceOrmEntity {
     const orm = new AccessibilityResourceOrmEntity();
-    orm.id = resource.id;
+    if (resource.id > 0) {
+      orm.id = resource.id;
+    }
     orm.studentId = studentId;
     orm.resource = resource.resource;
     orm.resourceOther = resource.resourceOther || null;
     orm.student = student;
     return orm;
+  }
+
+  private coerceOptionalDate(
+    value: Date | string | null | undefined,
+  ): Date | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    return value instanceof Date ? value : new Date(value);
   }
 }

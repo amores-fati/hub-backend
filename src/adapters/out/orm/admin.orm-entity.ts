@@ -6,7 +6,7 @@ export class AdminOrmEntity {
   @PrimaryColumn('uuid')
   id: string;
 
-  @OneToOne(() => UserOrmEntity, { cascade: true, onDelete: 'CASCADE' })
+  @OneToOne(() => UserOrmEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id' })
   user: UserOrmEntity;
 }

@@ -1,5 +1,19 @@
 # Modelo de persistencia atual e ajustes necessarios
 
+## Status
+
+Este documento ficou historico.
+
+Ele registra uma fase anterior da migracao para TypeORM e ainda menciona drifts ja corrigidos no repositorio atual.
+
+Para o estado vigente da persistencia, use:
+
+- `docs/esquema-banco-atual.md`
+- `src/config/database.config.ts`
+- `src/adapters/out/migrations/1776384000000-InitialSchema.ts`
+- `src/adapters/out/migrations/1776470400000-AddUserCreatedAtAndStudentControlledValues.ts`
+- `src/adapters/out/migrations/1776556800000-TrimLegacyContactColumnsAndProtectStudentLists.ts`
+
 ## Objetivo
 
 Este documento registra:

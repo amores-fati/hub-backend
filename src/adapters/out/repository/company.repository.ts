@@ -7,6 +7,7 @@ import { CompanyOrmEntity } from '../orm/company.orm-entity';
 import { Contact } from '../../../core/domain/contact.entity';
 import { UserOrmEntity } from '../orm/user.orm-entity';
 import { ContactOrmEntity } from '../orm/contact.orm-entity';
+import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @Injectable()
 export class CompanyRepository implements ICompanyRepository {
@@ -94,16 +95,16 @@ export class CompanyRepository implements ICompanyRepository {
     ormEntity.id = company.id;
     ormEntity.cnpj = company.cnpj;
     ormEntity.name = company.name;
-    ormEntity.ownerName = company.ownerName;
+    ormEntity.responsibleName = company.responsibleName;
 
     ormEntity.user = new UserOrmEntity();
     ormEntity.user.id = company.id;
     ormEntity.user.email = company.email;
     ormEntity.user.password = company.password;
+    ormEntity.user.role = UserRoleEnum.COMPANY;
 
     ormEntity.contact = new ContactOrmEntity();
     ormEntity.contact.id = company.contact.id;
-    ormEntity.contact.user = ormEntity.user;
     ormEntity.contact.phone = company.contact.phone;
     ormEntity.contact.neighbourhood = company.contact.neighbourhood || null;
     ormEntity.contact.state = company.contact.state || null;
@@ -133,7 +134,7 @@ export class CompanyRepository implements ICompanyRepository {
       ormEntity.user.password,
       ormEntity.name,
       ormEntity.cnpj,
-      ormEntity.ownerName,
+      ormEntity.responsibleName,
       contact,
     );
   }

@@ -34,6 +34,7 @@ import { ICourseRepository } from './core/ports/course.repository.interface';
 
 // Company Adapters & Core
 import { CompanyOrmEntity } from './adapters/out/orm/company.orm-entity';
+import { AdminOrmEntity } from './adapters/out/orm/admin.orm-entity';
 import { CompanyController } from './adapters/in/controllers/company.controller';
 import { CompanyService } from './core/services/company.service';
 import { ICompanyRepository } from './core/ports/company.repository.interface';
@@ -73,11 +74,11 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      inject: [ConfigService],
       useFactory: () => buildDatabaseOptions(),
     }),
     TypeOrmModule.forFeature([
       UserOrmEntity,
+      AdminOrmEntity,
       CourseOrmEntity,
       CompanyOrmEntity,
       StudentOrmEntity,

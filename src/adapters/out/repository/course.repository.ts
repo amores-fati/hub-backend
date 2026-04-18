@@ -28,12 +28,12 @@ export class CourseRepository implements ICourseRepository {
       ormEntity.id,
       ormEntity.name,
       ormEntity.banner,
-      ormEntity.course_load,
-      ormEntity.start_date,
-      ormEntity.end_date,
-      ormEntity.start_registrations,
-      ormEntity.end_registrations,
-      ormEntity.link_access,
+      ormEntity.courseLoad,
+      this.coerceDate(ormEntity.startDate),
+      this.coerceDate(ormEntity.endDate),
+      this.coerceDate(ormEntity.startRegistrations),
+      this.coerceDate(ormEntity.endRegistrations),
+      ormEntity.linkAccess,
       ormEntity.description ?? undefined,
     );
   }
@@ -44,12 +44,16 @@ export class CourseRepository implements ICourseRepository {
       name: course.name,
       banner: course.banner,
       description: course.description ?? null,
-      course_load: course.courseLoad,
-      start_date: course.startDate,
-      end_date: course.endDate,
-      start_registrations: course.startRegistrations,
-      end_registrations: course.endRegistrations,
-      link_access: course.linkAccess,
+      courseLoad: course.courseLoad,
+      startDate: course.startDate,
+      endDate: course.endDate,
+      startRegistrations: course.startRegistrations,
+      endRegistrations: course.endRegistrations,
+      linkAccess: course.linkAccess,
     };
+  }
+
+  private coerceDate(value: Date | string): Date {
+    return value instanceof Date ? value : new Date(value);
   }
 }

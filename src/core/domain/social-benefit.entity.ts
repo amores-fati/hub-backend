@@ -2,50 +2,59 @@ import { DomainException } from '../exceptions/domain.exception';
 import { SocialBenefitType } from './enums/social-benefit.enum';
 
 export class SocialBenefit {
+  readonly #id: number;
+  readonly #studentId: string;
+  #benefit: SocialBenefitType;
+  #benefitOther?: string;
+
   constructor(
-    private readonly _id: number,
-    private readonly _studentId: string,
-    private _benefit: SocialBenefitType,
-    private _benefitOther?: string,
+    id: number,
+    studentId: string,
+    benefit: SocialBenefitType,
+    benefitOther?: string,
   ) {
+    this.#id = id;
+    this.#studentId = studentId;
+    this.#benefit = benefit;
+    this.#benefitOther = benefitOther;
     this.validateSocialBenefit();
   }
 
   get id(): number {
-    return this._id;
+    return this.#id;
   }
 
   get studentId(): string {
-    return this._studentId;
+    return this.#studentId;
   }
 
   get benefit(): SocialBenefitType {
-    return this._benefit;
+    return this.#benefit;
   }
 
   get benefitOther(): string | undefined {
-    return this._benefitOther;
+    return this.#benefitOther;
   }
 
   public changeBenefit(
     newBenefit: SocialBenefitType,
     benefitOther?: string,
   ): void {
-    this._benefit = newBenefit;
-    this._benefitOther = benefitOther;
+    this.#benefit = newBenefit;
+    this.#benefitOther = benefitOther;
     this.validateSocialBenefit();
   }
 
   private validateSocialBenefit(): void {
-    if (!this._studentId || this._studentId.trim().length === 0) {
+    if (!this.#studentId || this.#studentId.trim().length === 0) {
       throw new DomainException(
-        'O identificador do estudante é obrigatório para benefício social.',
+        'O identificador do estudante Ã© obrigatÃ³rio para benefÃ­cio social.',
       );
     }
 
-    if (this._benefitOther && this._benefitOther.length > 100) {
+    if (this.#benefitOther && this.#benefitOther.length > 100) {
       throw new DomainException(
-        'A descrição complementar do benefício não pode ter mais que 100 caracteres.',
+        'A descriÃ§Ã£o complementar do benefÃ­cio nÃ£o pode ter mais que 100 caracteres.',
       );
     }
   }

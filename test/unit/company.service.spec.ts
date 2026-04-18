@@ -77,7 +77,7 @@ describe('CompanyService', () => {
         cnpj: mockCompany.cnpj,
         email: mockCompany.email,
         password: 'password123',
-        ownerName: mockCompany.ownerName,
+        responsibleName: mockCompany.responsibleName,
         contact: {
           phone: mockContact.phone,
           neighbourhood: mockContact.neighbourhood,
@@ -110,7 +110,7 @@ describe('CompanyService', () => {
         cnpj: mockCompany.cnpj,
         email: mockCompany.email,
         password: 'password123',
-        ownerName: mockCompany.ownerName,
+        responsibleName: mockCompany.responsibleName,
         contact: { phone: '11999999999' },
       };
 
@@ -127,7 +127,7 @@ describe('CompanyService', () => {
         cnpj: mockCompany.cnpj,
         email: mockCompany.email,
         password: 'password123',
-        ownerName: mockCompany.ownerName,
+        responsibleName: mockCompany.responsibleName,
         contact: { phone: '11999999999' },
       };
 
@@ -178,7 +178,7 @@ describe('CompanyService', () => {
       name: 'Tech Corp S.A.',
       email: 'novo@techcorp.com',
       password: 'newpassword123',
-      ownerName: 'Maria Souza',
+      responsibleName: 'Maria Souza',
       contact: {
         phone: '21999999999',
         neighbourhood: 'Copacabana',
@@ -192,6 +192,7 @@ describe('CompanyService', () => {
 
     it('should update and return the company', async () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(mockCompany);
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
       (mockHashService.hash as jest.Mock).mockResolvedValue(
         'hashedPassword-new',
       );
@@ -205,6 +206,28 @@ describe('CompanyService', () => {
       expect(result.contact.city).toBe(updateCommand.contact.city);
       expect(mockRepository.update).toHaveBeenCalled();
     });
+
+    it('should throw UserAlreadyExistsException when updating to a duplicated email', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockCompany);
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(
+        new Company(
+          '223e4567-e89b-12d3-a456-426614174111',
+          'duplicado@techcorp.com',
+          'hashedPassword',
+          'Outra Tech',
+          '10987654000100',
+          'Maria Souza',
+          mockContact,
+        ),
+      );
+
+      await expect(
+        service.updateCompany(mockCompany.id, {
+          ...updateCommand,
+          email: 'duplicado@techcorp.com',
+        }),
+      ).rejects.toThrow(UserAlreadyExistsException);
+    });
   });
 
   describe('patchCompany', () => {
@@ -216,10 +239,11 @@ describe('CompanyService', () => {
           mockCompany.password,
           mockCompany.name,
           mockCompany.cnpj,
-          mockCompany.ownerName,
+          mockCompany.responsibleName,
           mockContact,
         ),
       );
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
       (mockRepository.update as jest.Mock).mockImplementation((company) =>
         Promise.resolve(company),
       );
@@ -234,6 +258,7 @@ describe('CompanyService', () => {
 
     it('should partially update password and return the company', async () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(mockCompany);
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
       (mockHashService.hash as jest.Mock).mockResolvedValue(
         'hashedPassword-new',
       );
@@ -247,6 +272,27 @@ describe('CompanyService', () => {
       expect(result.password).toBe('hashedPassword-new');
       expect(mockHashService.hash).toHaveBeenCalledWith('newpassword123');
       expect(mockRepository.update).toHaveBeenCalled();
+    });
+
+    it('should throw UserAlreadyExistsException when patching to a duplicated email', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockCompany);
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(
+        new Company(
+          '223e4567-e89b-12d3-a456-426614174111',
+          'duplicado@techcorp.com',
+          'hashedPassword',
+          'Outra Tech',
+          '10987654000100',
+          'Maria Souza',
+          mockContact,
+        ),
+      );
+
+      await expect(
+        service.patchCompany(mockCompany.id, {
+          email: 'duplicado@techcorp.com',
+        }),
+      ).rejects.toThrow(UserAlreadyExistsException);
     });
   });
 

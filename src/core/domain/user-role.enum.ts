@@ -1,1 +1,5 @@
-export type UserRole = 'admin' | 'student' | 'company';
+import { UserRoleEnum } from './enums/user-role.enum';
+
+export { UserRoleEnum };
+
+export type UserRole = UserRoleEnum;
