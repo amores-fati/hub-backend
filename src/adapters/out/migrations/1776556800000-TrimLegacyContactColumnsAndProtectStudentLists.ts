@@ -36,7 +36,16 @@ export class TrimLegacyContactColumnsAndProtectStudentLists1776556800000 impleme
       CHECK ("benefit" IN (${benefitValues}))
     `);
 
-    const resourceValues = toSqlList(['tea','tdah','visual','auditiva','motora','down_syndrome','intelectual','other']);
+    const resourceValues = toSqlList([
+      'tea',
+      'tdah',
+      'visual',
+      'auditiva',
+      'motora',
+      'down_syndrome',
+      'intelectual',
+      'other',
+    ]);
     await queryRunner.query(`
       UPDATE "accessibility_resources"
       SET "resource" = 'other'

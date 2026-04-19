@@ -49,7 +49,7 @@ export class StudentService {
       ? new Disability(
           studentId,
           command.disability.hasDisability,
-        command.disability.type,
+          command.disability.type,
         )
       : undefined;
 

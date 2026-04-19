@@ -57,10 +57,7 @@ export type UpdateStudentCommand = Omit<
 export type PatchStudentCommand = Partial<
   Omit<
     CreateStudentCommand,
-    | 'cpf'
-    | 'contact'
-    | 'disability'
-    | 'socialBenefits'
+    'cpf' | 'contact' | 'disability' | 'socialBenefits'
   >
 > & {
   contact?: PatchContactCommand;

@@ -5,11 +5,7 @@ export class Disability {
   #hasDisability: boolean;
   #type?: string;
 
-  constructor(
-    studentId: string,
-    hasDisability: boolean,
-    type?: string,
-  ) {
+  constructor(studentId: string, hasDisability: boolean, type?: string) {
     this.#studentId = studentId;
     this.#hasDisability = hasDisability;
     this.#type = type;
@@ -28,10 +24,7 @@ export class Disability {
     return this.#type;
   }
 
-  public updateDetails(data: {
-    hasDisability?: boolean;
-    type?: string;
-  }): void {
+  public updateDetails(data: { hasDisability?: boolean; type?: string }): void {
     if (data.hasDisability !== undefined) {
       this.#hasDisability = data.hasDisability;
     }

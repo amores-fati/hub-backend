@@ -44,12 +44,7 @@ export class StudentRepository implements IStudentRepository {
 
     const savedEntity = await this.ormRepository.findOne({
       where: { id: student.id },
-      relations: [
-        'user',
-        'contact',
-        'disability',
-        'socialBenefits',
-      ],
+      relations: ['user', 'contact', 'disability', 'socialBenefits'],
     });
 
     return this.mapToDomain(savedEntity!);
@@ -57,12 +52,7 @@ export class StudentRepository implements IStudentRepository {
 
   async findAll(): Promise<Student[]> {
     const ormEntities = await this.ormRepository.find({
-      relations: [
-        'user',
-        'contact',
-        'disability',
-        'socialBenefits',
-      ],
+      relations: ['user', 'contact', 'disability', 'socialBenefits'],
     });
 
     return ormEntities.map((entity) => this.mapToDomain(entity));
@@ -71,12 +61,7 @@ export class StudentRepository implements IStudentRepository {
   async findById(id: string): Promise<Student | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { id },
-      relations: [
-        'user',
-        'contact',
-        'disability',
-        'socialBenefits',
-      ],
+      relations: ['user', 'contact', 'disability', 'socialBenefits'],
     });
 
     return ormEntity ? this.mapToDomain(ormEntity) : null;
@@ -89,12 +74,7 @@ export class StudentRepository implements IStudentRepository {
   async findByCpf(cpf: string): Promise<Student | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { cpf },
-      relations: [
-        'user',
-        'contact',
-        'disability',
-        'socialBenefits',
-      ],
+      relations: ['user', 'contact', 'disability', 'socialBenefits'],
     });
 
     return ormEntity ? this.mapToDomain(ormEntity) : null;
@@ -135,12 +115,7 @@ export class StudentRepository implements IStudentRepository {
 
     const savedEntity = await this.ormRepository.findOne({
       where: { id: student.id },
-      relations: [
-        'user',
-        'contact',
-        'disability',
-        'socialBenefits',
-      ],
+      relations: ['user', 'contact', 'disability', 'socialBenefits'],
     });
 
     return this.mapToDomain(savedEntity!);
@@ -149,12 +124,7 @@ export class StudentRepository implements IStudentRepository {
   async delete(id: string): Promise<void> {
     const ormEntity = await this.ormRepository.findOne({
       where: { id },
-      relations: [
-        'user',
-        'contact',
-        'disability',
-        'socialBenefits',
-      ],
+      relations: ['user', 'contact', 'disability', 'socialBenefits'],
     });
 
     if (ormEntity) {
