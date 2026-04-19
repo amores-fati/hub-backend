@@ -1,6 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-import { AccessibilityResourceType } from '../../../core/domain/enums/accessibility-resource.enum';
 import { SocialBenefitType } from '../../../core/domain/enums/social-benefit.enum';
 
 function toSqlList(values: string[]): string {
@@ -23,7 +22,7 @@ export class TrimLegacyContactColumnsAndProtectStudentLists1776556800000 impleme
     const benefitValues = toSqlList(Object.values(SocialBenefitType));
     await queryRunner.query(`
       UPDATE "social_benefits"
-      SET "benefit" = '${SocialBenefitType.other}'
+      SET "benefit" = '${SocialBenefitType.OTHERS}'
       WHERE "benefit" IS NOT NULL
         AND "benefit" NOT IN (${benefitValues})
     `);
@@ -37,10 +36,10 @@ export class TrimLegacyContactColumnsAndProtectStudentLists1776556800000 impleme
       CHECK ("benefit" IN (${benefitValues}))
     `);
 
-    const resourceValues = toSqlList(Object.values(AccessibilityResourceType));
+    const resourceValues = toSqlList(['tea','tdah','visual','auditiva','motora','down_syndrome','intelectual','other']);
     await queryRunner.query(`
       UPDATE "accessibility_resources"
-      SET "resource" = '${AccessibilityResourceType.other}'
+      SET "resource" = 'other'
       WHERE "resource" IS NOT NULL
         AND "resource" NOT IN (${resourceValues})
     `);
