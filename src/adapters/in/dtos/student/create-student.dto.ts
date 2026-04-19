@@ -14,7 +14,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 import { IsCpf } from '../../../../utils/validators/cpf.validator';
-import { CreateAccessibilityResourceDto } from '../accessibility-resource/create-accessibility-resource.dto';
 import { CreateContactDto } from '../contact/create-contact.dto';
 import { CreateDisabilityDto } from '../disability/create-disability.dto';
 import { CreateSocialBenefitDto } from '../social-benefit/create-social-benefit.dto';
@@ -23,6 +22,7 @@ import {
   Gender,
   HowHeardChannel,
   Race,
+  FamilyIncome,
 } from '../../../../core/domain/enums/student-profile.enum';
 
 export class CreateStudentDto {
@@ -43,6 +43,15 @@ export class CreateStudentDto {
   @IsNotEmpty()
   @MaxLength(100)
   password: string;
+
+  @ApiPropertyOptional({
+    example: 'Joãozinho',
+    description: 'Nome social do aluno',
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  socialName?: string;
 
   @ApiProperty({
     example: '52998224725',
@@ -86,20 +95,23 @@ export class CreateStudentDto {
   @IsOptional()
   activityArea?: string;
 
+  @ApiPropertyOptional({ example: 'Programação Web' })
+  @IsString()
+  @IsOptional()
+  courseName?: string;
+
   @ApiPropertyOptional({ example: false })
   @IsBoolean()
   @IsOptional()
   hasProgrammingExperience?: boolean;
 
-  @ApiPropertyOptional({ example: true })
-  @IsBoolean()
+  @ApiPropertyOptional({
+    enum: FamilyIncome,
+    example: FamilyIncome.TO1_SALARY,
+  })
+  @IsEnum(FamilyIncome)
   @IsOptional()
-  hasTechnologyCourse?: boolean;
-
-  @ApiPropertyOptional({ example: false })
-  @IsBoolean()
-  @IsOptional()
-  sendCurriculum?: boolean;
+  familyIncome?: FamilyIncome;
 
   @ApiPropertyOptional({ example: 'Quero aprender programacao.' })
   @IsString()
@@ -146,11 +158,4 @@ export class CreateStudentDto {
   @Type(() => CreateSocialBenefitDto)
   @IsOptional()
   socialBenefits?: CreateSocialBenefitDto[];
-
-  @ApiPropertyOptional({ type: () => [CreateAccessibilityResourceDto] })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CreateAccessibilityResourceDto)
-  @IsOptional()
-  accessibilityResources?: CreateAccessibilityResourceDto[];
 }

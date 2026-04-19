@@ -14,15 +14,11 @@ import {
   PatchSocialBenefitCommand,
 } from './social-benefit.command';
 import {
-  CreateAccessibilityResourceCommand,
-  UpdateAccessibilityResourceCommand,
-  PatchAccessibilityResourceCommand,
-} from './accessibility-resource.command';
-import {
   EducationLevel,
   Gender,
   HowHeardChannel,
   Race,
+  FamilyIncome,
 } from '../domain/enums/student-profile.enum';
 
 export interface CreateStudentCommand {
@@ -33,11 +29,10 @@ export interface CreateStudentCommand {
   gender: Gender;
   race: Race;
   education?: EducationLevel;
+  courseName?: string;
   institution?: string;
   activityArea?: string;
   hasProgrammingExperience?: boolean;
-  hasTechnologyCourse?: boolean;
-  sendCurriculum?: boolean;
   motivation?: string;
   howHeard?: HowHeardChannel;
   hasComputer?: boolean;
@@ -46,17 +41,17 @@ export interface CreateStudentCommand {
   contact: CreateContactCommand;
   disability?: CreateDisabilityCommand;
   socialBenefits?: CreateSocialBenefitCommand[];
-  accessibilityResources?: CreateAccessibilityResourceCommand[];
+  socialName?: string;
+  familyIncome?: FamilyIncome;
 }
 
 export type UpdateStudentCommand = Omit<
   CreateStudentCommand,
-  'cpf' | 'contact' | 'disability' | 'socialBenefits' | 'accessibilityResources'
+  'cpf' | 'contact' | 'disability' | 'socialBenefits'
 > & {
   contact: UpdateContactCommand;
   disability?: UpdateDisabilityCommand;
   socialBenefits?: UpdateSocialBenefitCommand[];
-  accessibilityResources?: UpdateAccessibilityResourceCommand[];
 };
 
 export type PatchStudentCommand = Partial<
@@ -66,11 +61,9 @@ export type PatchStudentCommand = Partial<
     | 'contact'
     | 'disability'
     | 'socialBenefits'
-    | 'accessibilityResources'
   >
 > & {
   contact?: PatchContactCommand;
   disability?: PatchDisabilityCommand;
   socialBenefits?: PatchSocialBenefitCommand[];
-  accessibilityResources?: PatchAccessibilityResourceCommand[];
 };

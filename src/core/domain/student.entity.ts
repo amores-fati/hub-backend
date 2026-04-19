@@ -1,5 +1,4 @@
 import { DomainException } from '../exceptions/domain.exception';
-import { AccessibilityResource } from './accessibility-resource.entity';
 import { Contact } from './contact.entity';
 import { Disability } from './disability.entity';
 import {
@@ -11,6 +10,8 @@ import {
   HOW_HEARD_CHANNEL_VALUES,
   Race,
   RACE_VALUES,
+  FamilyIncome,
+  FAMILY_INCOME_VALUES,
 } from './enums/student-profile.enum';
 import { SocialBenefit } from './social-benefit.entity';
 import { User } from './user.entity';
@@ -18,15 +19,16 @@ import { User } from './user.entity';
 export class Student extends User {
   readonly #cpf: string;
   #contact: Contact;
+  #socialName?: string;
   #birthDate: Date;
   #gender: Gender;
   #race: Race;
   #education?: EducationLevel;
+  #courseName?: string;
   #institution?: string;
   #activityArea?: string;
   #hasProgrammingExperience?: boolean;
-  #hasTechnologyCourse?: boolean;
-  #sendCurriculum: boolean;
+  #familyIncome?: FamilyIncome;
   #motivation?: string;
   #howHeard?: HowHeardChannel;
   #hasComputer?: boolean;
@@ -34,7 +36,6 @@ export class Student extends User {
   #committedToParticipate?: boolean;
   #disability?: Disability;
   #socialBenefits: SocialBenefit[];
-  #accessibilityResources: AccessibilityResource[];
 
   constructor(
     id: string,
@@ -49,8 +50,6 @@ export class Student extends User {
     institution?: string,
     activityArea?: string,
     hasProgrammingExperience?: boolean,
-    hasTechnologyCourse?: boolean,
-    sendCurriculum: boolean = false,
     motivation?: string,
     howHeard?: HowHeardChannel,
     hasComputer?: boolean,
@@ -58,7 +57,9 @@ export class Student extends User {
     committedToParticipate?: boolean,
     disability?: Disability,
     socialBenefits: SocialBenefit[] = [],
-    accessibilityResources: AccessibilityResource[] = [],
+    socialName?: string,
+    courseName?: string,
+    familyIncome?: FamilyIncome,
   ) {
     super(id, email, password);
     this.#cpf = cpf;
@@ -71,8 +72,6 @@ export class Student extends User {
     this.#institution = institution;
     this.#activityArea = activityArea;
     this.#hasProgrammingExperience = hasProgrammingExperience;
-    this.#hasTechnologyCourse = hasTechnologyCourse;
-    this.#sendCurriculum = sendCurriculum;
     this.#motivation = motivation;
     this.#howHeard = howHeard;
     this.#hasComputer = hasComputer;
@@ -80,7 +79,9 @@ export class Student extends User {
     this.#committedToParticipate = committedToParticipate;
     this.#disability = disability;
     this.#socialBenefits = socialBenefits;
-    this.#accessibilityResources = accessibilityResources;
+    this.#socialName = socialName;
+    this.#courseName = courseName;
+    this.#familyIncome = familyIncome;
     this.validateStudent();
   }
 
@@ -90,6 +91,10 @@ export class Student extends User {
 
   get contact(): Contact {
     return this.#contact;
+  }
+
+  get socialName(): string | undefined {
+    return this.#socialName;
   }
 
   get birthDate(): Date {
@@ -108,6 +113,10 @@ export class Student extends User {
     return this.#education;
   }
 
+  get courseName(): string | undefined {
+    return this.#courseName;
+  }
+
   get institution(): string | undefined {
     return this.#institution;
   }
@@ -120,12 +129,8 @@ export class Student extends User {
     return this.#hasProgrammingExperience;
   }
 
-  get hasTechnologyCourse(): boolean | undefined {
-    return this.#hasTechnologyCourse;
-  }
-
-  get sendCurriculum(): boolean {
-    return this.#sendCurriculum;
+  get familyIncome(): FamilyIncome | undefined {
+    return this.#familyIncome;
   }
 
   get motivation(): string | undefined {
@@ -156,10 +161,6 @@ export class Student extends User {
     return this.#socialBenefits;
   }
 
-  get accessibilityResources(): AccessibilityResource[] {
-    return this.#accessibilityResources;
-  }
-
   public changeContact(newContact: Contact): void {
     this.#contact = newContact;
     this.validateContact();
@@ -177,16 +178,13 @@ export class Student extends User {
   }
 
   public changeParticipationData(data: {
-    sendCurriculum?: boolean;
     motivation?: string;
     howHeard?: HowHeardChannel;
     hasComputer?: boolean;
     hasInternet?: boolean;
     committedToParticipate?: boolean;
+    familyIncome?: FamilyIncome;
   }): void {
-    if (data.sendCurriculum !== undefined) {
-      this.#sendCurriculum = data.sendCurriculum;
-    }
     if (data.motivation !== undefined) {
       this.#motivation = data.motivation;
     }
@@ -202,6 +200,9 @@ export class Student extends User {
     if (data.committedToParticipate !== undefined) {
       this.#committedToParticipate = data.committedToParticipate;
     }
+    if (data.familyIncome !== undefined) {
+      this.#familyIncome = data.familyIncome;
+    }
     this.validateControlledValues();
   }
 
@@ -211,12 +212,6 @@ export class Student extends User {
 
   public replaceSocialBenefits(benefits: SocialBenefit[]): void {
     this.#socialBenefits = benefits;
-  }
-
-  public replaceAccessibilityResources(
-    resources: AccessibilityResource[],
-  ): void {
-    this.#accessibilityResources = resources;
   }
 
   private validateStudent(): void {
@@ -265,6 +260,11 @@ export class Student extends User {
       this.#howHeard,
       HOW_HEARD_CHANNEL_VALUES,
     );
+    this.validateOptionalEnum(
+      'renda familiar',
+      this.#familyIncome,
+      FAMILY_INCOME_VALUES,
+    );
   }
 
   private validateOptionalEnum<T extends string>(
@@ -299,12 +299,6 @@ export class Student extends User {
         'Os beneficios sociais devem ser uma lista valida.',
       );
     }
-
-    if (!Array.isArray(this.#accessibilityResources)) {
-      throw new DomainException(
-        'Os recursos de acessibilidade devem ser uma lista valida.',
-      );
-    }
   }
 
   toJSON() {
@@ -320,8 +314,6 @@ export class Student extends User {
       institution: this.institution,
       activityArea: this.activityArea,
       hasProgrammingExperience: this.hasProgrammingExperience,
-      hasTechnologyCourse: this.hasTechnologyCourse,
-      sendCurriculum: this.sendCurriculum,
       motivation: this.motivation,
       howHeard: this.howHeard,
       hasComputer: this.hasComputer,
@@ -329,7 +321,9 @@ export class Student extends User {
       committedToParticipate: this.committedToParticipate,
       disability: this.disability,
       socialBenefits: this.socialBenefits,
-      accessibilityResources: this.accessibilityResources,
+      socialName: this.socialName,
+      courseName: this.courseName,
+      familyIncome: this.familyIncome,
     };
   }
 }

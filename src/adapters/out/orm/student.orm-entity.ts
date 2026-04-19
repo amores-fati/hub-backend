@@ -8,7 +8,6 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 import { ContactOrmEntity } from './contact.orm-entity';
-import { AccessibilityResourceOrmEntity } from './accessibility-resource.orm-entity';
 import { SocialBenefitOrmEntity } from './social-benefit.orm-entity';
 import { UserOrmEntity } from './user.orm-entity';
 import { DisabilityOrmEntity } from './disability.orm-entity';
@@ -17,6 +16,7 @@ import {
   Gender,
   HowHeardChannel,
   Race,
+  FamilyIncome,
 } from '../../../core/domain/enums/student-profile.enum';
 
 function toSqlList(values: string[]): string {
@@ -27,6 +27,7 @@ const GENDER_SQL = toSqlList(Object.values(Gender));
 const RACE_SQL = toSqlList(Object.values(Race));
 const EDUCATION_SQL = toSqlList(Object.values(EducationLevel));
 const HOW_HEARD_SQL = toSqlList(Object.values(HowHeardChannel));
+const FAMILY_INCOME_SQL = toSqlList(Object.values(FamilyIncome));
 
 @Check('ck_students__gender', `"gender" IN (${GENDER_SQL})`)
 @Check('ck_students__race', `"race" IN (${RACE_SQL})`)
@@ -37,6 +38,10 @@ const HOW_HEARD_SQL = toSqlList(Object.values(HowHeardChannel));
 @Check(
   'ck_students__how_heard',
   `"how_heard" IS NULL OR "how_heard" IN (${HOW_HEARD_SQL})`,
+)
+@Check(
+  'ck_students__family_income',
+  `"family_income" IS NULL OR "family_income" IN (${FAMILY_INCOME_SQL})`,
 )
 @Entity('students')
 export class StudentOrmEntity {
@@ -63,6 +68,9 @@ export class StudentOrmEntity {
   @Column({ unique: true })
   cpf: string;
 
+  @Column({ name: 'social_name', type: 'varchar', nullable: true })
+  socialName: string | null;
+
   @Column({ name: 'date_of_birth', type: 'date' })
   birthDate: Date;
 
@@ -74,6 +82,9 @@ export class StudentOrmEntity {
 
   @Column({ type: 'varchar', nullable: true })
   education: EducationLevel | null;
+
+  @Column({ name: 'course_name', type: 'varchar', nullable: true })
+  courseName: string | null;
 
   @Column({ type: 'varchar', nullable: true })
   institution: string | null;
@@ -88,16 +99,8 @@ export class StudentOrmEntity {
   })
   hasProgrammingExperience: boolean | null;
 
-  @Column({ name: 'has_technology_course', type: 'boolean', nullable: true })
-  hasTechnologyCourse: boolean | null;
-
-  @Column({
-    name: 'send_curriculum',
-    type: 'boolean',
-    nullable: false,
-    default: false,
-  })
-  sendCurriculum: boolean | null;
+  @Column({ name: 'family_income', type: 'varchar', nullable: true })
+  familyIncome: FamilyIncome | null;
 
   @Column({ name: 'motivation', type: 'text', nullable: true })
   motivation: string | null;
@@ -120,12 +123,6 @@ export class StudentOrmEntity {
 
   @OneToOne(() => DisabilityOrmEntity, (disability) => disability.student)
   disability: DisabilityOrmEntity | null;
-
-  @OneToMany(
-    () => AccessibilityResourceOrmEntity,
-    (resource) => resource.student,
-  )
-  accessibilityResources: AccessibilityResourceOrmEntity[];
 
   @OneToMany(() => SocialBenefitOrmEntity, (benefit) => benefit.student)
   socialBenefits: SocialBenefitOrmEntity[];

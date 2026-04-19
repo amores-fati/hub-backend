@@ -4,7 +4,7 @@ import { SocialBenefitType } from '../../../../core/domain/enums/social-benefit.
 
 export class CreateSocialBenefitDto {
   @ApiProperty({
-    example: SocialBenefitType.bolsaFamilia,
+    example: SocialBenefitType.BOLSA_FAMILIA,
   })
   @IsEnum(SocialBenefitType)
   benefit: SocialBenefitType;
