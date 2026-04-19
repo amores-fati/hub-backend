@@ -45,6 +45,9 @@ describe('StudentController (e2e)', () => {
           birthDate: '1995-05-20',
           gender: 'MALE',
           race: 'BROWN',
+          socialName: 'Student Social Name',
+          courseName: 'Computer Science',
+          familyIncome: 'BETWEEN_1_3',
           contact: {
             city: 'São Paulo',
             state: 'SP',
@@ -54,9 +57,10 @@ describe('StudentController (e2e)', () => {
             phone: '11988888888',
           },
         })
-        .expect(201)
         .expect((res) => {
+          if (res.status !== 201) console.log(res.body);
           const body = res.body as unknown as StudentResponse;
+          expect(res.status).toBe(201);
           expect(body.id).toBeDefined();
           expect(body.cpf).toBe(dynamicCpf);
           createdStudentId = body.id;
@@ -96,6 +100,9 @@ describe('StudentController (e2e)', () => {
           birthDate: '1995-05-20',
           gender: 'FEMALE',
           race: 'WHITE',
+          socialName: 'Another Social',
+          courseName: 'Engineering',
+          familyIncome: 'MORE_THAN_3',
           contact: {
             phone: '11988888888',
           },
@@ -173,6 +180,8 @@ describe('StudentController (e2e)', () => {
           birthDate: '1995-05-20',
           gender: 'MALE',
           race: 'BROWN',
+          courseName: 'New Course',
+          familyIncome: 'TO1_SALARY',
           contact: {
             city: 'Rio de Janeiro',
             state: 'RJ',

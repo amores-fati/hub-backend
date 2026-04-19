@@ -3,7 +3,6 @@ import { Student } from '../domain/student.entity';
 import { Contact } from '../domain/contact.entity';
 import { Disability } from '../domain/disability.entity';
 import { SocialBenefit } from '../domain/social-benefit.entity';
-import { AccessibilityResource } from '../domain/accessibility-resource.entity';
 import { IStudentRepository } from '../ports/student.repository.interface';
 import { StudentAlreadyExistsException } from '../exceptions/student-already-exists.exception';
 import {
@@ -50,9 +49,7 @@ export class StudentService {
       ? new Disability(
           studentId,
           command.disability.hasDisability,
-          command.disability.description,
-          command.disability.hasReport,
-          command.disability.type,
+        command.disability.type,
         )
       : undefined;
 
@@ -60,12 +57,6 @@ export class StudentService {
       command.socialBenefits?.map(
         (benefit, index) =>
           new SocialBenefit(-(index + 1), studentId, benefit.benefit),
-      ) || [];
-
-    const accessibilityResources =
-      command.accessibilityResources?.map(
-        (resource, index) =>
-          new AccessibilityResource(-(index + 1), studentId, resource.resource),
       ) || [];
 
     const birthDate =
@@ -86,8 +77,6 @@ export class StudentService {
       command.institution,
       command.activityArea,
       command.hasProgrammingExperience,
-      command.hasTechnologyCourse,
-      command.sendCurriculum ?? false,
       command.motivation,
       command.howHeard,
       command.hasComputer,
@@ -95,7 +84,9 @@ export class StudentService {
       command.committedToParticipate,
       disability,
       socialBenefits,
-      accessibilityResources,
+      command.socialName,
+      command.courseName,
+      command.familyIncome,
     );
 
     return this.studentRepository.create(student);
@@ -146,12 +137,12 @@ export class StudentService {
     });
 
     student.changeParticipationData({
-      sendCurriculum: command.sendCurriculum,
       motivation: command.motivation,
       howHeard: command.howHeard,
       hasComputer: command.hasComputer,
       hasInternet: command.hasInternet,
       committedToParticipate: command.committedToParticipate,
+      familyIncome: command.familyIncome,
     });
 
     student.contact.changePhone(command.contact.phone);
@@ -168,8 +159,6 @@ export class StudentService {
       const disability = new Disability(
         student.id,
         command.disability.hasDisability,
-        command.disability.description,
-        command.disability.hasReport,
         command.disability.type,
       );
       student.changeDisability(disability);
@@ -181,18 +170,6 @@ export class StudentService {
           new SocialBenefit(-(index + 1), student.id, benefit.benefit),
       );
       student.replaceSocialBenefits(benefits);
-    }
-
-    if (command.accessibilityResources) {
-      const resources = command.accessibilityResources.map(
-        (resource, index) =>
-          new AccessibilityResource(
-            -(index + 1),
-            student.id,
-            resource.resource,
-          ),
-      );
-      student.replaceAccessibilityResources(resources);
     }
 
     return this.studentRepository.update(student);
@@ -222,12 +199,12 @@ export class StudentService {
     });
 
     student.changeParticipationData({
-      sendCurriculum: command.sendCurriculum,
       motivation: command.motivation,
       howHeard: command.howHeard,
       hasComputer: command.hasComputer,
       hasInternet: command.hasInternet,
       committedToParticipate: command.committedToParticipate,
+      familyIncome: command.familyIncome,
     });
 
     if (command.contact) {
@@ -249,8 +226,6 @@ export class StudentService {
       const disability = new Disability(
         student.id,
         command.disability.hasDisability ?? false,
-        command.disability.description,
-        command.disability.hasReport,
         command.disability.type,
       );
       student.changeDisability(disability);
@@ -262,18 +237,6 @@ export class StudentService {
           new SocialBenefit(-(index + 1), student.id, benefit.benefit!),
       );
       student.replaceSocialBenefits(benefits);
-    }
-
-    if (command.accessibilityResources) {
-      const resources = command.accessibilityResources.map(
-        (resource, index) =>
-          new AccessibilityResource(
-            -(index + 1),
-            student.id,
-            resource.resource!,
-          ),
-      );
-      student.replaceAccessibilityResources(resources);
     }
 
     return this.studentRepository.update(student);

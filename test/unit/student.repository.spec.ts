@@ -1,14 +1,11 @@
 import { Repository } from 'typeorm';
 
-import { AccessibilityResource } from '../../src/core/domain/accessibility-resource.entity';
 import { Contact } from '../../src/core/domain/contact.entity';
-import { AccessibilityResourceType } from '../../src/core/domain/enums/accessibility-resource.enum';
 import { Gender, Race } from '../../src/core/domain/enums/student-profile.enum';
 import { SocialBenefitType } from '../../src/core/domain/enums/social-benefit.enum';
 import { SocialBenefit } from '../../src/core/domain/social-benefit.entity';
 import { Student } from '../../src/core/domain/student.entity';
 import { StudentRepository } from '../../src/adapters/out/repository/student.repository';
-import { AccessibilityResourceOrmEntity } from '../../src/adapters/out/orm/accessibility-resource.orm-entity';
 import { ContactOrmEntity } from '../../src/adapters/out/orm/contact.orm-entity';
 import { SocialBenefitOrmEntity } from '../../src/adapters/out/orm/social-benefit.orm-entity';
 import { StudentOrmEntity } from '../../src/adapters/out/orm/student.orm-entity';
@@ -56,21 +53,13 @@ describe('StudentRepository', () => {
   it('should replace child collections when update receives new items', async () => {
     const student = buildStudent({
       socialBenefits: [
-        new SocialBenefit(-1, 'student-id', SocialBenefitType.other),
-      ],
-      accessibilityResources: [
-        new AccessibilityResource(
-          -1,
-          'student-id',
-          AccessibilityResourceType.other,
-        ),
+        new SocialBenefit(-1, 'student-id', SocialBenefitType.OTHERS),
       ],
     });
 
     (ormRepository.findOne as jest.Mock).mockResolvedValue(
       buildStudentOrmEntity(student, {
         socialBenefitIds: [21],
-        accessibilityResourceIds: [31],
       }),
     );
 
@@ -81,7 +70,7 @@ describe('StudentRepository', () => {
       { studentId: student.id },
     );
     expect(transactionalEntityManager.delete).toHaveBeenCalledWith(
-      AccessibilityResourceOrmEntity,
+      SocialBenefitOrmEntity,
       { studentId: student.id },
     );
   });
@@ -89,7 +78,6 @@ describe('StudentRepository', () => {
   it('should remove child collections when update receives empty arrays', async () => {
     const student = buildStudent({
       socialBenefits: [],
-      accessibilityResources: [],
     });
 
     (ormRepository.findOne as jest.Mock).mockResolvedValue(
@@ -103,7 +91,7 @@ describe('StudentRepository', () => {
       { studentId: student.id },
     );
     expect(transactionalEntityManager.delete).toHaveBeenCalledWith(
-      AccessibilityResourceOrmEntity,
+      SocialBenefitOrmEntity,
       { studentId: student.id },
     );
   });
@@ -124,10 +112,8 @@ describe('StudentRepository', () => {
 
 function buildStudent({
   socialBenefits = [],
-  accessibilityResources = [],
 }: {
   socialBenefits?: SocialBenefit[];
-  accessibilityResources?: AccessibilityResource[];
 } = {}): Student {
   return new Student(
     'student-id',
@@ -151,8 +137,6 @@ function buildStudent({
     undefined, // institution
     undefined, // activityArea
     undefined, // hasProgrammingExperience
-    undefined, // hasTechnologyCourse
-    false, // sendCurriculum
     undefined, // motivation
     undefined, // howHeard
     undefined, // hasComputer
@@ -160,7 +144,9 @@ function buildStudent({
     undefined, // committedToParticipate
     undefined, // disability
     socialBenefits,
-    accessibilityResources,
+    undefined, // socialName
+    undefined, // courseName
+    undefined, // familyIncome
   );
 }
 
@@ -168,7 +154,6 @@ function buildStudentOrmEntity(
   student: Student,
   options: {
     socialBenefitIds?: number[];
-    accessibilityResourceIds?: number[];
   } = {},
 ): StudentOrmEntity {
   const user = new UserOrmEntity();
@@ -199,8 +184,6 @@ function buildStudentOrmEntity(
   ormEntity.institution = student.institution ?? null;
   ormEntity.activityArea = student.activityArea ?? null;
   ormEntity.hasProgrammingExperience = student.hasProgrammingExperience ?? null;
-  ormEntity.hasTechnologyCourse = student.hasTechnologyCourse ?? null;
-  ormEntity.sendCurriculum = student.sendCurriculum;
   ormEntity.motivation = student.motivation ?? null;
   ormEntity.howHeard = student.howHeard ?? null;
   ormEntity.hasComputer = student.hasComputer ?? null;
@@ -211,17 +194,8 @@ function buildStudentOrmEntity(
     const benefit = new SocialBenefitOrmEntity();
     benefit.id = id;
     benefit.studentId = student.id;
-    benefit.benefit = SocialBenefitType.other;
+    benefit.benefit = SocialBenefitType.OTHERS;
     return benefit;
-  });
-  ormEntity.accessibilityResources = (
-    options.accessibilityResourceIds ?? []
-  ).map((id) => {
-    const resource = new AccessibilityResourceOrmEntity();
-    resource.id = id;
-    resource.studentId = student.id;
-    resource.resource = AccessibilityResourceType.other;
-    return resource;
   });
 
   return ormEntity;
