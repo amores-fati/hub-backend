@@ -1,0 +1,46 @@
+services:
+  api-feature:
+    build:
+      context: .
+      target: development
+    init: true
+    env_file:
+      - .env
+    # Mirrors the main dev stack: migrations first, then the development seed, then the API.
+    command: ['npm', 'run', 'start:docker:dev']
+    ports:
+      - '3004:3004'
+    environment:
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: 'true'
+      PORT: 3004
+      DB_HOST: postgres-feature
+      DB_PORT: 5432
+      DB_DATABASE: api_db_feature
+    volumes:
+      - .:/usr/src/app
+      - node_modules_feature:/usr/src/app/node_modules
+    depends_on:
+      postgres-feature:
+        condition: service_healthy
+
+  postgres-feature:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-root}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+      POSTGRES_DB: api_db_feature
+    ports:
+      - '5435:5432'
+    volumes:
+      - pgdata_feature:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  node_modules_feature:
+  pgdata_feature:

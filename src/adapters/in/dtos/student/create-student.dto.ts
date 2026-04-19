@@ -1,20 +1,29 @@
 import {
-  IsString,
-  IsNotEmpty,
-  IsEmail,
-  IsOptional,
+  IsArray,
   IsBoolean,
+  IsDateString,
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
   MaxLength,
   ValidateNested,
-  IsArray,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+
 import { IsCpf } from '../../../../utils/validators/cpf.validator';
 import { CreateContactDto } from '../contact/create-contact.dto';
 import { CreateDisabilityDto } from '../disability/create-disability.dto';
 import { CreateSocialBenefitDto } from '../social-benefit/create-social-benefit.dto';
-import { CreateAccessibilityResourceDto } from '../accessibility-resource/create-accessibility-resource.dto';
+import {
+  EducationLevel,
+  Gender,
+  HowHeardChannel,
+  Race,
+  FamilyIncome,
+} from '../../../../core/domain/enums/student-profile.enum';
 
 export class CreateStudentDto {
   @ApiProperty({
@@ -28,12 +37,21 @@ export class CreateStudentDto {
 
   @ApiProperty({
     example: 'SenhaForte123!',
-    description: 'Senha de acesso à plataforma',
+    description: 'Senha de acesso a plataforma',
   })
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
   password: string;
+
+  @ApiPropertyOptional({
+    example: 'Joãozinho',
+    description: 'Nome social do aluno',
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  socialName?: string;
 
   @ApiProperty({
     example: '52998224725',
@@ -44,35 +62,28 @@ export class CreateStudentDto {
   @MaxLength(14)
   cpf: string;
 
-  @ApiPropertyOptional({ example: 'João social' })
-  @IsString()
-  @IsOptional()
-  socialName?: string;
-
   @ApiProperty({ example: '1995-05-20' })
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
   birthDate: string;
 
-  @ApiProperty({ example: 'Masculino' })
-  @IsString()
+  @ApiProperty({ enum: Gender, example: Gender.MALE })
+  @IsEnum(Gender)
   @IsNotEmpty()
-  gender: string;
+  gender: Gender;
 
-  @ApiProperty({ example: 'Parda' })
-  @IsString()
+  @ApiProperty({ enum: Race, example: Race.BROWN })
+  @IsEnum(Race)
   @IsNotEmpty()
-  race: string;
+  race: Race;
 
-  @ApiPropertyOptional({ example: 'Médio completo' })
-  @IsString()
+  @ApiPropertyOptional({
+    enum: EducationLevel,
+    example: EducationLevel.SECONDARY,
+  })
+  @IsEnum(EducationLevel)
   @IsOptional()
-  education?: string;
-
-  @ApiPropertyOptional({ example: 'Técnico em Informática' })
-  @IsString()
-  @IsOptional()
-  courseName?: string;
+  education?: EducationLevel;
 
   @ApiPropertyOptional({ example: 'ETEC' })
   @IsString()
@@ -84,35 +95,36 @@ export class CreateStudentDto {
   @IsOptional()
   activityArea?: string;
 
+  @ApiPropertyOptional({ example: 'Programação Web' })
+  @IsString()
+  @IsOptional()
+  courseName?: string;
+
   @ApiPropertyOptional({ example: false })
   @IsBoolean()
   @IsOptional()
   hasProgrammingExperience?: boolean;
 
-  @ApiPropertyOptional({ example: true })
-  @IsBoolean()
+  @ApiPropertyOptional({
+    enum: FamilyIncome,
+    example: FamilyIncome.TO1_SALARY,
+  })
+  @IsEnum(FamilyIncome)
   @IsOptional()
-  hasTechCourses?: boolean;
+  familyIncome?: FamilyIncome;
 
-  @ApiPropertyOptional({ example: 'Excel, Informática Básica' })
+  @ApiPropertyOptional({ example: 'Quero aprender programacao.' })
   @IsString()
   @IsOptional()
-  techCoursesList?: string;
+  motivation?: string;
 
-  @ApiPropertyOptional({ example: false })
-  @IsBoolean()
+  @ApiPropertyOptional({
+    enum: HowHeardChannel,
+    example: HowHeardChannel.INSTAGRAM,
+  })
+  @IsEnum(HowHeardChannel)
   @IsOptional()
-  sendCurriculum?: boolean;
-
-  @ApiPropertyOptional({ example: 'Quero aprender programação.' })
-  @IsString()
-  @IsOptional()
-  fatilabMotivation?: string;
-
-  @ApiPropertyOptional({ example: 'Instagram' })
-  @IsString()
-  @IsOptional()
-  howHeard?: string;
+  howHeard?: HowHeardChannel;
 
   @ApiPropertyOptional({ example: true })
   @IsBoolean()
@@ -146,11 +158,4 @@ export class CreateStudentDto {
   @Type(() => CreateSocialBenefitDto)
   @IsOptional()
   socialBenefits?: CreateSocialBenefitDto[];
-
-  @ApiPropertyOptional({ type: () => [CreateAccessibilityResourceDto] })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CreateAccessibilityResourceDto)
-  @IsOptional()
-  accessibilityResources?: CreateAccessibilityResourceDto[];
 }

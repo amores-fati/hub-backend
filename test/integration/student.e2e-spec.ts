@@ -1,14 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from '../../src/app.module';
 import { Server } from 'http';
 import { cpf } from 'cpf-cnpj-validator';
+import { createIntegrationApp } from './bootstrap';
 
 interface StudentResponse {
   id: string;
   cpf: string;
-  socialName: string;
+  activityArea?: string;
+  motivation?: string;
   contact: {
     city: string;
     phone: string;
@@ -24,21 +24,14 @@ describe('StudentController (e2e)', () => {
   const studentPassword = 'securepassword123';
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({ transform: true, whitelist: true }),
-    );
-    await app.init();
-
+    app = await createIntegrationApp();
     dynamicCpf = cpf.generate();
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   describe('/students (POST)', () => {
@@ -49,10 +42,12 @@ describe('StudentController (e2e)', () => {
           email: studentEmail,
           password: studentPassword,
           cpf: dynamicCpf,
-          socialName: 'Student E2E',
           birthDate: '1995-05-20',
-          gender: 'Masculino',
-          race: 'Parda',
+          gender: 'MALE',
+          race: 'BROWN',
+          socialName: 'Student Social Name',
+          courseName: 'Computer Science',
+          familyIncome: 'BETWEEN_1_3',
           contact: {
             city: 'São Paulo',
             state: 'SP',
@@ -62,9 +57,10 @@ describe('StudentController (e2e)', () => {
             phone: '11988888888',
           },
         })
-        .expect(201)
         .expect((res) => {
+          if (res.status !== 201) console.log(res.body);
           const body = res.body as unknown as StudentResponse;
+          expect(res.status).toBe(201);
           expect(body.id).toBeDefined();
           expect(body.cpf).toBe(dynamicCpf);
           createdStudentId = body.id;
@@ -89,7 +85,7 @@ describe('StudentController (e2e)', () => {
       return request(app.getHttpServer() as Server)
         .post('/students')
         .send({
-          socialName: 'Incomplete Student',
+          contact: {},
         })
         .expect(400);
     });
@@ -101,10 +97,12 @@ describe('StudentController (e2e)', () => {
           email: `anotherstudent-${Date.now()}@test.com`,
           password: 'securepassword123',
           cpf: dynamicCpf,
-          socialName: 'Duplicate Student',
           birthDate: '1995-05-20',
-          gender: 'Feminino',
-          race: 'Branca',
+          gender: 'FEMALE',
+          race: 'WHITE',
+          socialName: 'Another Social',
+          courseName: 'Engineering',
+          familyIncome: 'MORE_THAN_3',
           contact: {
             phone: '11988888888',
           },
@@ -179,10 +177,11 @@ describe('StudentController (e2e)', () => {
         .send({
           email: `updatedstudent-${Date.now()}@test.com`,
           password: 'newpassword123',
-          socialName: 'Updated Student E2E',
           birthDate: '1995-05-20',
-          gender: 'Masculino',
-          race: 'Parda',
+          gender: 'MALE',
+          race: 'BROWN',
+          courseName: 'New Course',
+          familyIncome: 'TO1_SALARY',
           contact: {
             city: 'Rio de Janeiro',
             state: 'RJ',
@@ -195,7 +194,6 @@ describe('StudentController (e2e)', () => {
         .expect(200)
         .expect((res) => {
           const body = res.body as unknown as StudentResponse;
-          expect(body.socialName).toBe('Updated Student E2E');
           expect(body.contact.city).toBe('Rio de Janeiro');
         });
     });
@@ -207,12 +205,12 @@ describe('StudentController (e2e)', () => {
         .patch(`/students/${createdStudentId}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          socialName: 'Patched Student E2E',
+          motivation: 'Patched Student Motivation',
         })
         .expect(200)
         .expect((res) => {
           const body = res.body as unknown as StudentResponse;
-          expect(body.socialName).toBe('Patched Student E2E');
+          expect(body.motivation).toBe('Patched Student Motivation');
         });
     });
   });

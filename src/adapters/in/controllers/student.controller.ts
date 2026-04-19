@@ -1,40 +1,41 @@
 import {
-  Controller,
-  Post,
-  Get,
-  Put,
-  Patch,
-  Delete,
+  BadRequestException,
   Body,
-  Param,
+  ConflictException,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
-  ConflictException,
   NotFoundException,
+  Param,
   ParseUUIDPipe,
-  BadRequestException,
+  Patch,
+  Post,
+  Put,
 } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiBody,
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiNoContentResponse,
   ApiBadRequestResponse,
+  ApiBody,
   ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
 } from '@nestjs/swagger';
-import { CreateStudentDto } from '../dtos/student/create-student.dto';
-import { UpdateStudentDto } from '../dtos/student/update-student.dto';
-import { PatchStudentDto } from '../dtos/student/patch-student.dto';
-import { StudentService } from '../../../core/services/student.service';
+
 import {
   CreateStudentCommand,
-  UpdateStudentCommand,
   PatchStudentCommand,
+  UpdateStudentCommand,
 } from '../../../core/command/student.command';
+import { StudentService } from '../../../core/services/student.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
+import { CreateStudentDto } from '../dtos/student/create-student.dto';
+import { PatchStudentDto } from '../dtos/student/patch-student.dto';
+import { UpdateStudentDto } from '../dtos/student/update-student.dto';
 
 @ApiTags('Students')
 @Controller('students')
@@ -50,8 +51,10 @@ export class StudentController {
   })
   @ApiBody({ type: CreateStudentDto })
   @ApiCreatedResponse({ description: 'Aluno registrado com sucesso.' })
-  @ApiBadRequestResponse({ description: 'Erro de validação.' })
-  @ApiConflictResponse({ description: 'CPF já cadastrado na plataforma.' })
+  @ApiBadRequestResponse({ description: 'Erro de validacao.' })
+  @ApiConflictResponse({
+    description: 'CPF ou e-mail ja cadastrado na plataforma.',
+  })
   async register(@Body() createStudentDto: CreateStudentDto) {
     try {
       const command: CreateStudentCommand = { ...createStudentDto };
@@ -59,7 +62,8 @@ export class StudentController {
     } catch (error) {
       if (
         error instanceof Error &&
-        error.name === 'StudentAlreadyExistsException'
+        (error.name === 'StudentAlreadyExistsException' ||
+          error.name === 'UserAlreadyExistsException')
       ) {
         throw new ConflictException(error.message);
       }
@@ -86,7 +90,7 @@ export class StudentController {
   @Get(':id')
   @ApiOperation({ summary: 'Busca um aluno por ID' })
   @ApiOkResponse({ description: 'Aluno encontrado com sucesso.' })
-  @ApiNotFoundResponse({ description: 'Aluno não encontrado.' })
+  @ApiNotFoundResponse({ description: 'Aluno nao encontrado.' })
   async findById(@Param('id', ParseUUIDPipe) id: string) {
     try {
       return await this.studentService.getStudentById(id);
@@ -102,7 +106,7 @@ export class StudentController {
   @Get('cpf/:cpf')
   @ApiOperation({ summary: 'Busca um aluno por CPF' })
   @ApiOkResponse({ description: 'Aluno encontrado com sucesso.' })
-  @ApiNotFoundResponse({ description: 'Aluno não encontrado.' })
+  @ApiNotFoundResponse({ description: 'Aluno nao encontrado.' })
   async findByCpf(@Param('cpf') cpf: string) {
     try {
       return await this.studentService.getStudentByCpf(cpf);
@@ -119,8 +123,9 @@ export class StudentController {
   @ApiOperation({ summary: 'Atualiza completamente os dados de um aluno' })
   @ApiBody({ type: UpdateStudentDto })
   @ApiOkResponse({ description: 'Aluno atualizado com sucesso.' })
-  @ApiNotFoundResponse({ description: 'Aluno não encontrado.' })
-  @ApiBadRequestResponse({ description: 'Erro de validação.' })
+  @ApiNotFoundResponse({ description: 'Aluno nao encontrado.' })
+  @ApiBadRequestResponse({ description: 'Erro de validacao.' })
+  @ApiConflictResponse({ description: 'E-mail ja cadastrado na plataforma.' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateStudentDto: UpdateStudentDto,
@@ -131,6 +136,13 @@ export class StudentController {
     } catch (error) {
       if (error instanceof Error && error.name === 'StudentNotFoundException') {
         throw new NotFoundException(error.message);
+      }
+
+      if (
+        error instanceof Error &&
+        error.name === 'UserAlreadyExistsException'
+      ) {
+        throw new ConflictException(error.message);
       }
 
       if (error instanceof Error && error.name === 'DomainException') {
@@ -146,8 +158,9 @@ export class StudentController {
   @ApiOperation({ summary: 'Atualiza parcialmente os dados de um aluno' })
   @ApiBody({ type: PatchStudentDto })
   @ApiOkResponse({ description: 'Aluno atualizado com sucesso.' })
-  @ApiNotFoundResponse({ description: 'Aluno não encontrado.' })
-  @ApiBadRequestResponse({ description: 'Erro de validação.' })
+  @ApiNotFoundResponse({ description: 'Aluno nao encontrado.' })
+  @ApiBadRequestResponse({ description: 'Erro de validacao.' })
+  @ApiConflictResponse({ description: 'E-mail ja cadastrado na plataforma.' })
   async patch(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() patchStudentDto: PatchStudentDto,
@@ -158,6 +171,13 @@ export class StudentController {
     } catch (error) {
       if (error instanceof Error && error.name === 'StudentNotFoundException') {
         throw new NotFoundException(error.message);
+      }
+
+      if (
+        error instanceof Error &&
+        error.name === 'UserAlreadyExistsException'
+      ) {
+        throw new ConflictException(error.message);
       }
 
       if (error instanceof Error && error.name === 'DomainException') {
@@ -173,7 +193,7 @@ export class StudentController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Deleta um aluno pelo ID' })
   @ApiNoContentResponse({ description: 'Aluno deletado com sucesso.' })
-  @ApiNotFoundResponse({ description: 'Aluno não encontrado.' })
+  @ApiNotFoundResponse({ description: 'Aluno nao encontrado.' })
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     try {
       await this.studentService.deleteStudent(id);
