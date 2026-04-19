@@ -44,7 +44,6 @@ import { CompanyRepository } from './adapters/out/repository/company.repository'
 import { ContactOrmEntity } from './adapters/out/orm/contact.orm-entity';
 import { DisabilityOrmEntity } from './adapters/out/orm/disability.orm-entity';
 import { SocialBenefitOrmEntity } from './adapters/out/orm/social-benefit.orm-entity';
-import { AccessibilityResourceOrmEntity } from './adapters/out/orm/accessibility-resource.orm-entity';
 
 // Student Adapters & Core
 import { HealthController } from './adapters/in/controllers/health.controller';
@@ -85,7 +84,6 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
       ContactOrmEntity,
       DisabilityOrmEntity,
       SocialBenefitOrmEntity,
-      AccessibilityResourceOrmEntity,
     ]),
   ],
   controllers: [

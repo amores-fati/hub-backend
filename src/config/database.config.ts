@@ -8,7 +8,6 @@ import { StudentOrmEntity } from '../adapters/out/orm/student.orm-entity';
 import { DisabilityOrmEntity } from '../adapters/out/orm/disability.orm-entity';
 import { CurriculumOrmEntity } from '../adapters/out/orm/curriculum.orm-entity';
 import { SocialBenefitOrmEntity } from '../adapters/out/orm/social-benefit.orm-entity';
-import { AccessibilityResourceOrmEntity } from '../adapters/out/orm/accessibility-resource.orm-entity';
 import { JobSkillOrmEntity } from '../adapters/out/orm/job-skill.orm-entity';
 import { CurriculumSkillOrmEntity } from '../adapters/out/orm/curriculum-skill.orm-entity';
 import { ContactOrmEntity } from '../adapters/out/orm/contact.orm-entity';
@@ -26,7 +25,6 @@ export const ORM_ENTITIES = [
   DisabilityOrmEntity,
   CurriculumOrmEntity,
   SocialBenefitOrmEntity,
-  AccessibilityResourceOrmEntity,
   JobSkillOrmEntity,
   CurriculumSkillOrmEntity,
   ContactOrmEntity,

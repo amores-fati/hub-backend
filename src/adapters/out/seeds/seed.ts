@@ -9,7 +9,6 @@ import { AdminOrmEntity } from '../orm/admin.orm-entity';
 import { ContactOrmEntity } from '../orm/contact.orm-entity';
 import { CompanyOrmEntity } from '../orm/company.orm-entity';
 import { StudentOrmEntity } from '../orm/student.orm-entity';
-import { AccessibilityResourceOrmEntity } from '../orm/accessibility-resource.orm-entity';
 import { SocialBenefitOrmEntity } from '../orm/social-benefit.orm-entity';
 import { DisabilityOrmEntity } from '../orm/disability.orm-entity';
 import { CourseOrmEntity } from '../orm/course.orm-entity';
@@ -20,12 +19,12 @@ import { CurriculumSkillOrmEntity } from '../orm/curriculum-skill.orm-entity';
 import { JobOpeningOrmEntity } from '../orm/job-opening.orm-entity';
 import { JobSkillOrmEntity } from '../orm/job-skill.orm-entity';
 import { SocialBenefitType } from '../../../core/domain/enums/social-benefit.enum';
-import { AccessibilityResourceType } from '../../../core/domain/enums/accessibility-resource.enum';
 import {
   EducationLevel,
   Gender,
   HowHeardChannel,
   Race,
+  FamilyIncome,
 } from '../../../core/domain/enums/student-profile.enum';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
@@ -60,11 +59,11 @@ function normalizeEducation(value: string): EducationLevel {
     case 'superior':
       return EducationLevel.HIGHER;
     case 'tecnico':
-      return EducationLevel.TECHNICAL;
+      return EducationLevel.SECONDARY;
     case 'pos_graduacao':
       return EducationLevel.POSTGRADUATE;
     default:
-      return EducationLevel.OTHER;
+      return EducationLevel.NO_EDUCATION;
   }
 }
 
@@ -90,9 +89,9 @@ function normalizeRace(value: string): Race {
     case 'parda':
       return Race.BROWN;
     case 'amarela':
-      return Race.ASIAN;
+      return Race.INDIGENOUS;
     default:
-      return Race.OTHER;
+      return Race.PREFER_NOT_TO_SAY;
   }
 }
 
@@ -110,7 +109,7 @@ async function ensureSeedMode(appDataSource: DataSource): Promise<boolean> {
     await appDataSource.query(`TRUNCATE TABLE
       job_skills, curriculum_skills, skills, job_openings, curriculum,
       in_person_course_details, courses, disabilities,
-      social_benefits, accessibility_resources,
+      social_benefits,
       students, admins, companies, contacts, users
       RESTART IDENTITY CASCADE`);
     console.log('Dados anteriores removidos.');
@@ -463,9 +462,9 @@ export async function seed(): Promise<void> {
     hasDisability: student.has_disability,
     howHeard: [
       HowHeardChannel.INSTAGRAM,
-      HowHeardChannel.REFERRAL,
-      HowHeardChannel.GOOGLE,
-      HowHeardChannel.EVENT,
+      HowHeardChannel.REFEREE,
+      HowHeardChannel.LINKEDIN,
+      HowHeardChannel.OTHERS,
     ][index % 4],
   }));
 
@@ -498,11 +497,10 @@ export async function seed(): Promise<void> {
       race: a.race,
       activityArea: a.area,
       hasProgrammingExperience: i % 2 === 0,
-      hasTechnologyCourse: i % 3 !== 0,
+      familyIncome: FamilyIncome.BETWEEN_1_3,
       hasComputer: true,
       hasInternet: true,
       committedToParticipate: true,
-      sendCurriculum: i % 2 === 0,
       motivation: `Quero desenvolver habilidades em ${a.area} para ingressar no mercado de trabalho.`,
       howHeard: a.howHeard,
     });
@@ -511,8 +509,6 @@ export async function seed(): Promise<void> {
     const disability = appDataSource.getRepository(DisabilityOrmEntity).create({
       studentId: userId,
       hasDisability: a.hasDisability,
-      description: a.hasDisability ? a.disability : null,
-      hasReport: a.hasDisability ? 'sim' : null,
       type: a.hasDisability ? a.disability : null,
     });
     await appDataSource.getRepository(DisabilityOrmEntity).save(disability);
@@ -523,23 +519,12 @@ export async function seed(): Promise<void> {
         .create({
           student: student,
           benefit: [
-            SocialBenefitType.bolsaFamilia,
-            SocialBenefitType.bpc,
-            SocialBenefitType.auxilioDoenca,
+            SocialBenefitType.BOLSA_FAMILIA,
+            SocialBenefitType.BPC,
+            SocialBenefitType.OTHERS,
           ][i % 3],
         });
       await appDataSource.getRepository(SocialBenefitOrmEntity).save(benefit);
-    }
-    if (a.hasDisability) {
-      const resource = appDataSource
-        .getRepository(AccessibilityResourceOrmEntity)
-        .create({
-          student: student,
-          resource: AccessibilityResourceType.other,
-        });
-      await appDataSource
-        .getRepository(AccessibilityResourceOrmEntity)
-        .save(resource);
     }
     alunos.push(student);
   }
