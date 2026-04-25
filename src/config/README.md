@@ -4,7 +4,9 @@ Este diretório centraliza as configurações de infraestrutura e frameworks uti
  
 ## Estrutura
  
-- `typeorm.config.ts`: Define a conexão com o banco de dados PostgreSQL, incluindo o carregamento de entidades e a configuração de migrations.
+- `database.config.ts`: Centraliza a montagem das opções de banco usadas pela aplicação.
+- `typeorm.datasource.ts`: Expõe o `DataSource` usado pela CLI do TypeORM.
+- `typeorm.config.ts`: Arquivo de compatibilidade transitória que reexporta o datasource central.
  
 ## Boas Práticas
  

@@ -9,17 +9,14 @@ export class DisabilityOrmEntity {
   @OneToOne(() => StudentOrmEntity, (student) => student.disability, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'student_id' })
+  @JoinColumn({
+    name: 'student_id',
+    foreignKeyConstraintName: 'fk_disabilities__student_id__students',
+  })
   student: StudentOrmEntity;
 
   @Column({ name: 'has_disability', type: 'boolean', default: false })
   hasDisability: boolean;
-
-  @Column({ name: 'description', type: 'text', nullable: true })
-  description: string | null;
-
-  @Column({ name: 'has_report', type: 'varchar', nullable: true })
-  hasReport: string | null;
 
   @Column({ type: 'varchar', nullable: true })
   type: string | null;

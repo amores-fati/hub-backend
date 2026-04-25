@@ -1,17 +1,22 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { StudentService } from '../../src/core/services/student.service';
-import { IStudentRepository } from '../../src/core/ports/student.repository.interface';
-import { Student } from '../../src/core/domain/student.entity';
-import { StudentNotFoundException } from '../../src/core/exceptions/student-not-found.exception';
-import { StudentAlreadyExistsException } from '../../src/core/exceptions/student-already-exists.exception';
 import { Contact } from '../../src/core/domain/contact.entity';
 import {
+  EducationLevel,
+  Gender,
+  Race,
+} from '../../src/core/domain/enums/student-profile.enum';
+import { Student } from '../../src/core/domain/student.entity';
+import {
   CreateStudentCommand,
-  UpdateStudentCommand,
   PatchStudentCommand,
+  UpdateStudentCommand,
 } from '../../src/core/command/student.command';
-import { IUserRepository } from '../../src/core/ports/user.repository.interface';
+import { StudentAlreadyExistsException } from '../../src/core/exceptions/student-already-exists.exception';
+import { StudentNotFoundException } from '../../src/core/exceptions/student-not-found.exception';
 import { IHashService } from '../../src/core/ports/hash.service.interface';
+import { IStudentRepository } from '../../src/core/ports/student.repository.interface';
+import { IUserRepository } from '../../src/core/ports/user.repository.interface';
+import { StudentService } from '../../src/core/services/student.service';
 import { UserAlreadyExistsException } from '../../src/core/exceptions/user-already-exists.exception';
 
 describe('StudentService', () => {
@@ -48,7 +53,7 @@ describe('StudentService', () => {
       '11999999999',
       'Bela Vista',
       'SP',
-      'São Paulo',
+      'Sao Paulo',
       'Avenida Paulista',
       '01310100',
       'Bloco A',
@@ -60,10 +65,9 @@ describe('StudentService', () => {
       'aluno@teste.com',
       '12345678909',
       mockContact,
-      'Aluno Teste',
       new Date('1990-01-01'),
-      'Masculino',
-      'Branca',
+      Gender.MALE,
+      Race.WHITE,
     );
 
     service = new StudentService(
@@ -79,10 +83,10 @@ describe('StudentService', () => {
         email: mockStudent.email,
         password: 'password123',
         cpf: mockStudent.cpf,
-        socialName: mockStudent.socialName,
-        birthDate: '1990-01-01',
-        gender: mockStudent.gender!,
-        race: mockStudent.race!,
+        birthDate: new Date('1990-01-01'),
+        gender: Gender.MALE,
+        race: Race.WHITE,
+        education: EducationLevel.SECONDARY,
         contact: {
           phone: mockContact.phone,
           neighbourhood: mockContact.neighbourhood,
@@ -106,6 +110,9 @@ describe('StudentService', () => {
       expect(result.id).toBeDefined();
       expect(result.cpf).toBe(mockStudent.cpf);
       expect(result.password).toBe('hashedPassword');
+      expect(result.contact.id).toBe(result.id);
+      expect(result.gender).toBe(Gender.MALE);
+      expect(result.race).toBe(Race.WHITE);
       expect(mockRepository.create).toHaveBeenCalledTimes(1);
     });
 
@@ -114,10 +121,9 @@ describe('StudentService', () => {
         email: mockStudent.email,
         password: 'password123',
         cpf: mockStudent.cpf,
-        socialName: mockStudent.socialName,
-        birthDate: '1990-01-01',
-        gender: mockStudent.gender!,
-        race: mockStudent.race!,
+        birthDate: new Date('1990-01-01'),
+        gender: Gender.MALE,
+        race: Race.WHITE,
         contact: { phone: '11999999999' },
       };
 
@@ -133,10 +139,9 @@ describe('StudentService', () => {
         email: mockStudent.email,
         password: 'password123',
         cpf: mockStudent.cpf,
-        socialName: mockStudent.socialName,
-        birthDate: '1990-01-01',
-        gender: mockStudent.gender!,
-        race: mockStudent.race!,
+        birthDate: new Date('1990-01-01'),
+        gender: Gender.MALE,
+        race: Race.WHITE,
         contact: { phone: '11999999999' },
       };
 
@@ -205,16 +210,16 @@ describe('StudentService', () => {
     const updateCommand: UpdateStudentCommand = {
       email: 'novoaluno@teste.com',
       password: 'newpassword123',
-      socialName: 'Aluno Atualizado',
-      birthDate: '1995-05-05',
-      gender: 'Feminino',
-      race: 'Parda',
+      birthDate: new Date('1995-05-05'),
+      gender: Gender.FEMALE,
+      race: Race.BROWN,
+      education: EducationLevel.HIGHER,
       contact: {
         phone: '21999999999',
         neighbourhood: 'Copacabana',
         state: 'RJ',
         city: 'Rio de Janeiro',
-        address: 'Avenida Atlântica',
+        address: 'Avenida Atlantica',
         cep: '22070000',
         complement: '100',
       },
@@ -222,6 +227,7 @@ describe('StudentService', () => {
 
     it('should update and return the student', async () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
       (mockHashService.hash as jest.Mock).mockResolvedValue(
         'hashedPassword-new',
       );
@@ -231,9 +237,35 @@ describe('StudentService', () => {
 
       const result = await service.updateStudent(mockStudent.id, updateCommand);
 
-      expect(result.socialName).toBe(updateCommand.socialName);
+      expect(result.email).toBe(updateCommand.email);
       expect(result.contact.city).toBe(updateCommand.contact.city);
+      expect(result.gender).toBe(Gender.FEMALE);
+      expect(result.race).toBe(Race.BROWN);
+      expect(result.birthDate?.toISOString()).toContain('1995-05-05');
       expect(mockRepository.update).toHaveBeenCalled();
+    });
+
+    it('should throw UserAlreadyExistsException when updating to a duplicated email', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(
+        new Student(
+          '223e4567-e89b-12d3-a456-426614174111',
+          'hashedPassword',
+          'duplicado@teste.com',
+          '98765432100',
+          mockContact,
+          new Date('1991-01-01'),
+          Gender.FEMALE,
+          Race.BLACK,
+        ),
+      );
+
+      await expect(
+        service.updateStudent(mockStudent.id, {
+          ...updateCommand,
+          email: 'duplicado@teste.com',
+        }),
+      ).rejects.toThrow(UserAlreadyExistsException);
     });
   });
 
@@ -246,26 +278,30 @@ describe('StudentService', () => {
           mockStudent.email,
           mockStudent.cpf,
           mockContact,
-          mockStudent.socialName,
           mockStudent.birthDate,
           mockStudent.gender,
           mockStudent.race,
         ),
       );
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
       (mockRepository.update as jest.Mock).mockImplementation((student) =>
         Promise.resolve(student),
       );
 
-      const partialData: PatchStudentCommand = { socialName: 'Nome Global' };
+      const partialData: PatchStudentCommand = {
+        gender: Gender.NON_BINARY,
+        birthDate: new Date('1990-01-01'),
+      };
       const result = await service.patchStudent(mockStudent.id, partialData);
 
-      expect(result.socialName).toBe(partialData.socialName);
+      expect(result.gender).toBe(Gender.NON_BINARY);
       expect(result.email).toBe(mockStudent.email);
       expect(mockRepository.update).toHaveBeenCalled();
     });
 
     it('should partially update password and return the student', async () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
       (mockHashService.hash as jest.Mock).mockResolvedValue(
         'hashedPassword-new',
       );
@@ -279,6 +315,28 @@ describe('StudentService', () => {
       expect(result.password).toBe('hashedPassword-new');
       expect(mockHashService.hash).toHaveBeenCalledWith('newpassword123');
       expect(mockRepository.update).toHaveBeenCalled();
+    });
+
+    it('should throw UserAlreadyExistsException when patching to a duplicated email', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(
+        new Student(
+          '223e4567-e89b-12d3-a456-426614174111',
+          'hashedPassword',
+          'duplicado@teste.com',
+          '98765432100',
+          mockContact,
+          new Date('1991-01-01'),
+          Gender.FEMALE,
+          Race.BLACK,
+        ),
+      );
+
+      await expect(
+        service.patchStudent(mockStudent.id, {
+          email: 'duplicado@teste.com',
+        }),
+      ).rejects.toThrow(UserAlreadyExistsException);
     });
   });
 

@@ -14,60 +14,53 @@ import {
   PatchSocialBenefitCommand,
 } from './social-benefit.command';
 import {
-  CreateAccessibilityResourceCommand,
-  UpdateAccessibilityResourceCommand,
-  PatchAccessibilityResourceCommand,
-} from './accessibility-resource.command';
+  EducationLevel,
+  Gender,
+  HowHeardChannel,
+  Race,
+  FamilyIncome,
+} from '../domain/enums/student-profile.enum';
 
 export interface CreateStudentCommand {
   email: string;
   password: string;
   cpf: string;
-  socialName?: string;
-  birthDate: string;
-  gender: string;
-  race: string;
-  education?: string;
+  birthDate: string | Date;
+  gender: Gender;
+  race: Race;
+  education?: EducationLevel;
   courseName?: string;
   institution?: string;
   activityArea?: string;
   hasProgrammingExperience?: boolean;
-  hasTechCourses?: boolean;
-  techCoursesList?: string;
-  sendCurriculum?: boolean;
-  fatilabMotivation?: string;
-  howHeard?: string;
+  motivation?: string;
+  howHeard?: HowHeardChannel;
   hasComputer?: boolean;
   hasInternet?: boolean;
   committedToParticipate?: boolean;
   contact: CreateContactCommand;
   disability?: CreateDisabilityCommand;
   socialBenefits?: CreateSocialBenefitCommand[];
-  accessibilityResources?: CreateAccessibilityResourceCommand[];
+  socialName?: string;
+  familyIncome?: FamilyIncome;
 }
 
 export type UpdateStudentCommand = Omit<
   CreateStudentCommand,
-  'cpf' | 'contact' | 'disability' | 'socialBenefits' | 'accessibilityResources'
+  'cpf' | 'contact' | 'disability' | 'socialBenefits'
 > & {
   contact: UpdateContactCommand;
   disability?: UpdateDisabilityCommand;
   socialBenefits?: UpdateSocialBenefitCommand[];
-  accessibilityResources?: UpdateAccessibilityResourceCommand[];
 };
 
 export type PatchStudentCommand = Partial<
   Omit<
     CreateStudentCommand,
-    | 'cpf'
-    | 'contact'
-    | 'disability'
-    | 'socialBenefits'
-    | 'accessibilityResources'
+    'cpf' | 'contact' | 'disability' | 'socialBenefits'
   >
 > & {
   contact?: PatchContactCommand;
   disability?: PatchDisabilityCommand;
   socialBenefits?: PatchSocialBenefitCommand[];
-  accessibilityResources?: PatchAccessibilityResourceCommand[];
 };
