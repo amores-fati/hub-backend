@@ -27,11 +27,14 @@ import {
   FamilyIncome,
 } from '../../../core/domain/enums/student-profile.enum';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
+import { AmoresFatiLogger } from '../../../utils/logger';
 
 dotenv.config({
   path: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
   quiet: true,
 });
+
+const logger = new AmoresFatiLogger().setContext('Seed');
 
 const shouldReset = process.argv.includes('--reset');
 const studentBirthDates = [
@@ -99,7 +102,7 @@ async function ensureSeedMode(appDataSource: DataSource): Promise<boolean> {
   const userCount = await appDataSource.getRepository(UserOrmEntity).count();
 
   if (!shouldReset && userCount > 0) {
-    console.log(
+    logger.info(
       'Seed cancelado: o banco ja possui dados. Use "npm run seed:dev:reset" para recriar tudo.',
     );
     return false;
@@ -112,9 +115,9 @@ async function ensureSeedMode(appDataSource: DataSource): Promise<boolean> {
       social_benefits,
       students, admins, companies, contacts, users
       RESTART IDENTITY CASCADE`);
-    console.log('Dados anteriores removidos.');
+    logger.info('Dados anteriores removidos.');
   } else {
-    console.log(
+    logger.info(
       'Banco vazio detectado. Seed inicial sera executado sem reset.',
     );
   }
@@ -125,7 +128,7 @@ async function ensureSeedMode(appDataSource: DataSource): Promise<boolean> {
 export async function seed(): Promise<void> {
   const appDataSource = new DataSource(buildDatabaseOptions());
   await appDataSource.initialize();
-  console.log(' Conectado ao banco de dados.');
+  logger.info(' Conectado ao banco de dados.');
 
   const shouldContinue = await ensureSeedMode(appDataSource);
 
@@ -152,7 +155,7 @@ export async function seed(): Promise<void> {
     id: adminUserId,
   });
   await appDataSource.getRepository(AdminOrmEntity).save(admin);
-  console.log('Admin criado.');
+  logger.info('Admin criado.');
 
   // 2. EMPRESAS
   const empresasData = [
@@ -212,7 +215,7 @@ export async function seed(): Promise<void> {
     await appDataSource.getRepository(CompanyOrmEntity).save(company);
     empresas.push(company);
   }
-  console.log('3 empresas criadas.');
+  logger.info('3 empresas criadas.');
 
   // 3. CURSOS
   const cursosData = [
@@ -282,7 +285,7 @@ export async function seed(): Promise<void> {
     await appDataSource.getRepository(CourseOrmEntity).save(curso);
     cursos.push(curso);
   }
-  console.log('5 cursos criados.');
+  logger.info('5 cursos criados.');
 
   // 4. ALUNOS (15)
   const alunosData = [
@@ -528,7 +531,7 @@ export async function seed(): Promise<void> {
     }
     alunos.push(student);
   }
-  console.log('15 alunos criados.');
+  logger.info('15 alunos criados.');
 
   // CURSOS PRESENCIAIS
   const cursosPresenciais = [cursos[0], cursos[1]];
@@ -548,7 +551,7 @@ export async function seed(): Promise<void> {
       .getRepository(InPersonCourseDetailOrmEntity)
       .save(personCourse);
   }
-  console.log('2 cursos presenciais criados.');
+  logger.info('2 cursos presenciais criados.');
 
   // 5. SKILLS
   const skillNames = [
@@ -572,7 +575,7 @@ export async function seed(): Promise<void> {
     await appDataSource.getRepository(SkillOrmEntity).save(skill);
     skills.push(skill);
   }
-  console.log('Skills criadas.');
+  logger.info('Skills criadas.');
 
   // 6. CURRÍCULOS (2)
   const curriculoAlunos = [alunos[0], alunos[1]];
@@ -596,7 +599,7 @@ export async function seed(): Promise<void> {
       await appDataSource.getRepository(CurriculumSkillOrmEntity).save(sc);
     }
   }
-  console.log('2 currículos com skills criados.');
+  logger.info('2 currículos com skills criados.');
 
   // 7. VAGAS (5)
   const vagasData = [
@@ -654,47 +657,47 @@ export async function seed(): Promise<void> {
       await appDataSource.getRepository(JobSkillOrmEntity).save(sj);
     }
   }
-  console.log('5 vagas com skills criadas.');
-  console.log('\nResumo do dataset gerado:');
-  console.log('- 1 admin');
-  console.log('- 3 empresas');
-  console.log('- 5 cursos');
-  console.log('- 2 cursos presenciais');
-  console.log('- 15 alunos');
-  console.log('- 10 skills');
-  console.log('- 2 curriculos');
-  console.log('- 5 vagas');
-  console.log('\nExemplos reais do seed:');
-  console.log('- Admin: admin@fatilab.com | senha: Admin@123 | role: ADMIN');
-  console.log(
+  logger.info('5 vagas com skills criadas.');
+  logger.info('\nResumo do dataset gerado:');
+  logger.info('- 1 admin');
+  logger.info('- 3 empresas');
+  logger.info('- 5 cursos');
+  logger.info('- 2 cursos presenciais');
+  logger.info('- 15 alunos');
+  logger.info('- 10 skills');
+  logger.info('- 2 curriculos');
+  logger.info('- 5 vagas');
+  logger.info('\nExemplos reais do seed:');
+  logger.info('- Admin: admin@fatilab.com | senha: Admin@123 | role: ADMIN');
+  logger.info(
     '- Empresa: tech@innovatech.com | InnovaTech Solucoes | CNPJ: 12.345.678/0001-99',
   );
-  console.log(
+  logger.info(
     '- Empresa: rh@solucoesdigitais.com | Solucoes Digitais Ltda | CNPJ: 98.765.432/0001-11',
   );
-  console.log(
+  logger.info(
     '- Curso: Desenvolvimento Web Full Stack | carga: 120h | inicio: 2025-02-01',
   );
-  console.log(
+  logger.info(
     '- Curso: Ciencia de Dados com Python | carga: 80h | inicio: 2025-03-01',
   );
-  console.log(
+  logger.info(
     '- Aluno: aluno01@fatilab.com | Ana Beatriz Costa | area: design',
   );
-  console.log(
+  logger.info(
     '- Aluno: aluno02@fatilab.com | Bruno Ferreira | area: desenvolvimento',
   );
-  console.log(
+  logger.info(
     '- Vaga: Desenvolvedor Frontend | empresa: InnovaTech Solucoes | vagas: 2 | PCD: sim',
   );
-  console.log(
+  logger.info(
     '- Vaga: Engenheiro DevOps | empresa: Solucoes Digitais Ltda | vagas: 1 | PCD: nao',
   );
-  console.log(
+  logger.info(
     '- Skills de exemplo: JavaScript, TypeScript, Python, React, Node.js, SQL',
   );
 
-  console.log('\nSeed concluído com sucesso!');
+  logger.info('\nSeed concluído com sucesso!');
   await appDataSource.destroy();
 }
 
@@ -706,7 +709,7 @@ function isSeedEntrypoint(): boolean {
 
 if (isSeedEntrypoint()) {
   void seed().catch((err) => {
-    console.error('Erro no seed:', err);
+    logger.critical('Erro no seed', err);
     process.exit(1);
   });
 }

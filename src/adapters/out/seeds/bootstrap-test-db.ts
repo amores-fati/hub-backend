@@ -2,7 +2,10 @@ import { createRequire } from 'module';
 import { DataSource } from 'typeorm';
 
 import { buildDatabaseOptions } from '../../../config/database.config';
+import { AmoresFatiLogger } from '../../../utils/logger';
 import { configureTestDatabaseEnvironment } from './test-db-env';
+
+const logger = new AmoresFatiLogger().setContext('TestDbBootstrap');
 
 const requireModule = createRequire(__filename);
 
@@ -20,6 +23,6 @@ async function bootstrap(): Promise<void> {
 }
 
 bootstrap().catch((error) => {
-  console.error('Erro no bootstrap do banco de teste:', error);
+  logger.critical('Erro no bootstrap do banco de teste', error);
   process.exit(1);
 });

@@ -32,6 +32,7 @@ import {
 } from '../../../core/command/company.command';
 import { CompanyService } from '../../../core/services/company.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
+import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCompanyDto } from '../dtos/company/create-company.dto';
 import { PatchCompanyDto } from '../dtos/company/patch-company.dto';
 import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
@@ -39,7 +40,12 @@ import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
 @ApiTags('Companies')
 @Controller('companies')
 export class CompanyController {
-  constructor(private readonly companyService: CompanyService) {}
+  constructor(
+    private readonly companyService: CompanyService,
+    private readonly logger: AmoresFatiLogger,
+  ) {
+    this.logger.setContext(CompanyController.name);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -56,18 +62,31 @@ export class CompanyController {
   })
   async register(@Body() createCompanyDto: CreateCompanyDto) {
     try {
+      this.logger.info('Creating company', {
+        cnpj: createCompanyDto.cnpj,
+        email: createCompanyDto.email,
+      });
       const command: CreateCompanyCommand = { ...createCompanyDto };
-      return await this.companyService.createCompany(command);
+      const company = await this.companyService.createCompany(command);
+      this.logger.info('Company created', {
+        id: (company as { id?: string })?.id,
+      });
+      return company;
     } catch (error) {
       if (
         error instanceof Error &&
         (error.name === 'CompanyAlreadyExistsException' ||
           error.name === 'UserAlreadyExistsException')
       ) {
+        this.logger.warn('Company creation conflict: already registered', {
+          cnpj: createCompanyDto.cnpj,
+          email: createCompanyDto.email,
+        });
         throw new ConflictException(error.message);
       }
 
       if (error instanceof Error && error.name === 'DomainException') {
+        this.logger.error('Company creation domain error');
         throw new BadRequestException(error.message);
       }
 
@@ -82,7 +101,10 @@ export class CompanyController {
     description: 'Retorna um array com todas as empresas cadastradas.',
   })
   async findAll() {
-    return this.companyService.findAllCompanies();
+    this.logger.info('Listing companies');
+    const companies = await this.companyService.findAllCompanies();
+    this.logger.info('Companies listed', { count: companies.length });
+    return companies;
   }
 
   @RequireAuth()
@@ -92,9 +114,13 @@ export class CompanyController {
   @ApiNotFoundResponse({ description: 'Empresa nao encontrada.' })
   async findById(@Param('id', ParseUUIDPipe) id: string) {
     try {
-      return await this.companyService.getCompanyById(id);
+      this.logger.info('Fetching company by id', { id });
+      const company = await this.companyService.getCompanyById(id);
+      this.logger.info('Company fetched', { id });
+      return company;
     } catch (error) {
       if (error instanceof Error && error.name === 'CompanyNotFoundException') {
+        this.logger.warn('Company not found', { id });
         throw new NotFoundException(error.message);
       }
       throw error;
@@ -108,9 +134,13 @@ export class CompanyController {
   @ApiNotFoundResponse({ description: 'Empresa nao encontrada.' })
   async findByCnpj(@Param('cnpj') cnpj: string) {
     try {
-      return await this.companyService.getCompanyByCnpj(cnpj);
+      this.logger.info('Fetching company by cnpj', { cnpj });
+      const company = await this.companyService.getCompanyByCnpj(cnpj);
+      this.logger.info('Company fetched', { cnpj });
+      return company;
     } catch (error) {
       if (error instanceof Error && error.name === 'CompanyNotFoundException') {
+        this.logger.warn('Company not found', { cnpj });
         throw new NotFoundException(error.message);
       }
       throw error;
@@ -130,10 +160,14 @@ export class CompanyController {
     @Body() updateCompanyDto: UpdateCompanyDto,
   ) {
     try {
+      this.logger.info('Updating company', { id });
       const command: UpdateCompanyCommand = { ...updateCompanyDto };
-      return await this.companyService.updateCompany(id, command);
+      const company = await this.companyService.updateCompany(id, command);
+      this.logger.info('Company updated', { id });
+      return company;
     } catch (error) {
       if (error instanceof Error && error.name === 'CompanyNotFoundException') {
+        this.logger.warn('Company not found', { id });
         throw new NotFoundException(error.message);
       }
 
@@ -141,10 +175,14 @@ export class CompanyController {
         error instanceof Error &&
         error.name === 'UserAlreadyExistsException'
       ) {
+        this.logger.warn('Company update conflict: email already in use', {
+          id,
+        });
         throw new ConflictException(error.message);
       }
 
       if (error instanceof Error && error.name === 'DomainException') {
+        this.logger.error('Company update domain error');
         throw new BadRequestException(error.message);
       }
 
@@ -165,9 +203,16 @@ export class CompanyController {
     @Body() patchCompanyDto: PatchCompanyDto,
   ) {
     try {
-      return await this.companyService.patchCompany(id, patchCompanyDto);
+      this.logger.info('Patching company', { id });
+      const company = await this.companyService.patchCompany(
+        id,
+        patchCompanyDto,
+      );
+      this.logger.info('Company patched', { id });
+      return company;
     } catch (error) {
       if (error instanceof Error && error.name === 'CompanyNotFoundException') {
+        this.logger.warn('Company not found', { id });
         throw new NotFoundException(error.message);
       }
 
@@ -175,10 +220,14 @@ export class CompanyController {
         error instanceof Error &&
         error.name === 'UserAlreadyExistsException'
       ) {
+        this.logger.warn('Company patch conflict: email already in use', {
+          id,
+        });
         throw new ConflictException(error.message);
       }
 
       if (error instanceof Error && error.name === 'DomainException') {
+        this.logger.error('Company patch domain error');
         throw new BadRequestException(error.message);
       }
 
@@ -194,13 +243,17 @@ export class CompanyController {
   @ApiNotFoundResponse({ description: 'Empresa nao encontrada.' })
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     try {
+      this.logger.info('Deleting company', { id });
       await this.companyService.deleteCompany(id);
+      this.logger.info('Company deleted', { id });
     } catch (error) {
       if (error instanceof Error && error.name === 'CompanyNotFoundException') {
+        this.logger.warn('Company not found', { id });
         throw new NotFoundException(error.message);
       }
 
       if (error instanceof Error && error.name === 'DomainException') {
+        this.logger.error('Company deletion domain error');
         throw new BadRequestException(error.message);
       }
 

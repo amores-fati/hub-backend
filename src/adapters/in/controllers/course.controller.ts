@@ -18,13 +18,19 @@ import {
 import { CreateCourseCommand } from '../../../core/command/course.command';
 import { CourseService } from '../../../core/services/course.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
+import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCourseDto } from '../dtos/course/create-course.dto';
 
 @ApiTags('Courses')
 @RequireAuth()
 @Controller('courses')
 export class CourseController {
-  constructor(private readonly courseService: CourseService) {}
+  constructor(
+    private readonly courseService: CourseService,
+    private readonly logger: AmoresFatiLogger,
+  ) {
+    this.logger.setContext(CourseController.name);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -62,10 +68,17 @@ export class CourseController {
   })
   async create(@Body() createCourseDto: CreateCourseDto) {
     try {
+      this.logger.info('Creating course', { name: createCourseDto.name });
       const command: CreateCourseCommand = { ...createCourseDto };
-      return await this.courseService.createCourse(command);
+      const course = await this.courseService.createCourse(command);
+      this.logger.info('Course created', {
+        id: (course as { id?: string })?.id,
+        name: createCourseDto.name,
+      });
+      return course;
     } catch (error) {
       if (error instanceof Error && error.name === 'DomainException') {
+        this.logger.error('Course creation domain error');
         throw new BadRequestException(error.message);
       }
 
@@ -100,6 +113,9 @@ export class CourseController {
     },
   })
   async findAll() {
-    return this.courseService.getAllCourses();
+    this.logger.info('Listing courses');
+    const courses = await this.courseService.getAllCourses();
+    this.logger.info('Courses listed', { count: courses.length });
+    return courses;
   }
 }

@@ -33,6 +33,7 @@ import {
 } from '../../../core/command/student.command';
 import { StudentService } from '../../../core/services/student.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
+import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateStudentDto } from '../dtos/student/create-student.dto';
 import { PatchStudentDto } from '../dtos/student/patch-student.dto';
 import { UpdateStudentDto } from '../dtos/student/update-student.dto';
@@ -40,7 +41,12 @@ import { UpdateStudentDto } from '../dtos/student/update-student.dto';
 @ApiTags('Students')
 @Controller('students')
 export class StudentController {
-  constructor(private readonly studentService: StudentService) {}
+  constructor(
+    private readonly studentService: StudentService,
+    private readonly logger: AmoresFatiLogger,
+  ) {
+    this.logger.setContext(StudentController.name);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -57,18 +63,31 @@ export class StudentController {
   })
   async register(@Body() createStudentDto: CreateStudentDto) {
     try {
+      this.logger.info('Creating student', {
+        cpf: createStudentDto.cpf,
+        email: createStudentDto.email,
+      });
       const command: CreateStudentCommand = { ...createStudentDto };
-      return await this.studentService.createStudent(command);
+      const student = await this.studentService.createStudent(command);
+      this.logger.info('Student created', {
+        id: (student as { id?: string })?.id,
+      });
+      return student;
     } catch (error) {
       if (
         error instanceof Error &&
         (error.name === 'StudentAlreadyExistsException' ||
           error.name === 'UserAlreadyExistsException')
       ) {
+        this.logger.warn('Student creation conflict: already registered', {
+          cpf: createStudentDto.cpf,
+          email: createStudentDto.email,
+        });
         throw new ConflictException(error.message);
       }
 
       if (error instanceof Error && error.name === 'DomainException') {
+        this.logger.error('Student creation domain error');
         throw new BadRequestException(error.message);
       }
 
@@ -83,7 +102,10 @@ export class StudentController {
     description: 'Retorna um array com todos os alunos cadastrados.',
   })
   async findAll() {
-    return this.studentService.findAllStudents();
+    this.logger.info('Listing students');
+    const students = await this.studentService.findAllStudents();
+    this.logger.info('Students listed', { count: students.length });
+    return students;
   }
 
   @RequireAuth()
@@ -93,9 +115,13 @@ export class StudentController {
   @ApiNotFoundResponse({ description: 'Aluno nao encontrado.' })
   async findById(@Param('id', ParseUUIDPipe) id: string) {
     try {
-      return await this.studentService.getStudentById(id);
+      this.logger.info('Fetching student by id', { id });
+      const student = await this.studentService.getStudentById(id);
+      this.logger.info('Student fetched', { id });
+      return student;
     } catch (error) {
       if (error instanceof Error && error.name === 'StudentNotFoundException') {
+        this.logger.warn('Student not found', { id });
         throw new NotFoundException(error.message);
       }
       throw error;
@@ -109,9 +135,13 @@ export class StudentController {
   @ApiNotFoundResponse({ description: 'Aluno nao encontrado.' })
   async findByCpf(@Param('cpf') cpf: string) {
     try {
-      return await this.studentService.getStudentByCpf(cpf);
+      this.logger.info('Fetching student by cpf', { cpf });
+      const student = await this.studentService.getStudentByCpf(cpf);
+      this.logger.info('Student fetched', { cpf });
+      return student;
     } catch (error) {
       if (error instanceof Error && error.name === 'StudentNotFoundException') {
+        this.logger.warn('Student not found', { cpf });
         throw new NotFoundException(error.message);
       }
       throw error;
@@ -131,10 +161,14 @@ export class StudentController {
     @Body() updateStudentDto: UpdateStudentDto,
   ) {
     try {
+      this.logger.info('Updating student', { id });
       const command: UpdateStudentCommand = { ...updateStudentDto };
-      return await this.studentService.updateStudent(id, command);
+      const student = await this.studentService.updateStudent(id, command);
+      this.logger.info('Student updated', { id });
+      return student;
     } catch (error) {
       if (error instanceof Error && error.name === 'StudentNotFoundException') {
+        this.logger.warn('Student not found', { id });
         throw new NotFoundException(error.message);
       }
 
@@ -142,10 +176,14 @@ export class StudentController {
         error instanceof Error &&
         error.name === 'UserAlreadyExistsException'
       ) {
+        this.logger.warn('Student update conflict: email already in use', {
+          id,
+        });
         throw new ConflictException(error.message);
       }
 
       if (error instanceof Error && error.name === 'DomainException') {
+        this.logger.error('Student update domain error');
         throw new BadRequestException(error.message);
       }
 
@@ -166,10 +204,14 @@ export class StudentController {
     @Body() patchStudentDto: PatchStudentDto,
   ) {
     try {
+      this.logger.info('Patching student', { id });
       const command: PatchStudentCommand = { ...patchStudentDto };
-      return await this.studentService.patchStudent(id, command);
+      const student = await this.studentService.patchStudent(id, command);
+      this.logger.info('Student patched', { id });
+      return student;
     } catch (error) {
       if (error instanceof Error && error.name === 'StudentNotFoundException') {
+        this.logger.warn('Student not found', { id });
         throw new NotFoundException(error.message);
       }
 
@@ -177,10 +219,14 @@ export class StudentController {
         error instanceof Error &&
         error.name === 'UserAlreadyExistsException'
       ) {
+        this.logger.warn('Student patch conflict: email already in use', {
+          id,
+        });
         throw new ConflictException(error.message);
       }
 
       if (error instanceof Error && error.name === 'DomainException') {
+        this.logger.error('Student patch domain error');
         throw new BadRequestException(error.message);
       }
 
@@ -196,13 +242,17 @@ export class StudentController {
   @ApiNotFoundResponse({ description: 'Aluno nao encontrado.' })
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     try {
+      this.logger.info('Deleting student', { id });
       await this.studentService.deleteStudent(id);
+      this.logger.info('Student deleted', { id });
     } catch (error) {
       if (error instanceof Error && error.name === 'StudentNotFoundException') {
+        this.logger.warn('Student not found', { id });
         throw new NotFoundException(error.message);
       }
 
       if (error instanceof Error && error.name === 'DomainException') {
+        this.logger.error('Student deletion domain error');
         throw new BadRequestException(error.message);
       }
 
