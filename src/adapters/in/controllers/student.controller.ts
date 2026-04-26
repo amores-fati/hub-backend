@@ -13,6 +13,8 @@ import {
   Patch,
   Post,
   Put,
+  ForbiddenException, 
+  Req,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -30,6 +32,7 @@ import {
   CreateStudentCommand,
   PatchStudentCommand,
   UpdateStudentCommand,
+  UpdateStudentMeCommand,
 } from '../../../core/command/student.command';
 import { StudentService } from '../../../core/services/student.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
@@ -37,6 +40,9 @@ import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateStudentDto } from '../dtos/student/create-student.dto';
 import { PatchStudentDto } from '../dtos/student/patch-student.dto';
 import { UpdateStudentDto } from '../dtos/student/update-student.dto';
+import { UpdateStudentMeDto } from '../dtos/student/update-student-me.dto';
+import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
+import { Request } from 'express';
 
 @ApiTags('Students')
 @Controller('students')
@@ -106,6 +112,32 @@ export class StudentController {
     const students = await this.studentService.findAllStudents();
     this.logger.info('Students listed', { count: students.length });
     return students;
+  }
+
+  @RequireAuth()
+  @Put('me')
+  @ApiOperation({ summary: 'Atualiza o perfil do aluno autenticado' })
+  @ApiBody({ type: UpdateStudentMeDto })
+  @ApiOkResponse({ description: 'Perfil atualizado com sucesso.' })
+  @ApiBadRequestResponse({ description: 'Erro de validacao.' })
+  async updateMe(
+    @Req() req: Request & { user: { id: string; role: UserRoleEnum } },
+    @Body() updateStudentMeDto: UpdateStudentMeDto,
+  ) {
+    if (req.user.role !== UserRoleEnum.STUDENT) {
+      throw new ForbiddenException('Apenas estudantes podem atualizar este perfil.');
+    }
+
+    this.logger.info('Updating authenticated student profile', {
+      userId: req.user.id,
+    });
+
+    const command: UpdateStudentMeCommand = { ...updateStudentMeDto };
+
+    return this.studentService.updateAuthenticatedStudentProfile(
+      req.user.id,
+      command,
+    );
   }
 
   @RequireAuth()
