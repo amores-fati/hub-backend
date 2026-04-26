@@ -119,7 +119,20 @@ export class StudentController {
   @ApiOperation({ summary: 'Atualiza o perfil do aluno autenticado' })
   @ApiBody({ type: UpdateStudentMeDto })
   @ApiOkResponse({ description: 'Perfil atualizado com sucesso.' })
-  @ApiBadRequestResponse({ description: 'Erro de validacao.' })
+  @ApiBadRequestResponse({
+    description: 'Dados inválidos.',
+    schema: {
+      example: {
+        statusCode: 400,
+        message: [
+          'phone deve conter apenas dígitos',
+          'householdSize deve ser um número inteiro positivo',
+        ],
+        error: 'Bad Request',
+        errorKind: 'VALIDATION_ERROR',
+      },
+    },
+  })
   async updateMe(
     @Req() req: Request & { user: { id: string; role: UserRoleEnum } },
     @Body() updateStudentMeDto: UpdateStudentMeDto,
