@@ -113,35 +113,30 @@ export class StudentController {
 
 
 
- @RequireAuth()
+  @RequireAuth()
   @Get('me')
-  @ApiOperation({ summary: 'Retorna o perfil do aluno autentificado' })
-  @ApiOkResponse({
-    description: 'Perfil retornado com sucesso.',
-  })
+  @ApiOperation({ summary: 'Retorna o perfil do aluno autenticado' })
+  @ApiOkResponse({ description: 'Perfil retornado com sucesso.' })
   async getMyProfile(@CurrentUser() user: AuthenticatedUser) {
-    this.logger.info('Fetching own student profile',{ userId: user.id });
+    this.logger.info('Fetching own student profile', { userId: user.id });
 
+    if (user.role !== UserRoleEnum.STUDENT) {
+      throw new ForbiddenException('Acesso restrito a alunos.');
+    }
 
-   if(user.role !== UserRoleEnum.STUDENT){  
-    throw new ForbiddenException('Acesso restrito a aluno.');
+    try {
+      const student = await this.studentService.getStudentById(user.id);
+      this.logger.info('Own student profile fetched', { userId: user.id });
+      return student;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'StudentNotFoundException') {
+        this.logger.warn('Student profile not found', { userId: user.id });
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
+  }
 
-try { 
-  const student = await this.studentService.getStudentById(user.id);
-
-this.logger.info('Own student profile fetched', {userId: user.id});
-
-return student;
-} catch(error){
-
-if(error instanceof Error && error  === 'StudentNotFoundException'){
-  this.logger.warn('Student profile not found', {userId: user.id});
-  throw new NotFoundException(Error.arguments);
-}
-
-throw error;
-
-}}}    
 
 
 
