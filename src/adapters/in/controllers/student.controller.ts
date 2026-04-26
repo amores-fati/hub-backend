@@ -4,6 +4,7 @@ import {
   ConflictException,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -33,6 +34,8 @@ import {
 } from '../../../core/command/student.command';
 import { StudentService } from '../../../core/services/student.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
+import { CurrentUser, type AuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
+import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateStudentDto } from '../dtos/student/create-student.dto';
 import { PatchStudentDto } from '../dtos/student/patch-student.dto';
@@ -107,6 +110,43 @@ export class StudentController {
     this.logger.info('Students listed', { count: students.length });
     return students;
   }
+
+
+
+ @RequireAuth()
+  @Get('me')
+  @ApiOperation({ summary: 'Retorna o perfil do aluno autentificado' })
+  @ApiOkResponse({
+    description: 'Perfil retornado com sucesso.',
+  })
+  async getMyProfile(@CurrentUser() user: AuthenticatedUser) {
+    this.logger.info('Fetching own student profile',{ userId: user.id });
+
+
+   if(user.role !== UserRoleEnum.STUDENT){  
+    throw new ForbiddenException('Acesso restrito a aluno.');
+
+try { 
+  const student = await this.studentService.getStudentById(user.id);
+
+this.logger.info('Own student profile fetched', {userId: user.id});
+
+return student;
+} catch(error){
+
+if(error instanceof Error && error  === 'StudentNotFoundException'){
+  this.logger.warn('Student profile not found', {userId: user.id});
+  throw new NotFoundException(Error.arguments);
+}
+
+throw error;
+
+}}}    
+
+
+
+
+
 
   @RequireAuth()
   @Get(':id')
