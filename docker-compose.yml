@@ -2,84 +2,45 @@ services:
   api:
     build:
       context: .
-      target: development
-    init: true
-    env_file:
-      - .env
-    # Runs migrations, executes the idempotent development seed and then starts Nest in watch mode.
-    command: ['npm', 'run', 'start:docker:dev']
-    environment:
-      NODE_ENV: development
-      CHOKIDAR_USEPOLLING: 'true'
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_TEST_HOST: postgres-test
-      DB_TEST_PORT: 5432
+      target: builder
+    command: sh -c "npm install && npm run start:docker:dev"
     ports:
-      - '${PORT:-3001}:${PORT:-3001}'
+      - '${PORT}:${PORT}'
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME}
     volumes:
       - .:/usr/src/app
-      - node_modules:/usr/src/app/node_modules
+      - /usr/src/app/node_modules
     depends_on:
-      postgres:
-        condition: service_healthy
-      postgres-test:
-        condition: service_healthy
+      - postgres
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
-      POSTGRES_USER: ${DB_USERNAME:-root}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
-      POSTGRES_DB: ${DB_DATABASE:-api_db}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - '5434:5432'
+      - '${DB_PORT}:${DB_PORT}'
     volumes:
       - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
 
   postgres-test:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
-      POSTGRES_USER: ${DB_TEST_USERNAME:-root}
-      POSTGRES_PASSWORD: ${DB_TEST_PASSWORD:-secret}
-      POSTGRES_DB: ${DB_TEST_DATABASE:-api_db_test}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}_test
     ports:
       - '${DB_TEST_PORT:-5433}:5432'
     volumes:
       - pgdata_test:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
-
-  postgres-e2e:
-    image: postgres:16-alpine
-    profiles: ['e2e']
-    environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: api_db_e2e
-    ports:
-      - '5436:5432'
-    volumes:
-      - pgdata_e2e:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
 
 volumes:
-  node_modules:
   pgdata:
   pgdata_test:
-  pgdata_e2e:

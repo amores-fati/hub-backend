@@ -22,17 +22,11 @@ import { LoginDto } from '../dtos/login/login.dto';
 import { LoginCommand } from '../../../core/command/auth.command';
 import { InvalidCredentialsException } from '../../../core/exceptions/invalid-credentials.exception';
 import { DomainException } from '../../../core/exceptions/domain.exception';
-import { AmoresFatiLogger } from '../../../utils/logger';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly logger: AmoresFatiLogger,
-  ) {
-    this.logger.setContext(AuthController.name);
-  }
+  constructor(private readonly authService: AuthService) {}
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -73,23 +67,16 @@ export class AuthController {
   })
   async login(@Body() loginDto: LoginDto) {
     try {
-      this.logger.info('Logging in user', { email: loginDto.email });
       const command: LoginCommand = {
         email: loginDto.email,
         password: loginDto.password,
       };
-      const result = await this.authService.login(command);
-      this.logger.info('User login succeeded', { email: loginDto.email });
-      return result;
+      return await this.authService.login(command);
     } catch (error) {
       if (error instanceof InvalidCredentialsException) {
-        this.logger.warn('Login failed: invalid credentials', {
-          email: loginDto.email,
-        });
         throw new UnauthorizedException(error.message);
       }
       if (error instanceof DomainException) {
-        this.logger.error('Login domain error');
         throw new BadRequestException(error.message);
       }
       throw error;

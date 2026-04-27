@@ -1,62 +1,59 @@
 import { DomainException } from '../exceptions/domain.exception';
 
 export abstract class User {
-  readonly #id: string;
-  #email: string;
-  #password: string;
-
-  constructor(id: string, email: string, password: string) {
-    this.#id = id;
-    this.#email = email;
-    this.#password = password;
+  constructor(
+    protected readonly _id: string,
+    protected _email: string,
+    protected _password: string,
+  ) {
     this.validateUser();
   }
 
   get id(): string {
-    return this.#id;
+    return this._id;
   }
 
   get email(): string {
-    return this.#email;
+    return this._email;
   }
 
   get password(): string {
-    return this.#password;
+    return this._password;
   }
 
   public changeEmail(newEmail: string): void {
     this.validateEmail(newEmail);
-    this.#email = newEmail;
+    this._email = newEmail;
   }
 
   public changePassword(newPassword: string): void {
     this.validatePassword(newPassword);
-    this.#password = newPassword;
+    this._password = newPassword;
   }
 
   private validateUser(): void {
-    this.validateEmail(this.#email);
-    this.validatePassword(this.#password);
+    this.validateEmail(this._email);
+    this.validatePassword(this._password);
   }
 
   private validatePassword(password: string): void {
     if (!password || password.trim().length === 0) {
-      throw new DomainException('A senha Ã© obrigatÃ³ria.');
+      throw new DomainException('A senha é obrigatória.');
     }
     if (password.length > 100) {
       throw new DomainException(
-        'A senha nÃ£o pode ter mais que 100 caracteres.',
+        'A senha não pode ter mais que 100 caracteres.',
       );
     }
   }
 
   private validateEmail(email: string): void {
     if (!email || email.trim().length === 0) {
-      throw new DomainException('O e-mail Ã© obrigatÃ³rio.');
+      throw new DomainException('O e-mail é obrigatório.');
     }
     if (email.length > 100) {
       throw new DomainException(
-        'O e-mail nÃ£o pode ter mais que 100 caracteres.',
+        'O e-mail não pode ter mais que 100 caracteres.',
       );
     }
   }

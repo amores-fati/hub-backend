@@ -1,302 +1,243 @@
 import { DomainException } from '../exceptions/domain.exception';
+import { AccessibilityResource } from './accessibility-resource.entity';
 import { Contact } from './contact.entity';
 import { Disability } from './disability.entity';
-import {
-  EducationLevel,
-  EDUCATION_LEVEL_VALUES,
-  Gender,
-  GENDER_VALUES,
-  HowHeardChannel,
-  HOW_HEARD_CHANNEL_VALUES,
-  Race,
-  RACE_VALUES,
-  FamilyIncome,
-  FAMILY_INCOME_VALUES,
-} from './enums/student-profile.enum';
 import { SocialBenefit } from './social-benefit.entity';
 import { User } from './user.entity';
 
 export class Student extends User {
-  readonly #cpf: string;
-  #contact: Contact;
-  #socialName?: string;
-  #birthDate: Date;
-  #gender: Gender;
-  #race: Race;
-  #education?: EducationLevel;
-  #courseName?: string;
-  #institution?: string;
-  #activityArea?: string;
-  #hasProgrammingExperience?: boolean;
-  #familyIncome?: FamilyIncome;
-  #motivation?: string;
-  #howHeard?: HowHeardChannel;
-  #hasComputer?: boolean;
-  #hasInternet?: boolean;
-  #committedToParticipate?: boolean;
-  #disability?: Disability;
-  #socialBenefits: SocialBenefit[];
-
   constructor(
     id: string,
     password: string,
     email: string,
-    cpf: string,
-    contact: Contact,
-    birthDate: Date | string,
-    gender: Gender,
-    race: Race,
-    education?: EducationLevel,
-    institution?: string,
-    activityArea?: string,
-    hasProgrammingExperience?: boolean,
-    motivation?: string,
-    howHeard?: HowHeardChannel,
-    hasComputer?: boolean,
-    hasInternet?: boolean,
-    committedToParticipate?: boolean,
-    disability?: Disability,
-    socialBenefits: SocialBenefit[] = [],
-    socialName?: string,
-    courseName?: string,
-    familyIncome?: FamilyIncome,
+    private readonly _cpf: string,
+    private _contact: Contact,
+    private _socialName?: string,
+    private _birthDate?: Date,
+    private _gender?: string,
+    private _race?: string,
+    private _education?: string,
+    private _courseName?: string,
+    private _institution?: string,
+    private _activityArea?: string,
+    private _hasProgrammingExperience?: boolean,
+    private _hasTechCourses?: boolean,
+    private _techCoursesList?: string,
+    private _sendCurriculum: boolean = false,
+    private _fatilabMotivation?: string,
+    private _howHeard?: string,
+    private _hasComputer?: boolean,
+    private _hasInternet?: boolean,
+    private _committedToParticipate?: boolean,
+    private _disability?: Disability,
+    private _socialBenefits: SocialBenefit[] = [],
+    private _accessibilityResources: AccessibilityResource[] = [],
   ) {
     super(id, email, password);
-    this.#cpf = cpf;
-    this.#contact = contact;
-    this.#birthDate =
-      birthDate instanceof Date ? birthDate : new Date(birthDate);
-    this.#gender = gender;
-    this.#race = race;
-    this.#education = education;
-    this.#institution = institution;
-    this.#activityArea = activityArea;
-    this.#hasProgrammingExperience = hasProgrammingExperience;
-    this.#motivation = motivation;
-    this.#howHeard = howHeard;
-    this.#hasComputer = hasComputer;
-    this.#hasInternet = hasInternet;
-    this.#committedToParticipate = committedToParticipate;
-    this.#disability = disability;
-    this.#socialBenefits = socialBenefits;
-    this.#socialName = socialName;
-    this.#courseName = courseName;
-    this.#familyIncome = familyIncome;
     this.validateStudent();
   }
 
   get cpf(): string {
-    return this.#cpf;
+    return this._cpf;
   }
 
   get contact(): Contact {
-    return this.#contact;
+    return this._contact;
   }
 
   get socialName(): string | undefined {
-    return this.#socialName;
+    return this._socialName;
   }
 
-  get birthDate(): Date {
-    return this.#birthDate;
+  get birthDate(): Date | undefined {
+    return this._birthDate;
   }
 
-  get gender(): Gender {
-    return this.#gender;
+  get gender(): string | undefined {
+    return this._gender;
   }
 
-  get race(): Race {
-    return this.#race;
+  get race(): string | undefined {
+    return this._race;
   }
 
-  get education(): EducationLevel | undefined {
-    return this.#education;
+  get education(): string | undefined {
+    return this._education;
   }
 
   get courseName(): string | undefined {
-    return this.#courseName;
+    return this._courseName;
   }
 
   get institution(): string | undefined {
-    return this.#institution;
+    return this._institution;
   }
 
   get activityArea(): string | undefined {
-    return this.#activityArea;
+    return this._activityArea;
   }
 
   get hasProgrammingExperience(): boolean | undefined {
-    return this.#hasProgrammingExperience;
+    return this._hasProgrammingExperience;
   }
 
-  get familyIncome(): FamilyIncome | undefined {
-    return this.#familyIncome;
+  get hasTechCourses(): boolean | undefined {
+    return this._hasTechCourses;
   }
 
-  get motivation(): string | undefined {
-    return this.#motivation;
+  get techCoursesList(): string | undefined {
+    return this._techCoursesList;
   }
 
-  get howHeard(): HowHeardChannel | undefined {
-    return this.#howHeard;
+  get sendCurriculum(): boolean {
+    return this._sendCurriculum;
+  }
+
+  get fatilabMotivation(): string | undefined {
+    return this._fatilabMotivation;
+  }
+
+  get howHeard(): string | undefined {
+    return this._howHeard;
   }
 
   get hasComputer(): boolean | undefined {
-    return this.#hasComputer;
+    return this._hasComputer;
   }
 
   get hasInternet(): boolean | undefined {
-    return this.#hasInternet;
+    return this._hasInternet;
   }
 
   get committedToParticipate(): boolean | undefined {
-    return this.#committedToParticipate;
+    return this._committedToParticipate;
   }
 
   get disability(): Disability | undefined {
-    return this.#disability;
+    return this._disability;
   }
 
   get socialBenefits(): SocialBenefit[] {
-    return this.#socialBenefits;
+    return this._socialBenefits;
+  }
+
+  get accessibilityResources(): AccessibilityResource[] {
+    return this._accessibilityResources;
   }
 
   public changeContact(newContact: Contact): void {
-    this.#contact = newContact;
+    this._contact = newContact;
     this.validateContact();
   }
 
-  public changeProfileData(data: {
-    birthDate?: Date;
-    gender?: Gender;
-    race?: Race;
+  public changeSocialName(newSocialName?: string): void {
+    this._socialName = newSocialName;
+  }
+
+  public changeAcademicData(data: {
+    education?: string;
+    courseName?: string;
+    institution?: string;
+    activityArea?: string;
   }): void {
-    if (data.birthDate !== undefined) this.#birthDate = data.birthDate;
-    if (data.gender !== undefined) this.#gender = data.gender;
-    if (data.race !== undefined) this.#race = data.race;
-    this.validateProfileData();
+    if (data.education !== undefined) this._education = data.education;
+    if (data.courseName !== undefined) this._courseName = data.courseName;
+    if (data.institution !== undefined) this._institution = data.institution;
+    if (data.activityArea !== undefined) this._activityArea = data.activityArea;
+  }
+
+  public changeTechnologyData(data: {
+    hasProgrammingExperience?: boolean;
+    hasTechCourses?: boolean;
+    techCoursesList?: string;
+  }): void {
+    if (data.hasProgrammingExperience !== undefined) {
+      this._hasProgrammingExperience = data.hasProgrammingExperience;
+    }
+    if (data.hasTechCourses !== undefined) {
+      this._hasTechCourses = data.hasTechCourses;
+    }
+    if (data.techCoursesList !== undefined) {
+      this._techCoursesList = data.techCoursesList;
+    }
   }
 
   public changeParticipationData(data: {
-    motivation?: string;
-    howHeard?: HowHeardChannel;
+    sendCurriculum?: boolean;
+    fatilabMotivation?: string;
+    howHeard?: string;
     hasComputer?: boolean;
     hasInternet?: boolean;
     committedToParticipate?: boolean;
-    familyIncome?: FamilyIncome;
   }): void {
-    if (data.motivation !== undefined) {
-      this.#motivation = data.motivation;
+    if (data.sendCurriculum !== undefined) {
+      this._sendCurriculum = data.sendCurriculum;
+    }
+    if (data.fatilabMotivation !== undefined) {
+      this._fatilabMotivation = data.fatilabMotivation;
     }
     if (data.howHeard !== undefined) {
-      this.#howHeard = data.howHeard;
+      this._howHeard = data.howHeard;
     }
     if (data.hasComputer !== undefined) {
-      this.#hasComputer = data.hasComputer;
+      this._hasComputer = data.hasComputer;
     }
     if (data.hasInternet !== undefined) {
-      this.#hasInternet = data.hasInternet;
+      this._hasInternet = data.hasInternet;
     }
     if (data.committedToParticipate !== undefined) {
-      this.#committedToParticipate = data.committedToParticipate;
+      this._committedToParticipate = data.committedToParticipate;
     }
-    if (data.familyIncome !== undefined) {
-      this.#familyIncome = data.familyIncome;
-    }
-    this.validateControlledValues();
   }
 
   public changeDisability(disability?: Disability): void {
-    this.#disability = disability;
+    this._disability = disability;
   }
 
   public replaceSocialBenefits(benefits: SocialBenefit[]): void {
-    this.#socialBenefits = benefits;
+    this._socialBenefits = benefits;
+  }
+
+  public replaceAccessibilityResources(
+    resources: AccessibilityResource[],
+  ): void {
+    this._accessibilityResources = resources;
   }
 
   private validateStudent(): void {
-    this.validateCpf(this.#cpf);
+    this.validateCpf(this._cpf);
     this.validateContact();
-    this.validateProfileData();
-    this.validateControlledValues();
     this.validateCollections();
   }
 
   private validateCpf(cpf: string): void {
     if (!cpf || cpf.trim().length === 0) {
-      throw new DomainException('O CPF e obrigatorio.');
+      throw new DomainException('O CPF é obrigatório.');
     }
 
     if (cpf.length > 14) {
-      throw new DomainException('O CPF nao pode ter mais que 14 caracteres.');
+      throw new DomainException('O CPF não pode ter mais que 14 caracteres.');
     }
   }
 
   private validateContact(): void {
-    if (!this.#contact || !(this.#contact instanceof Contact)) {
+    if (!this._contact || !(this._contact instanceof Contact)) {
       throw new DomainException(
-        'Um contato valido e estruturado e obrigatorio para o aluno.',
+        'Um contato válido e estruturado é obrigatório para o aluno.',
       );
     }
   }
 
-  private validateProfileData(): void {
-    if (!this.#birthDate || Number.isNaN(this.#birthDate.getTime())) {
-      throw new DomainException('A data de nascimento informada e invalida.');
-    }
-
-    this.validateRequiredEnum('genero', this.#gender, GENDER_VALUES);
-    this.validateRequiredEnum('raca', this.#race, RACE_VALUES);
-  }
-
-  private validateControlledValues(): void {
-    this.validateOptionalEnum(
-      'escolaridade',
-      this.#education,
-      EDUCATION_LEVEL_VALUES,
-    );
-    this.validateOptionalEnum(
-      'canal de origem',
-      this.#howHeard,
-      HOW_HEARD_CHANNEL_VALUES,
-    );
-    this.validateOptionalEnum(
-      'renda familiar',
-      this.#familyIncome,
-      FAMILY_INCOME_VALUES,
-    );
-  }
-
-  private validateOptionalEnum<T extends string>(
-    label: string,
-    value: T | undefined,
-    allowedValues: readonly T[],
-  ): void {
-    if (!value) {
-      return;
-    }
-
-    if (!allowedValues.includes(value)) {
-      throw new DomainException(`O valor informado para ${label} e invalido.`);
-    }
-  }
-
-  private validateRequiredEnum<T extends string>(
-    label: string,
-    value: T | undefined,
-    allowedValues: readonly T[],
-  ): void {
-    if (!value) {
-      throw new DomainException(`O campo ${label} e obrigatorio.`);
-    }
-
-    this.validateOptionalEnum(label, value, allowedValues);
-  }
-
   private validateCollections(): void {
-    if (!Array.isArray(this.#socialBenefits)) {
+    if (!Array.isArray(this._socialBenefits)) {
       throw new DomainException(
-        'Os beneficios sociais devem ser uma lista valida.',
+        'Os benefícios sociais devem ser uma lista válida.',
+      );
+    }
+
+    if (!Array.isArray(this._accessibilityResources)) {
+      throw new DomainException(
+        'Os recursos de acessibilidade devem ser uma lista válida.',
       );
     }
   }
@@ -307,23 +248,26 @@ export class Student extends User {
       email: this.email,
       cpf: this.cpf,
       contact: this.contact,
+      socialName: this.socialName,
       birthDate: this.birthDate,
       gender: this.gender,
       race: this.race,
       education: this.education,
+      courseName: this.courseName,
       institution: this.institution,
       activityArea: this.activityArea,
       hasProgrammingExperience: this.hasProgrammingExperience,
-      motivation: this.motivation,
+      hasTechCourses: this.hasTechCourses,
+      techCoursesList: this.techCoursesList,
+      sendCurriculum: this.sendCurriculum,
+      fatilabMotivation: this.fatilabMotivation,
       howHeard: this.howHeard,
       hasComputer: this.hasComputer,
       hasInternet: this.hasInternet,
       committedToParticipate: this.committedToParticipate,
       disability: this.disability,
       socialBenefits: this.socialBenefits,
-      socialName: this.socialName,
-      courseName: this.courseName,
-      familyIncome: this.familyIncome,
+      accessibilityResources: this.accessibilityResources,
     };
   }
 }

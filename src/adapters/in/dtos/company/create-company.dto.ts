@@ -51,7 +51,7 @@ export class CreateCompanyDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
-  responsibleName: string;
+  ownerName: string;
 
   @ApiProperty({ type: () => CreateContactDto })
   @ValidateNested()

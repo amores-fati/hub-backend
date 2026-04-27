@@ -5,11 +5,11 @@ import {
   JoinColumn,
   ManyToOne,
 } from 'typeorm';
+import { AccessibilityResourceType } from '../../../core/domain/enums/accessibility-resource.enum';
 import { StudentOrmEntity } from './student.orm-entity';
-import { SocialBenefitType } from '../../../core/domain/enums/social-benefit.enum';
 
-@Entity('social_benefits')
-export class SocialBenefitOrmEntity {
+@Entity('accessibility_resources')
+export class AccessibilityResourceOrmEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -17,19 +17,21 @@ export class SocialBenefitOrmEntity {
   studentId: string;
 
   @Column({ type: 'varchar' })
-  benefit: SocialBenefitType;
+  resource: AccessibilityResourceType;
 
   @Column({
-    name: 'benefit_other',
+    name: 'resource_other',
     type: 'varchar',
     length: 100,
     nullable: true,
   })
-  benefitOther: string | null;
+  resourceOther: string | null;
 
-  @ManyToOne(() => StudentOrmEntity, (student) => student.socialBenefits, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(
+    () => StudentOrmEntity,
+    (student) => student.accessibilityResources,
+    { onDelete: 'CASCADE' },
+  )
   @JoinColumn({ name: 'student_id' })
   student: StudentOrmEntity;
 }

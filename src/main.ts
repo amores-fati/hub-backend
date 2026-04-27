@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { AmoresFatiLogger } from './utils/logger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -36,7 +35,6 @@ async function bootstrap() {
   await app.listen(Number(process.env.PORT));
 }
 bootstrap().catch((err) => {
-  const logger = new AmoresFatiLogger().setContext('Bootstrap');
-  logger.critical('Application bootstrap failed', err);
+  console.error(err);
   process.exit(1);
 });

@@ -44,7 +44,6 @@ typings/
 .env
 .env.test
 .env.production
-.env.e2e
 
 # NestJS build output
 dist/

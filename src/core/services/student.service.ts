@@ -3,6 +3,7 @@ import { Student } from '../domain/student.entity';
 import { Contact } from '../domain/contact.entity';
 import { Disability } from '../domain/disability.entity';
 import { SocialBenefit } from '../domain/social-benefit.entity';
+import { AccessibilityResource } from '../domain/accessibility-resource.entity';
 import { IStudentRepository } from '../ports/student.repository.interface';
 import { StudentAlreadyExistsException } from '../exceptions/student-already-exists.exception';
 import {
@@ -29,13 +30,16 @@ export class StudentService {
       throw new StudentAlreadyExistsException(command.cpf);
     }
 
-    await this.assertEmailAvailable(command.email);
+    const existingUser = await this.userRepository.findByEmail(command.email);
+    if (existingUser) {
+      throw new UserAlreadyExistsException(command.email);
+    }
 
     const studentId = randomUUID();
     const hashedPassword = await this.hashService.hash(command.password);
 
     const contact = new Contact(
-      studentId,
+      randomUUID(),
       command.contact.phone,
       command.contact.neighbourhood,
       command.contact.state,
@@ -49,6 +53,8 @@ export class StudentService {
       ? new Disability(
           studentId,
           command.disability.hasDisability,
+          command.disability.description,
+          command.disability.hasReport,
           command.disability.type,
         )
       : undefined;
@@ -56,13 +62,24 @@ export class StudentService {
     const socialBenefits =
       command.socialBenefits?.map(
         (benefit, index) =>
-          new SocialBenefit(-(index + 1), studentId, benefit.benefit),
+          new SocialBenefit(
+            index + 1,
+            studentId,
+            benefit.benefit,
+            benefit.benefitOther,
+          ),
       ) || [];
 
-    const birthDate =
-      command.birthDate instanceof Date
-        ? command.birthDate
-        : new Date(command.birthDate);
+    const accessibilityResources =
+      command.accessibilityResources?.map(
+        (resource, index) =>
+          new AccessibilityResource(
+            index + 1,
+            studentId,
+            resource.resource,
+            resource.resourceOther,
+          ),
+      ) || [];
 
     const student = new Student(
       studentId,
@@ -70,23 +87,26 @@ export class StudentService {
       command.email,
       command.cpf,
       contact,
-      birthDate,
+      command.socialName,
+      command.birthDate ? new Date(command.birthDate) : undefined,
       command.gender,
       command.race,
       command.education,
+      command.courseName,
       command.institution,
       command.activityArea,
       command.hasProgrammingExperience,
-      command.motivation,
+      command.hasTechCourses,
+      command.techCoursesList,
+      command.sendCurriculum ?? false,
+      command.fatilabMotivation,
       command.howHeard,
       command.hasComputer,
       command.hasInternet,
       command.committedToParticipate,
       disability,
       socialBenefits,
-      command.socialName,
-      command.courseName,
-      command.familyIncome,
+      accessibilityResources,
     );
 
     return this.studentRepository.create(student);
@@ -122,7 +142,6 @@ export class StudentService {
   ): Promise<Student> {
     const student = await this.getStudentById(id);
 
-    await this.assertEmailAvailable(command.email, student.id);
     student.changeEmail(command.email);
 
     if (command.password) {
@@ -130,19 +149,28 @@ export class StudentService {
       student.changePassword(hashedPassword);
     }
 
-    student.changeProfileData({
-      birthDate: command.birthDate ? new Date(command.birthDate) : undefined,
-      gender: command.gender,
-      race: command.race,
+    student.changeSocialName(command.socialName);
+
+    student.changeAcademicData({
+      education: command.education,
+      courseName: command.courseName,
+      institution: command.institution,
+      activityArea: command.activityArea,
+    });
+
+    student.changeTechnologyData({
+      hasProgrammingExperience: command.hasProgrammingExperience,
+      hasTechCourses: command.hasTechCourses,
+      techCoursesList: command.techCoursesList,
     });
 
     student.changeParticipationData({
-      motivation: command.motivation,
+      sendCurriculum: command.sendCurriculum,
+      fatilabMotivation: command.fatilabMotivation,
       howHeard: command.howHeard,
       hasComputer: command.hasComputer,
       hasInternet: command.hasInternet,
       committedToParticipate: command.committedToParticipate,
-      familyIncome: command.familyIncome,
     });
 
     student.contact.changePhone(command.contact.phone);
@@ -159,6 +187,8 @@ export class StudentService {
       const disability = new Disability(
         student.id,
         command.disability.hasDisability,
+        command.disability.description,
+        command.disability.hasReport,
         command.disability.type,
       );
       student.changeDisability(disability);
@@ -167,9 +197,27 @@ export class StudentService {
     if (command.socialBenefits) {
       const benefits = command.socialBenefits.map(
         (benefit, index) =>
-          new SocialBenefit(-(index + 1), student.id, benefit.benefit),
+          new SocialBenefit(
+            index + 1,
+            student.id,
+            benefit.benefit,
+            benefit.benefitOther,
+          ),
       );
       student.replaceSocialBenefits(benefits);
+    }
+
+    if (command.accessibilityResources) {
+      const resources = command.accessibilityResources.map(
+        (resource, index) =>
+          new AccessibilityResource(
+            index + 1,
+            student.id,
+            resource.resource,
+            resource.resourceOther,
+          ),
+      );
+      student.replaceAccessibilityResources(resources);
     }
 
     return this.studentRepository.update(student);
@@ -181,30 +229,35 @@ export class StudentService {
   ): Promise<Student> {
     const student = await this.getStudentById(id);
 
-    if (command.email !== undefined) {
-      await this.assertEmailAvailable(command.email, student.id);
-      student.changeEmail(command.email);
-    }
+    if (command.email !== undefined) student.changeEmail(command.email);
     if (command.password !== undefined) {
       const hashedPassword = await this.hashService.hash(command.password);
       student.changePassword(hashedPassword);
     }
-    student.changeProfileData({
-      birthDate:
-        command.birthDate !== undefined
-          ? new Date(command.birthDate)
-          : undefined,
-      gender: command.gender,
-      race: command.race,
+    if (command.socialName !== undefined) {
+      student.changeSocialName(command.socialName);
+    }
+
+    student.changeAcademicData({
+      education: command.education,
+      courseName: command.courseName,
+      institution: command.institution,
+      activityArea: command.activityArea,
+    });
+
+    student.changeTechnologyData({
+      hasProgrammingExperience: command.hasProgrammingExperience,
+      hasTechCourses: command.hasTechCourses,
+      techCoursesList: command.techCoursesList,
     });
 
     student.changeParticipationData({
-      motivation: command.motivation,
+      sendCurriculum: command.sendCurriculum,
+      fatilabMotivation: command.fatilabMotivation,
       howHeard: command.howHeard,
       hasComputer: command.hasComputer,
       hasInternet: command.hasInternet,
       committedToParticipate: command.committedToParticipate,
-      familyIncome: command.familyIncome,
     });
 
     if (command.contact) {
@@ -226,6 +279,8 @@ export class StudentService {
       const disability = new Disability(
         student.id,
         command.disability.hasDisability ?? false,
+        command.disability.description,
+        command.disability.hasReport,
         command.disability.type,
       );
       student.changeDisability(disability);
@@ -234,9 +289,27 @@ export class StudentService {
     if (command.socialBenefits) {
       const benefits = command.socialBenefits.map(
         (benefit, index) =>
-          new SocialBenefit(-(index + 1), student.id, benefit.benefit!),
+          new SocialBenefit(
+            index + 1,
+            student.id,
+            benefit.benefit!,
+            benefit.benefitOther,
+          ),
       );
       student.replaceSocialBenefits(benefits);
+    }
+
+    if (command.accessibilityResources) {
+      const resources = command.accessibilityResources.map(
+        (resource, index) =>
+          new AccessibilityResource(
+            index + 1,
+            student.id,
+            resource.resource!,
+            resource.resourceOther,
+          ),
+      );
+      student.replaceAccessibilityResources(resources);
     }
 
     return this.studentRepository.update(student);
@@ -245,16 +318,5 @@ export class StudentService {
   async deleteStudent(id: string): Promise<void> {
     const student = await this.getStudentById(id);
     await this.studentRepository.delete(student.id);
-  }
-
-  private async assertEmailAvailable(
-    email: string,
-    currentUserId?: string,
-  ): Promise<void> {
-    const existingUser = await this.userRepository.findByEmail(email);
-
-    if (existingUser && existingUser.id !== currentUserId) {
-      throw new UserAlreadyExistsException(email);
-    }
   }
 }

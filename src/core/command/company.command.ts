@@ -9,7 +9,7 @@ export interface CreateCompanyCommand {
   password: string;
   name: string;
   cnpj: string;
-  responsibleName: string;
+  ownerName: string;
   contact: CreateContactCommand;
 }
 

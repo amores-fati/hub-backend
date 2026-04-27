@@ -1,64 +1,47 @@
 import { DomainException } from '../exceptions/domain.exception';
 
 export class Contact {
-  readonly #id: string;
-  #phone: string;
-  #neighbourhood?: string;
-  #state?: string;
-  #city?: string;
-  #address?: string;
-  #cep?: string;
-  #complement?: string;
-
   constructor(
-    id: string,
-    phone: string,
-    neighbourhood?: string,
-    state?: string,
-    city?: string,
-    address?: string,
-    cep?: string,
-    complement?: string,
+    private readonly _id: string,
+    private _phone: string,
+    private _neighbourhood?: string,
+    private _state?: string,
+    private _city?: string,
+    private _address?: string,
+    private _cep?: string,
+    private _complement?: string,
   ) {
-    this.#id = id;
-    this.#phone = phone;
-    this.#neighbourhood = neighbourhood;
-    this.#state = state;
-    this.#city = city;
-    this.#address = address;
-    this.#cep = cep;
-    this.#complement = complement;
     this.validateContact();
   }
 
   get id(): string {
-    return this.#id;
+    return this._id;
   }
   get phone(): string {
-    return this.#phone;
+    return this._phone;
   }
   get neighbourhood(): string | undefined {
-    return this.#neighbourhood;
+    return this._neighbourhood;
   }
   get state(): string | undefined {
-    return this.#state;
+    return this._state;
   }
   get city(): string | undefined {
-    return this.#city;
+    return this._city;
   }
   get address(): string | undefined {
-    return this.#address;
+    return this._address;
   }
   get cep(): string | undefined {
-    return this.#cep;
+    return this._cep;
   }
   get complement(): string | undefined {
-    return this.#complement;
+    return this._complement;
   }
 
   public changePhone(newPhone: string): void {
     this.validatePhone(newPhone);
-    this.#phone = newPhone;
+    this._phone = newPhone;
   }
 
   public changeAddress(data: {
@@ -72,29 +55,28 @@ export class Contact {
     if (data.state !== undefined) this.validateState(data.state);
     if (data.cep !== undefined) this.validateCep(data.cep);
 
-    if (data.neighbourhood !== undefined) {
-      this.#neighbourhood = data.neighbourhood;
-    }
-    if (data.state !== undefined) this.#state = data.state;
-    if (data.city !== undefined) this.#city = data.city;
-    if (data.address !== undefined) this.#address = data.address;
-    if (data.cep !== undefined) this.#cep = data.cep;
-    if (data.complement !== undefined) this.#complement = data.complement;
+    if (data.neighbourhood !== undefined)
+      this._neighbourhood = data.neighbourhood;
+    if (data.state !== undefined) this._state = data.state;
+    if (data.city !== undefined) this._city = data.city;
+    if (data.address !== undefined) this._address = data.address;
+    if (data.cep !== undefined) this._cep = data.cep;
+    if (data.complement !== undefined) this._complement = data.complement;
   }
 
   private validateContact(): void {
-    this.validatePhone(this.#phone);
-    if (this.#state) this.validateState(this.#state);
-    if (this.#cep) this.validateCep(this.#cep);
+    this.validatePhone(this._phone);
+    if (this._state) this.validateState(this._state);
+    if (this._cep) this.validateCep(this._cep);
   }
 
   private validatePhone(phone: string): void {
     if (!phone || phone.trim().length === 0) {
-      throw new DomainException('O telefone Ã© obrigatÃ³rio.');
+      throw new DomainException('O telefone é obrigatório.');
     }
     if (phone.length > 20) {
       throw new DomainException(
-        'O telefone nÃ£o pode ter mais que 20 caracteres.',
+        'O telefone não pode ter mais que 20 caracteres.',
       );
     }
   }
@@ -109,7 +91,7 @@ export class Contact {
 
   private validateCep(cep: string): void {
     if (cep.length > 9) {
-      throw new DomainException('O CEP nÃ£o pode ter mais que 9 caracteres.');
+      throw new DomainException('O CEP não pode ter mais que 9 caracteres.');
     }
   }
 

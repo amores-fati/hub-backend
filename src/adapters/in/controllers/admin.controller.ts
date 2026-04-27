@@ -1,38 +1,32 @@
 // Substitui o antigo: src/adapters/in/controllers/user.controller.ts
 // src/adapters/in/controllers/admin.controller.ts
 import {
-  BadRequestException,
-  Body,
-  ConflictException,
   Controller,
+  Post,
+  Body,
   HttpCode,
   HttpStatus,
-  Post,
+  ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import {
-  ApiBadRequestResponse,
+  ApiTags,
+  ApiOperation,
   ApiBody,
+  ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
-  ApiOperation,
-  ApiTags,
 } from '@nestjs/swagger';
-import { DomainException } from '../../../core/exceptions/domain.exception';
 import { AdminService } from '../../../core/services/admin.service';
-import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
-import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateAdminDto } from '../dtos/admin/create-admin.dto';
+import { DomainException } from '../../../core/exceptions/domain.exception';
+import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 
 @ApiTags('Admins')
 @RequireAuth()
 @Controller('admins')
 export class AdminController {
-  constructor(
-    private readonly adminService: AdminService,
-    private readonly logger: AmoresFatiLogger,
-  ) {
-    this.logger.setContext(AdminController.name);
-  }
+  constructor(private readonly adminService: AdminService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -49,9 +43,7 @@ export class AdminController {
   @ApiConflictResponse({ description: 'O e-mail fornecido já está em uso.' })
   async create(@Body() createAdminDto: CreateAdminDto) {
     try {
-      this.logger.info('Creating admin', { email: createAdminDto.email });
       const admin = await this.adminService.createAdmin(createAdminDto);
-      this.logger.info('Admin created', { id: admin.id, email: admin.email });
       return {
         id: admin.id,
         email: admin.email,
@@ -61,13 +53,9 @@ export class AdminController {
         error instanceof Error &&
         error.name === 'UserAlreadyExistsException'
       ) {
-        this.logger.warn('Admin creation conflict: email already in use', {
-          email: createAdminDto.email,
-        });
         throw new ConflictException(error.message);
       }
       if (error instanceof DomainException) {
-        this.logger.error('Admin creation domain error');
         throw new BadRequestException(error.message);
       }
       throw error;

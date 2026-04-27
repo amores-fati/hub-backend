@@ -1,14 +1,8 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule, JwtService } from '@nestjs/jwt';
-import { buildDatabaseOptions } from './config/database.config';
-import {
-  AmoresFatiLogger,
-  HttpLoggerInterceptor,
-} from './utils/logger';
 
 // Admin Adapters & Core
 import { AdminController } from './adapters/in/controllers/admin.controller';
@@ -39,7 +33,6 @@ import { ICourseRepository } from './core/ports/course.repository.interface';
 
 // Company Adapters & Core
 import { CompanyOrmEntity } from './adapters/out/orm/company.orm-entity';
-import { AdminOrmEntity } from './adapters/out/orm/admin.orm-entity';
 import { CompanyController } from './adapters/in/controllers/company.controller';
 import { CompanyService } from './core/services/company.service';
 import { ICompanyRepository } from './core/ports/company.repository.interface';
@@ -49,6 +42,7 @@ import { CompanyRepository } from './adapters/out/repository/company.repository'
 import { ContactOrmEntity } from './adapters/out/orm/contact.orm-entity';
 import { DisabilityOrmEntity } from './adapters/out/orm/disability.orm-entity';
 import { SocialBenefitOrmEntity } from './adapters/out/orm/social-benefit.orm-entity';
+import { AccessibilityResourceOrmEntity } from './adapters/out/orm/accessibility-resource.orm-entity';
 
 // Student Adapters & Core
 import { HealthController } from './adapters/in/controllers/health.controller';
@@ -57,6 +51,7 @@ import { StudentService } from './core/services/student.service';
 import { StudentRepository } from './adapters/out/repository/student.repository';
 import { StudentOrmEntity } from './adapters/out/orm/student.orm-entity';
 import { IStudentRepository } from './core/ports/student.repository.interface';
+import { AdminOrmEntity } from './adapters/out/orm/admin.orm-entity';
 
 @Module({
   imports: [
@@ -78,17 +73,28 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: () => buildDatabaseOptions(),
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USER'),
+        password: configService.get<string>('DB_PASS'),
+        database: configService.get<string>('DB_NAME'),
+        autoLoadEntities: true,
+        synchronize: configService.get<string>('NODE_ENV') !== 'production',
+      }),
     }),
     TypeOrmModule.forFeature([
       UserOrmEntity,
-      AdminOrmEntity,
       CourseOrmEntity,
       CompanyOrmEntity,
+      AdminOrmEntity,
       StudentOrmEntity,
       ContactOrmEntity,
       DisabilityOrmEntity,
       SocialBenefitOrmEntity,
+      AccessibilityResourceOrmEntity,
     ]),
   ],
   controllers: [
@@ -100,11 +106,6 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
     HealthController,
   ],
   providers: [
-    AmoresFatiLogger,
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: HttpLoggerInterceptor,
-    },
     {
       provide: AdminService,
       useFactory: (

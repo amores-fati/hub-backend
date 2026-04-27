@@ -1,48 +1,39 @@
 import {
-  BadRequestException,
-  Body,
   Controller,
+  Post,
   Get,
+  Body,
   HttpCode,
   HttpStatus,
-  Post,
 } from '@nestjs/common';
 import {
-  ApiBadRequestResponse,
+  ApiTags,
+  ApiOperation,
   ApiBody,
   ApiCreatedResponse,
   ApiOkResponse,
-  ApiOperation,
-  ApiTags,
+  ApiBadRequestResponse,
 } from '@nestjs/swagger';
-import { CreateCourseCommand } from '../../../core/command/course.command';
 import { CourseService } from '../../../core/services/course.service';
-import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
-import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCourseDto } from '../dtos/course/create-course.dto';
+import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 
 @ApiTags('Courses')
 @RequireAuth()
 @Controller('courses')
 export class CourseController {
-  constructor(
-    private readonly courseService: CourseService,
-    private readonly logger: AmoresFatiLogger,
-  ) {
-    this.logger.setContext(CourseController.name);
-  }
+  constructor(private readonly courseService: CourseService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Cria um novo curso',
     description:
-      'Recebe os dados estruturais do curso e orquestra o caso de uso de criacao na camada Core.',
+      'Recebe os dados do curso e orquestra o caso de uso de criação na camada Core.',
   })
   @ApiBody({
     type: CreateCourseDto,
-    description:
-      'Payload contendo os campos obrigatorios persistidos em courses.',
+    description: 'Payload contendo Título e Descrição obrigatórios.',
   })
   @ApiCreatedResponse({
     description:
@@ -50,40 +41,22 @@ export class CourseController {
     schema: {
       example: {
         id: '123e4567-e89b-12d3-a456-426614174000',
-        name: 'Desenvolvimento Web Full Stack',
-        banner: 'https://fatilab.com/banners/web.jpg',
-        description:
-          'Curso completo de desenvolvimento web com React e Node.js.',
-        courseLoad: '120h',
-        startDate: '2025-02-01T00:00:00.000Z',
-        endDate: '2025-06-30T00:00:00.000Z',
-        startRegistrations: '2025-01-01T00:00:00.000Z',
-        endRegistrations: '2025-01-28T00:00:00.000Z',
-        linkAccess: 'https://fatilab.com/cursos/web',
+        title: 'NestJS Avançado',
+        description: 'Arquitetura Hexagonal na prática',
+        createdAt: '2023-10-01T12:00:00Z',
+        updatedAt: '2023-10-01T12:00:00Z',
       },
     },
   })
   @ApiBadRequestResponse({
-    description: 'Erro de validacao ou inconsistencia de dominio.',
+    description:
+      'Erro de validação (ex: campos vazios). Retorna detalhes pelo class-validator.',
   })
   async create(@Body() createCourseDto: CreateCourseDto) {
-    try {
-      this.logger.info('Creating course', { name: createCourseDto.name });
-      const command: CreateCourseCommand = { ...createCourseDto };
-      const course = await this.courseService.createCourse(command);
-      this.logger.info('Course created', {
-        id: (course as { id?: string })?.id,
-        name: createCourseDto.name,
-      });
-      return course;
-    } catch (error) {
-      if (error instanceof Error && error.name === 'DomainException') {
-        this.logger.error('Course creation domain error');
-        throw new BadRequestException(error.message);
-      }
-
-      throw error;
-    }
+    return this.courseService.createCourse(
+      createCourseDto.title,
+      createCourseDto.description,
+    );
   }
 
   @Get()
@@ -98,24 +71,15 @@ export class CourseController {
       example: [
         {
           id: '123e4567-e89b-12d3-a456-426614174000',
-          name: 'Desenvolvimento Web Full Stack',
-          banner: 'https://fatilab.com/banners/web.jpg',
-          description:
-            'Curso completo de desenvolvimento web com React e Node.js.',
-          courseLoad: '120h',
-          startDate: '2025-02-01T00:00:00.000Z',
-          endDate: '2025-06-30T00:00:00.000Z',
-          startRegistrations: '2025-01-01T00:00:00.000Z',
-          endRegistrations: '2025-01-28T00:00:00.000Z',
-          linkAccess: 'https://fatilab.com/cursos/web',
+          title: 'NestJS Avançado',
+          description: 'Arquitetura Hexagonal na prática',
+          createdAt: '2023-10-01T12:00:00Z',
+          updatedAt: '2023-10-01T12:00:00Z',
         },
       ],
     },
   })
   async findAll() {
-    this.logger.info('Listing courses');
-    const courses = await this.courseService.getAllCourses();
-    this.logger.info('Courses listed', { count: courses.length });
-    return courses;
+    return this.courseService.getAllCourses();
   }
 }

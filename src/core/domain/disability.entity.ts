@@ -1,48 +1,67 @@
 import { DomainException } from '../exceptions/domain.exception';
 
 export class Disability {
-  readonly #studentId: string;
-  #hasDisability: boolean;
-  #type?: string;
-
-  constructor(studentId: string, hasDisability: boolean, type?: string) {
-    this.#studentId = studentId;
-    this.#hasDisability = hasDisability;
-    this.#type = type;
+  constructor(
+    private readonly _studentId: string,
+    private _hasDisability: boolean,
+    private _description?: string,
+    private _hasReport?: string,
+    private _type?: string,
+  ) {
     this.validateDisability();
   }
 
   get studentId(): string {
-    return this.#studentId;
+    return this._studentId;
   }
 
   get hasDisability(): boolean {
-    return this.#hasDisability;
+    return this._hasDisability;
+  }
+
+  get description(): string | undefined {
+    return this._description;
+  }
+
+  get hasReport(): string | undefined {
+    return this._hasReport;
   }
 
   get type(): string | undefined {
-    return this.#type;
+    return this._type;
   }
 
-  public updateDetails(data: { hasDisability?: boolean; type?: string }): void {
-    if (data.hasDisability !== undefined) {
-      this.#hasDisability = data.hasDisability;
-    }
-    if (data.type !== undefined) this.#type = data.type;
+  public updateDetails(data: {
+    hasDisability?: boolean;
+    description?: string;
+    hasReport?: string;
+    type?: string;
+  }): void {
+    if (data.hasDisability !== undefined)
+      this._hasDisability = data.hasDisability;
+    if (data.description !== undefined) this._description = data.description;
+    if (data.hasReport !== undefined) this._hasReport = data.hasReport;
+    if (data.type !== undefined) this._type = data.type;
 
     this.validateDisability();
   }
 
   private validateDisability(): void {
-    if (!this.#studentId || this.#studentId.trim().length === 0) {
+    if (!this._studentId || this._studentId.trim().length === 0) {
       throw new DomainException(
-        'O identificador do estudante Ã© obrigatÃ³rio para deficiÃªncia.',
+        'O identificador do estudante é obrigatório para deficiência.',
       );
     }
 
-    if (this.#type && this.#type.length > 50) {
+    if (this._hasReport && this._hasReport.length > 30) {
       throw new DomainException(
-        'O tipo de deficiÃªncia nÃ£o pode ter mais que 50 caracteres.',
+        'A informação sobre laudo não pode ter mais que 30 caracteres.',
+      );
+    }
+
+    if (this._type && this._type.length > 50) {
+      throw new DomainException(
+        'O tipo de deficiência não pode ter mais que 50 caracteres.',
       );
     }
   }
@@ -51,6 +70,8 @@ export class Disability {
     return {
       studentId: this.studentId,
       hasDisability: this.hasDisability,
+      description: this.description,
+      hasReport: this.hasReport,
       type: this.type,
     };
   }

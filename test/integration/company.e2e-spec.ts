@@ -1,8 +1,9 @@
-import { INestApplication } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
+import { AppModule } from '../../src/app.module';
 import { Server } from 'http';
 import { cnpj } from 'cpf-cnpj-validator';
-import { createIntegrationApp } from './bootstrap';
 
 interface CompanyResponse {
   id: string;
@@ -23,14 +24,21 @@ describe('CompanyController (e2e)', () => {
   const companyPassword = 'securepassword123';
 
   beforeAll(async () => {
-    app = await createIntegrationApp();
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true }),
+    );
+    await app.init();
+
     dynamicCnpj = cnpj.generate();
   });
 
   afterAll(async () => {
-    if (app) {
-      await app.close();
-    }
+    await app.close();
   });
 
   describe('/companies (POST)', () => {
@@ -42,7 +50,7 @@ describe('CompanyController (e2e)', () => {
           cnpj: dynamicCnpj,
           email: companyEmail,
           password: companyPassword,
-          responsibleName: 'Admin E2E',
+          ownerName: 'Admin E2E',
           contact: {
             city: 'São Paulo',
             state: 'SP',
@@ -92,7 +100,7 @@ describe('CompanyController (e2e)', () => {
           cnpj: dynamicCnpj,
           email: `another-${Date.now()}@company.com`,
           password: 'securepassword123',
-          responsibleName: 'Admin E2E',
+          ownerName: 'Admin E2E',
           contact: {
             phone: '11988888888',
           },
@@ -146,7 +154,7 @@ describe('CompanyController (e2e)', () => {
           name: 'Updated E2E Company',
           email: 'updated@company.com',
           password: 'newpassword123',
-          responsibleName: 'Admin Updated',
+          ownerName: 'Admin Updated',
           contact: {
             city: 'Rio de Janeiro',
             state: 'RJ',

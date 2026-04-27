@@ -7,33 +7,20 @@ export class CompanyOrmEntity {
   @PrimaryColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 18, unique: true })
+  @Column({ type: 'varchar', length: 18 })
   cnpj: string;
 
   @Column({ type: 'varchar', length: 100 })
   name: string;
 
-  @Column({ name: 'responsible_name', type: 'varchar', length: 100 })
-  responsibleName: string;
+  @Column({ type: 'varchar', length: 100 })
+  ownerName: string;
 
-  @OneToOne(() => UserOrmEntity, {
-    eager: true,
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({
-    name: 'id',
-    foreignKeyConstraintName: 'fk_companies__id__users',
-  })
+  @OneToOne(() => UserOrmEntity, { cascade: true, eager: true })
+  @JoinColumn({ name: 'id' })
   user: UserOrmEntity;
 
-  @OneToOne(() => ContactOrmEntity, {
-    eager: true,
-    onDelete: 'NO ACTION',
-    nullable: false,
-  })
-  @JoinColumn({
-    name: 'contact_id',
-    foreignKeyConstraintName: 'fk_companies__contact_id__contacts',
-  })
+  @OneToOne(() => ContactOrmEntity, { cascade: true, eager: true })
+  @JoinColumn({ name: 'contact_id' })
   contact: ContactOrmEntity;
 }

@@ -1,112 +1,77 @@
 import {
-  Check,
-  Column,
   Entity,
+  Column,
+  PrimaryColumn,
+  OneToOne,
   JoinColumn,
   OneToMany,
-  OneToOne,
-  PrimaryColumn,
 } from 'typeorm';
 import { ContactOrmEntity } from './contact.orm-entity';
+import { AccessibilityResourceOrmEntity } from './accessibility-resource.orm-entity';
 import { SocialBenefitOrmEntity } from './social-benefit.orm-entity';
 import { UserOrmEntity } from './user.orm-entity';
 import { DisabilityOrmEntity } from './disability.orm-entity';
-import {
-  EducationLevel,
-  Gender,
-  HowHeardChannel,
-  Race,
-  FamilyIncome,
-} from '../../../core/domain/enums/student-profile.enum';
 
-function toSqlList(values: string[]): string {
-  return values.map((value) => `'${value.replace(/'/g, "''")}'`).join(', ');
-}
-
-const GENDER_SQL = toSqlList(Object.values(Gender));
-const RACE_SQL = toSqlList(Object.values(Race));
-const EDUCATION_SQL = toSqlList(Object.values(EducationLevel));
-const HOW_HEARD_SQL = toSqlList(Object.values(HowHeardChannel));
-const FAMILY_INCOME_SQL = toSqlList(Object.values(FamilyIncome));
-
-@Check('ck_students__gender', `"gender" IN (${GENDER_SQL})`)
-@Check('ck_students__race', `"race" IN (${RACE_SQL})`)
-@Check(
-  'ck_students__education',
-  `"education" IS NULL OR "education" IN (${EDUCATION_SQL})`,
-)
-@Check(
-  'ck_students__how_heard',
-  `"how_heard" IS NULL OR "how_heard" IN (${HOW_HEARD_SQL})`,
-)
-@Check(
-  'ck_students__family_income',
-  `"family_income" IS NULL OR "family_income" IN (${FAMILY_INCOME_SQL})`,
-)
 @Entity('students')
 export class StudentOrmEntity {
   @PrimaryColumn('uuid')
   id: string;
 
-  @OneToOne(() => UserOrmEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({
-    name: 'id',
-    foreignKeyConstraintName: 'fk_students__id__users',
-  })
+  @OneToOne(() => UserOrmEntity, { cascade: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'id' })
   user: UserOrmEntity;
 
-  @OneToOne(() => ContactOrmEntity, {
-    onDelete: 'NO ACTION',
-    nullable: false,
-  })
-  @JoinColumn({
-    name: 'contact_id',
-    foreignKeyConstraintName: 'fk_students__contact_id__contacts',
-  })
+  @OneToOne(() => ContactOrmEntity, { cascade: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'contact_id' })
   contact: ContactOrmEntity;
 
-  @Column({ unique: true })
+  @Column()
   cpf: string;
 
   @Column({ name: 'social_name', type: 'varchar', nullable: true })
-  socialName: string | null;
+  socialName?: string | null;
 
-  @Column({ name: 'date_of_birth', type: 'date' })
-  birthDate: Date;
-
-  @Column({ type: 'varchar' })
-  gender: Gender;
-
-  @Column({ name: 'race', type: 'varchar' })
-  race: Race;
+  @Column({ name: 'date_of_birth', type: 'timestamp', nullable: true })
+  birthDate?: Date | null;
 
   @Column({ type: 'varchar', nullable: true })
-  education: EducationLevel | null;
+  gender?: string | null;
 
-  @Column({ name: 'course_name', type: 'varchar', nullable: true })
+  @Column({ name: 'gender_other', type: 'varchar', nullable: true })
+  genderOther?: string | null;
+
+  @Column({ name: 'color', type: 'varchar', nullable: true })
+  race: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  education: string | null;
+
+  @Column({ name: 'course', type: 'varchar', nullable: true })
   courseName: string | null;
 
   @Column({ type: 'varchar', nullable: true })
   institution: string | null;
 
-  @Column({ name: 'activity_area', type: 'varchar', nullable: true })
+  @Column({ name: 'area_activity', type: 'varchar', nullable: true })
   activityArea: string | null;
 
-  @Column({
-    name: 'has_programming_experience',
-    type: 'boolean',
-    nullable: true,
-  })
+  @Column({ name: 'programming_exp', type: 'boolean', nullable: true })
   hasProgrammingExperience: boolean | null;
 
-  @Column({ name: 'family_income', type: 'varchar', nullable: true })
-  familyIncome: FamilyIncome | null;
+  @Column({ name: 'tecnology_course', type: 'boolean', nullable: true })
+  hasTechCourses: boolean | null;
+
+  @Column({ name: 'which_courses', type: 'text', nullable: true })
+  techCoursesList: string | null;
+
+  @Column({ name: 'send_curriculum', type: 'boolean', nullable: true })
+  sendCurriculum: boolean | null;
 
   @Column({ name: 'motivation', type: 'text', nullable: true })
-  motivation: string | null;
+  fatilabMotivation: string | null;
 
-  @Column({ name: 'how_heard', type: 'varchar', nullable: true })
-  howHeard: HowHeardChannel | null;
+  @Column({ name: 'how_know', type: 'varchar', nullable: true })
+  howHeard: string | null;
 
   @Column({ name: 'has_computer', type: 'boolean', nullable: true })
   hasComputer: boolean | null;
@@ -114,16 +79,23 @@ export class StudentOrmEntity {
   @Column({ name: 'has_internet', type: 'boolean', nullable: true })
   hasInternet: boolean | null;
 
-  @Column({
-    name: 'committed_to_participate',
-    type: 'boolean',
-    nullable: true,
-  })
+  @Column({ name: 'compromisse', type: 'boolean', nullable: true })
   committedToParticipate: boolean | null;
 
-  @OneToOne(() => DisabilityOrmEntity, (disability) => disability.student)
+  @OneToOne(() => DisabilityOrmEntity, (disability) => disability.student, {
+    cascade: true,
+  })
   disability: DisabilityOrmEntity | null;
 
-  @OneToMany(() => SocialBenefitOrmEntity, (benefit) => benefit.student)
+  @OneToMany(
+    () => AccessibilityResourceOrmEntity,
+    (resource) => resource.student,
+    { cascade: true },
+  )
+  accessibilityResources: AccessibilityResourceOrmEntity[];
+
+  @OneToMany(() => SocialBenefitOrmEntity, (benefit) => benefit.student, {
+    cascade: true,
+  })
   socialBenefits: SocialBenefitOrmEntity[];
 }
