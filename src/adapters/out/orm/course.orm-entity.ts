@@ -12,23 +12,23 @@ export class CourseOrmEntity {
   banner: string;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  description: string | null;
 
-  @Column()
-  course_load: string;
+  @Column({ name: 'course_load' })
+  courseLoad: string;
 
-  @Column()
-  start_date: Date;
+  @Column({ name: 'start_date', type: 'date' })
+  startDate: Date;
 
-  @Column()
-  end_date: Date;
+  @Column({ name: 'end_date', type: 'date' })
+  endDate: Date;
 
-  @Column()
-  start_registrations: Date;
+  @Column({ name: 'start_registrations', type: 'date' })
+  startRegistrations: Date;
 
-  @Column()
-  end_registrations: Date;
+  @Column({ name: 'end_registrations', type: 'date' })
+  endRegistrations: Date;
 
-  @Column()
-  link_access: string;
+  @Column({ name: 'link_access' })
+  linkAccess: string;
 }

@@ -3,76 +3,90 @@ import { Contact } from './contact.entity';
 import { User } from './user.entity';
 
 export class Company extends User {
+  #name: string;
+  readonly #cnpj: string;
+  #responsibleName: string;
+  #contact: Contact;
+
   constructor(
     id: string,
     email: string,
     password: string,
-    private _name: string,
-    private readonly _cnpj: string,
-    private _ownerName: string,
-    private _contact: Contact,
+    name: string,
+    cnpj: string,
+    responsibleName: string,
+    contact: Contact,
   ) {
     super(id, email, password);
+    this.#name = name;
+    this.#cnpj = cnpj;
+    this.#responsibleName = responsibleName;
+    this.#contact = contact;
     this.validateCompany();
   }
 
   get name(): string {
-    return this._name;
-  }
-  get cnpj(): string {
-    return this._cnpj;
-  }
-  get ownerName(): string {
-    return this._ownerName;
-  }
-  get contact(): Contact {
-    return this._contact;
+    return this.#name;
   }
 
-  public changeOwnerName(newOwnerName: string): void {
-    this.validateName(newOwnerName);
-    this._ownerName = newOwnerName;
+  get cnpj(): string {
+    return this.#cnpj;
+  }
+
+  get responsibleName(): string {
+    return this.#responsibleName;
+  }
+
+  get contact(): Contact {
+    return this.#contact;
+  }
+
+  public changeResponsibleName(newResponsibleName: string): void {
+    this.validateName(newResponsibleName);
+    this.#responsibleName = newResponsibleName;
   }
 
   public changeName(newName: string): void {
     this.validateName(newName);
-    this._name = newName;
+    this.#name = newName;
   }
 
   public changeContact(newContact: Contact): void {
-    this._contact = newContact;
+    this.#contact = newContact;
     this.validateContact();
   }
 
   private validateCompany(): void {
-    this.validateCnpj(this._cnpj);
-    this.validateName(this._ownerName);
-    this.validateName(this._name);
+    this.validateCnpj(this.#cnpj);
+    this.validateName(this.#responsibleName);
+    this.validateName(this.#name);
     this.validateContact();
   }
 
   private validateCnpj(cnpj: string): void {
     if (!cnpj || cnpj.trim().length === 0) {
-      throw new DomainException('O CNPJ é obrigatório.');
+      throw new DomainException('O CNPJ Ã© obrigatÃ³rio.');
     }
     if (cnpj.length > 18) {
-      throw new DomainException('O CNPJ não pode ter mais que 18 caracteres.');
+      throw new DomainException('O CNPJ nÃ£o pode ter mais que 18 caracteres.');
     }
   }
 
   private validateName(name: string): void {
     if (!name || name.trim().length === 0) {
-      throw new DomainException('O nome é obrigatório.');
+      throw new DomainException('O nome Ã© obrigatÃ³rio.');
     }
     if (name.length > 100) {
-      throw new DomainException('O nome não pode ter mais que 100 caracteres.');
+      throw new DomainException(
+        'O nome nÃ£o pode ter mais que 100 caracteres.',
+      );
     }
   }
 
   private validateContact(): void {
-    if (!this._contact || !(this._contact instanceof Contact)) {
+    if (!this.#contact || !(this.#contact instanceof Contact)) {
       throw new DomainException(
-        'Um contato válido e estruturado é obrigatório para a empresa.',
+        'Um contato vÃ¡lido e estruturado Ã© obrigatÃ³rio para a empresa.',
       );
     }
   }
@@ -83,7 +97,7 @@ export class Company extends User {
       email: this.email,
       name: this.name,
       cnpj: this.cnpj,
-      ownerName: this.ownerName,
+      responsibleName: this.responsibleName,
       contact: this.contact,
     };
   }

@@ -2,50 +2,38 @@ import { DomainException } from '../exceptions/domain.exception';
 import { SocialBenefitType } from './enums/social-benefit.enum';
 
 export class SocialBenefit {
-  constructor(
-    private readonly _id: number,
-    private readonly _studentId: string,
-    private _benefit: SocialBenefitType,
-    private _benefitOther?: string,
-  ) {
+  readonly #id: number;
+  readonly #studentId: string;
+  #benefit: SocialBenefitType;
+
+  constructor(id: number, studentId: string, benefit: SocialBenefitType) {
+    this.#id = id;
+    this.#studentId = studentId;
+    this.#benefit = benefit;
     this.validateSocialBenefit();
   }
 
   get id(): number {
-    return this._id;
+    return this.#id;
   }
 
   get studentId(): string {
-    return this._studentId;
+    return this.#studentId;
   }
 
   get benefit(): SocialBenefitType {
-    return this._benefit;
+    return this.#benefit;
   }
 
-  get benefitOther(): string | undefined {
-    return this._benefitOther;
-  }
-
-  public changeBenefit(
-    newBenefit: SocialBenefitType,
-    benefitOther?: string,
-  ): void {
-    this._benefit = newBenefit;
-    this._benefitOther = benefitOther;
+  public changeBenefit(newBenefit: SocialBenefitType): void {
+    this.#benefit = newBenefit;
     this.validateSocialBenefit();
   }
 
   private validateSocialBenefit(): void {
-    if (!this._studentId || this._studentId.trim().length === 0) {
+    if (!this.#studentId || this.#studentId.trim().length === 0) {
       throw new DomainException(
-        'O identificador do estudante é obrigatório para benefício social.',
-      );
-    }
-
-    if (this._benefitOther && this._benefitOther.length > 100) {
-      throw new DomainException(
-        'A descrição complementar do benefício não pode ter mais que 100 caracteres.',
+        'O identificador do estudante e obrigatorio para beneficio social.',
       );
     }
   }
@@ -55,7 +43,6 @@ export class SocialBenefit {
       id: this.id,
       studentId: this.studentId,
       benefit: this.benefit,
-      benefitOther: this.benefitOther,
     };
   }
 }
