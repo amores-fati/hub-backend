@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   Post,
 } from '@nestjs/common';
 import {
@@ -21,11 +22,13 @@ import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import { CreateCourseDto } from '../dtos/course/create-course.dto';
 
 @ApiTags('Courses')
-@RequireAuth()
 @Controller('courses')
 export class CourseController {
+  private readonly logger = new Logger(CourseController.name);
+
   constructor(private readonly courseService: CourseService) {}
 
+  @RequireAuth()
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -100,6 +103,7 @@ export class CourseController {
     },
   })
   async findAll() {
+    this.logger.log('Iniciando listagem de cursos');
     return this.courseService.getAllCourses();
   }
 }

@@ -19,7 +19,9 @@ export class CourseRepository implements ICourseRepository {
   }
 
   async findAll(): Promise<Course[]> {
-    const ormEntities = await this.ormRepository.find();
+    const ormEntities = await this.ormRepository.find({
+      order: { createdAt: 'DESC' },
+    });
     return ormEntities.map((entity) => this.mapToDomain(entity));
   }
 
@@ -50,6 +52,7 @@ export class CourseRepository implements ICourseRepository {
       startRegistrations: course.startRegistrations,
       endRegistrations: course.endRegistrations,
       linkAccess: course.linkAccess,
+      createdAt: new Date(),
     };
   }
 
