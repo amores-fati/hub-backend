@@ -29,6 +29,7 @@ describe('StudentService', () => {
     findByCpf: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    softDelete: jest.fn(),
     existsById: jest.fn(),
   };
 
@@ -341,13 +342,23 @@ describe('StudentService', () => {
   });
 
   describe('deleteStudent', () => {
-    it('should delete a student', async () => {
-      (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
-      (mockRepository.delete as jest.Mock).mockResolvedValue(undefined);
+  it('should soft delete a student', async () => {
+    (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
+    (mockRepository.softDelete as jest.Mock).mockResolvedValue(undefined);
 
-      await service.deleteStudent(mockStudent.id);
+    await service.deleteStudent(mockStudent.id);
 
-      expect(mockRepository.delete).toHaveBeenCalledWith(mockStudent.id);
-    });
+    expect(mockRepository.findById).toHaveBeenCalledWith(mockStudent.id);
+    expect(mockRepository.softDelete).toHaveBeenCalledWith(mockStudent.id);
   });
+
+  it('should throw StudentNotFoundException if student does not exist', async () => {
+    (mockRepository.findById as jest.Mock).mockResolvedValue(null);
+
+    await expect(service.deleteStudent('id-inexistente'))
+      .rejects.toThrow(StudentNotFoundException);
+
+    expect(mockRepository.softDelete).not.toHaveBeenCalled();
+  });
+});
 });

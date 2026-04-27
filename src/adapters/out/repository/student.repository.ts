@@ -150,6 +150,10 @@ export class StudentRepository implements IStudentRepository {
     }
   }
 
+  async softDelete(id: string): Promise<void> {
+  await this.ormRepository.manager.softDelete(UserOrmEntity, id);
+}
+
   private mapToOrm(student: Student): StudentOrmEntity {
     const ormEntity = new StudentOrmEntity();
 

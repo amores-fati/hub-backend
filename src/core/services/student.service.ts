@@ -244,7 +244,7 @@ export class StudentService {
 
   async deleteStudent(id: string): Promise<void> {
     const student = await this.getStudentById(id);
-    await this.studentRepository.delete(student.id);
+    await this.studentRepository.softDelete(student.id);
   }
 
   private async assertEmailAvailable(

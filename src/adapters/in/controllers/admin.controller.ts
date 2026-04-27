@@ -8,6 +8,11 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -16,12 +21,15 @@ import {
   ApiCreatedResponse,
   ApiOperation,
   ApiTags,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { DomainException } from '../../../core/exceptions/domain.exception';
 import { AdminService } from '../../../core/services/admin.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateAdminDto } from '../dtos/admin/create-admin.dto';
+import { StudentService } from '../../../core/services/student.service';
 
 @ApiTags('Admins')
 @RequireAuth()
@@ -30,6 +38,7 @@ export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly logger: AmoresFatiLogger,
+    private readonly studentService: StudentService,
   ) {
     this.logger.setContext(AdminController.name);
   }
@@ -73,4 +82,24 @@ export class AdminController {
       throw error;
     }
   }
+  @RequireAuth()
+  @Delete('students/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Deleta (soft delete) um aluno pelo ID' })
+  @ApiNoContentResponse({ description: 'Aluno deletado com sucesso.' })
+  @ApiNotFoundResponse({ description: 'Aluno não encontrado.' })
+  async removeStudent(@Param('id', ParseUUIDPipe) id: string) {
+    try {
+      this.logger.info('Deleting student', { id });
+      await this.studentService.deleteStudent(id);
+      this.logger.info('Student deleted', { id });
+    } catch (error) {
+      if (error instanceof Error && error.name === 'StudentNotFoundException') {
+        this.logger.warn('Student not found', { id });
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
+  }
 }
+
