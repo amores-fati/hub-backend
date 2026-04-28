@@ -22,7 +22,6 @@ import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCourseDto } from '../dtos/course/create-course.dto';
 
 @ApiTags('Courses')
-@RequireAuth()
 @Controller('courses')
 export class CourseController {
   constructor(
@@ -32,6 +31,7 @@ export class CourseController {
     this.logger.setContext(CourseController.name);
   }
 
+  @RequireAuth()
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
