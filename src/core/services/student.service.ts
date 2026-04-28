@@ -9,11 +9,20 @@ import {
   CreateStudentCommand,
   PatchStudentCommand,
   UpdateStudentCommand,
+  UpdateStudentMeCommand,
 } from '../command/student.command';
 import { StudentNotFoundException } from '../exceptions/student-not-found.exception';
 import { IHashService } from '../ports/hash.service.interface';
 import { IUserRepository } from '../ports/user.repository.interface';
 import { UserAlreadyExistsException } from '../exceptions/user-already-exists.exception';
+import {
+  EducationLevel,
+  FamilyIncome,
+  Gender,
+  HowHeardChannel,
+  Race,
+} from '../domain/enums/student-profile.enum';
+import { SocialBenefitType } from '../domain/enums/social-benefit.enum';
 
 export class StudentService {
   constructor(
@@ -175,6 +184,69 @@ export class StudentService {
     return this.studentRepository.update(student);
   }
 
+  async updateAuthenticatedStudentProfile(
+    userId: string,
+    command: UpdateStudentMeCommand,
+  ): Promise<Student> {
+    const student = await this.getStudentById(userId);
+
+    student.contact.changeAddress({
+      city: command.city,
+      state: command.state,
+      address: command.address,
+      cep: command.cep,
+    });
+
+    if (command.phone !== undefined) {
+      student.contact.changePhone(command.phone);
+    }
+
+    student.changeProfileData({
+      birthDate: command.birthDate ? new Date(command.birthDate) : undefined,
+      gender: this.mapGender(command.gender),
+      race: this.mapRace(command.race),
+      socialName: command.socialName,
+      education: this.mapEducation(command.educationLevel),
+      courseName: command.courseName,
+      institution: command.institution,
+      activityArea: command.workArea ?? undefined,
+      hasProgrammingExperience: command.hasProgrammingExperience,
+    });
+
+    student.changeParticipationData({
+      motivation: command.fatilabMotivation,
+      howHeard: this.mapHowHeard(command.howHeard),
+      hasComputer: command.hasComputer,
+      hasInternet: command.hasInternet,
+      familyIncome: this.mapFamilyIncome(command.familyIncome),
+    });
+
+    if (
+      command.isPcd !== undefined ||
+      command.disabilityType !== undefined
+    ) {
+      student.changeDisability(
+        new Disability(
+          student.id,
+          command.isPcd ?? false,
+          command.disabilityType,
+        ),
+      );
+    }
+
+    if (command.socialBenefits !== undefined) {
+      student.replaceSocialBenefits([
+        new SocialBenefit(
+          -1,
+          student.id,
+          this.mapSocialBenefit(command.socialBenefits),
+        ),
+      ]);
+    }
+
+    return this.studentRepository.update(student);
+  }
+
   async patchStudent(
     id: string,
     command: PatchStudentCommand,
@@ -256,5 +328,84 @@ export class StudentService {
     if (existingUser && existingUser.id !== currentUserId) {
       throw new UserAlreadyExistsException(email);
     }
+  }
+
+  private mapGender(value?: string): Gender | undefined {
+    if (value === undefined) return undefined;
+
+    const map: Record<string, Gender> = {
+      Masculino: Gender.MALE,
+      Feminino: Gender.FEMALE,
+      'Não-binário': Gender.NON_BINARY,
+      'Prefiro não informar': Gender.PREFER_NOT_TO_SAY,
+      Outro: Gender.OTHER,
+    };
+    return map[value];
+  }
+
+  private mapRace(value?: string): Race | undefined {
+    if (value === undefined) return undefined;
+
+    const map: Record<string, Race> = {
+      Branco: Race.WHITE,
+      Branca: Race.WHITE,
+      Preto: Race.BLACK,
+      Preta: Race.BLACK,
+      Pardo: Race.BROWN,
+      Parda: Race.BROWN,
+      Indígena: Race.INDIGENOUS,
+      'Prefiro não informar': Race.PREFER_NOT_TO_SAY,
+    };
+    return map[value];
+  }
+
+  private mapEducation(value?: string): EducationLevel | undefined {
+    if (value === undefined) return undefined;
+
+    const map: Record<string, EducationLevel> = {
+      'Sem escolaridade': EducationLevel.NO_EDUCATION,
+      'Ensino Fundamental': EducationLevel.PRIMARY,
+      'Ensino Médio': EducationLevel.SECONDARY,
+      'Ensino Médio Completo': EducationLevel.SECONDARY,
+      'Ensino Superior': EducationLevel.HIGHER,
+      'Pós-graduação': EducationLevel.POSTGRADUATE,
+    };
+    return map[value];
+  }
+
+  private mapFamilyIncome(value?: string): FamilyIncome | undefined {
+    if (value === undefined) return undefined;
+
+    const map: Record<string, FamilyIncome> = {
+      'Até 1 salário mínimo': FamilyIncome.TO1_SALARY,
+      'Entre 1 e 3 salários mínimos': FamilyIncome.BETWEEN_1_3,
+      'Mais de 3 salários mínimos': FamilyIncome.MORE_THAN_3,
+    };
+    return map[value];
+  }
+
+  private mapHowHeard(value?: string): HowHeardChannel | undefined {
+    if (value === undefined) return undefined;
+
+    const map: Record<string, HowHeardChannel> = {
+      Instagram: HowHeardChannel.INSTAGRAM,
+      'Redes sociais': HowHeardChannel.INSTAGRAM,
+      Indicação: HowHeardChannel.REFEREE,
+      LinkedIn: HowHeardChannel.LINKEDIN,
+      Outros: HowHeardChannel.OTHERS,
+      Outro: HowHeardChannel.OTHERS,
+    };
+    return map[value];
+  }
+
+  private mapSocialBenefit(value: string): SocialBenefitType {
+    const map: Record<string, SocialBenefitType> = {
+      'Bolsa Família': SocialBenefitType.BOLSA_FAMILIA,
+      BPC: SocialBenefitType.BPC,
+      Nenhum: SocialBenefitType.NONE,
+      Outros: SocialBenefitType.OTHERS,
+      Outro: SocialBenefitType.OTHERS,
+    };
+    return map[value] ?? SocialBenefitType.OTHERS;
   }
 }

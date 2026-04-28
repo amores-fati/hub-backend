@@ -340,6 +340,67 @@ describe('StudentService', () => {
     });
   });
 
+  describe('updateAuthenticatedStudentProfile', () => {
+    it('should update student profile successfully', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
+      (mockRepository.update as jest.Mock).mockImplementation((student) =>
+        Promise.resolve(student),
+      );
+
+      const command = {
+        phone: '11988887777',
+        city: 'Rio de Janeiro',
+        state: 'RJ',
+        address: 'Av Atlântica',
+        cep: '22070000',
+        gender: 'Masculino',
+        race: 'Pardo',
+        fatilabMotivation: 'Nova motivação',
+      };
+
+      const result = await service.updateAuthenticatedStudentProfile(
+        mockStudent.id,
+        command as any,
+      );
+
+      expect(result.contact.phone).toBe('11988887777');
+      expect(result.contact.city).toBe('Rio de Janeiro');
+      expect(mockRepository.update).toHaveBeenCalled();
+    });
+
+    it('should ignore cpf and email updates', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
+      (mockRepository.update as jest.Mock).mockImplementation((student) =>
+        Promise.resolve(student),
+      );
+
+      const originalEmail = mockStudent.email;
+      const originalCpf = mockStudent.cpf;
+
+      const command = {
+        email: 'hacker@teste.com',
+        cpf: '00000000000',
+        phone: '11988887777',
+      };
+
+      const result = await service.updateAuthenticatedStudentProfile(
+        mockStudent.id,
+        command as any,
+      );
+
+      expect(result.email).toBe(originalEmail);
+      expect(result.cpf).toBe(originalCpf);
+    });
+
+    it('should throw error if student not found', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.updateAuthenticatedStudentProfile('invalid-id', {} as any),
+      ).rejects.toThrow();
+    });
+  });
+
   describe('deleteStudent', () => {
     it('should delete a student', async () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);

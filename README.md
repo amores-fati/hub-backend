@@ -37,6 +37,8 @@ npm install
 
 ```bash
 docker compose up -d --build
+
+docker compose logs -f api
 ```
 
 No bootstrap atual da API em Docker, o container executa:
@@ -48,10 +50,15 @@ npm run bootstrap:test:dev
 npm run start:dev
 ```
 
+docker compose up -d --build
+docker compose logs -f api
+
 Endpoints locais:
 
 - API: `http://localhost:3001`
 - Swagger: `http://localhost:3001/docs`
+- Swagger funcionando: `http://localhost:3000/docs`
+
 
 ## Comandos principais
 
