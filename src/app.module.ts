@@ -1,9 +1,14 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { buildDatabaseOptions } from './config/database.config';
+import {
+  AmoresFatiLogger,
+  HttpLoggerInterceptor,
+} from './utils/logger';
 
 // Admin Adapters & Core
 import { AdminController } from './adapters/in/controllers/admin.controller';
@@ -95,6 +100,11 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
     HealthController,
   ],
   providers: [
+    AmoresFatiLogger,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: HttpLoggerInterceptor,
+    },
     {
       provide: AdminService,
       useFactory: (
