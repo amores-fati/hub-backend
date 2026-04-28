@@ -13,6 +13,7 @@ import { SocialBenefitOrmEntity } from '../orm/social-benefit.orm-entity';
 import { DisabilityOrmEntity } from '../orm/disability.orm-entity';
 import { CourseOrmEntity } from '../orm/course.orm-entity';
 import { InPersonCourseDetailOrmEntity } from '../orm/in-person-course-detail.orm-entity';
+import { SettingOrmEntity } from '../orm/setting.orm-entity';
 import { SkillOrmEntity } from '../orm/skill.orm-entity';
 import { CurriculumOrmEntity } from '../orm/curriculum.orm-entity';
 import { CurriculumSkillOrmEntity } from '../orm/curriculum-skill.orm-entity';
@@ -113,7 +114,7 @@ async function ensureSeedMode(appDataSource: DataSource): Promise<boolean> {
       job_skills, curriculum_skills, skills, job_openings, curriculum,
       in_person_course_details, courses, disabilities,
       social_benefits,
-      students, admins, companies, contacts, users
+      students, admins, companies, contacts, users, settings
       RESTART IDENTITY CASCADE`);
     logger.info('Dados anteriores removidos.');
   } else {
@@ -156,6 +157,15 @@ export async function seed(): Promise<void> {
   });
   await appDataSource.getRepository(AdminOrmEntity).save(admin);
   logger.info('Admin criado.');
+  
+  // 1.1 CONFIGURAÇÕES GERAIS
+  const whatsappSetting = appDataSource.getRepository(SettingOrmEntity).create({
+    id: uuidv4(),
+    key: 'whatsapp_phone',
+    value: '(51) 99266-9381',
+  });
+  await appDataSource.getRepository(SettingOrmEntity).save(whatsappSetting);
+  logger.info('Configuração de WhatsApp seedada.');
 
   // 2. EMPRESAS
   const empresasData = [
@@ -667,6 +677,7 @@ export async function seed(): Promise<void> {
   logger.info('- 10 skills');
   logger.info('- 2 curriculos');
   logger.info('- 5 vagas');
+  logger.info('- 1 configuração de WhatsApp');
   logger.info('\nExemplos reais do seed:');
   logger.info('- Admin: admin@fatilab.com | senha: Admin@123 | role: ADMIN');
   logger.info(
