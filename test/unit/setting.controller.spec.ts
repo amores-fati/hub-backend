@@ -41,20 +41,33 @@ describe('SettingController', () => {
 
   describe('getPublicSetting', () => {
     it('should return the setting value', async () => {
-      const expectedResult = { key: 'whatsapp_phone', value: '(51) 99266-9381' };
+      const expectedResult = {
+        key: 'whatsapp_phone',
+        value: '(51) 99266-9381',
+      };
       service.getSettingByKey.mockResolvedValue(expectedResult);
 
       const result = await controller.getPublicSetting('whatsapp_phone');
 
       expect(result).toEqual(expectedResult);
-      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('whatsapp_phone'));
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('whatsapp_phone'),
+      );
     });
 
     it('should throw NotFoundException if service throws SettingNotFoundException', async () => {
-      service.getSettingByKey.mockRejectedValue(new SettingNotFoundException('non_existent'));
+      service.getSettingByKey.mockRejectedValue(
+        new SettingNotFoundException('non_existent'),
+      );
 
-      await expect(controller.getPublicSetting('non_existent')).rejects.toThrow(NotFoundException);
-      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('non_existent'));
+      await expect(controller.getPublicSetting('non_existent')).rejects.toThrow(
+        NotFoundException,
+      );
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining('non_existent'),
+      );
     });
   });
 });

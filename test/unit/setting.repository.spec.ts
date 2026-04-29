@@ -34,13 +34,14 @@ describe('SettingRepository', () => {
       ormEntity.id = '1';
       ormEntity.key = 'key';
       ormEntity.value = 'value';
-      
+
       ormRepository.findOneBy.mockResolvedValue(ormEntity);
 
       const result = await repository.findByKey('key');
 
       expect(result).toBeInstanceOf(Setting);
       expect(result?.key).toBe('key');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(ormRepository.findOneBy).toHaveBeenCalledWith({ key: 'key' });
     });
 

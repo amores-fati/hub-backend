@@ -10,8 +10,6 @@ export class AddCourseCreatedAt1776926400000 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "courses" DROP COLUMN "created_at"`,
-    );
+    await queryRunner.query(`ALTER TABLE "courses" DROP COLUMN "created_at"`);
   }
 }

@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  NotFoundException,
-} from '@nestjs/common';
+import { Controller, Get, Param, NotFoundException } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -51,7 +46,9 @@ export class SettingController {
   })
   async getPublicSetting(@Param('key') key: string) {
     try {
-      this.logger.info(`Iniciando busca da configuração pública para a chave: ${key}`);
+      this.logger.info(
+        `Iniciando busca da configuração pública para a chave: ${key}`,
+      );
       const result = await this.settingService.getSettingByKey(key);
       this.logger.info(`Configuração encontrada para a chave: ${key}`);
       return result;

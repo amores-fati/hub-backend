@@ -157,7 +157,7 @@ export async function seed(): Promise<void> {
   });
   await appDataSource.getRepository(AdminOrmEntity).save(admin);
   logger.info('Admin criado.');
-  
+
   // 1.1 CONFIGURAÇÕES GERAIS
   const whatsappSetting = appDataSource.getRepository(SettingOrmEntity).create({
     id: uuidv4(),

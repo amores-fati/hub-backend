@@ -5,10 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { buildDatabaseOptions } from './config/database.config';
-import {
-  AmoresFatiLogger,
-  HttpLoggerInterceptor,
-} from './utils/logger';
+import { AmoresFatiLogger, HttpLoggerInterceptor } from './utils/logger';
 
 // Admin Adapters & Core
 import { AdminController } from './adapters/in/controllers/admin.controller';

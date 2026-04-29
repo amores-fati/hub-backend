@@ -10,7 +10,7 @@ describe('SettingService', () => {
   beforeEach(() => {
     repository = {
       findByKey: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<ISettingRepository>;
     service = new SettingService(repository);
   });
 
@@ -25,13 +25,17 @@ describe('SettingService', () => {
         key: 'whatsapp_phone',
         value: '(51) 99266-9381',
       });
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(repository.findByKey).toHaveBeenCalledWith('whatsapp_phone');
     });
 
     it('should throw SettingNotFoundException if setting does not exist', async () => {
       repository.findByKey.mockResolvedValue(null);
 
-      await expect(service.getSettingByKey('non_existent')).rejects.toThrow(SettingNotFoundException);
+      await expect(service.getSettingByKey('non_existent')).rejects.toThrow(
+        SettingNotFoundException,
+      );
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(repository.findByKey).toHaveBeenCalledWith('non_existent');
     });
   });

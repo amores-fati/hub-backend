@@ -11,17 +11,25 @@ describe('Setting Entity', () => {
 
   it('should throw an error if ID is missing', () => {
     expect(() => new Setting('', 'key', 'value')).toThrow(DomainException);
-    expect(() => new Setting('', 'key', 'value')).toThrow('O ID da configuração é obrigatório.');
+    expect(() => new Setting('', 'key', 'value')).toThrow(
+      'O ID da configuração é obrigatório.',
+    );
   });
 
   it('should throw an error if key is missing', () => {
     expect(() => new Setting('1', '', 'value')).toThrow(DomainException);
-    expect(() => new Setting('1', '', 'value')).toThrow('A chave da configuração é obrigatória.');
+    expect(() => new Setting('1', '', 'value')).toThrow(
+      'A chave da configuração é obrigatória.',
+    );
   });
 
   it('should throw an error if value is missing', () => {
-    expect(() => new Setting('1', 'key', null as any)).toThrow(DomainException);
-    expect(() => new Setting('1', 'key', null as any)).toThrow('O valor da configuração é obrigatório.');
+    expect(() => new Setting('1', 'key', null as unknown as string)).toThrow(
+      DomainException,
+    );
+    expect(() => new Setting('1', 'key', null as unknown as string)).toThrow(
+      'O valor da configuração é obrigatório.',
+    );
   });
 
   it('should return a JSON representation', () => {
