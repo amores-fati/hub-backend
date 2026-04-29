@@ -215,6 +215,17 @@ erDiagram
         uuid job_id PK
         uuid skill_id PK
     }
+    SETTINGS {
+        uuid id PK
+        varchar key UK
+        varchar value
+    }
+
+## Endpoints Públicos
+
+| Método | Rota | Descrição |
+| --- | --- | --- |
+| `GET` | `/settings/public/:key` | Retorna o valor de uma configuração pública (ex: `whatsapp_phone`) |
 ```
 
 ## E2E
@@ -258,6 +269,7 @@ Quando o banco principal esta vazio e o seed roda com sucesso, ele cria:
 - `10` skills
 - `2` curriculos
 - `5` vagas
+- `1` configuração de WhatsApp
 
 ## Credenciais documentadas
 
