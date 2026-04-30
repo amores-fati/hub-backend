@@ -45,6 +45,13 @@ import { ContactOrmEntity } from './adapters/out/orm/contact.orm-entity';
 import { DisabilityOrmEntity } from './adapters/out/orm/disability.orm-entity';
 import { SocialBenefitOrmEntity } from './adapters/out/orm/social-benefit.orm-entity';
 
+// Setting Adapters & Core
+import { SettingController } from './adapters/in/controllers/setting.controller';
+import { SettingService } from './core/services/setting.service';
+import { SettingRepository } from './adapters/out/repository/setting.repository';
+import { SettingOrmEntity } from './adapters/out/orm/setting.orm-entity';
+import { ISettingRepository } from './core/ports/setting.repository.interface';
+
 // Student Adapters & Core
 import { HealthController } from './adapters/in/controllers/health.controller';
 import { StudentController } from './adapters/in/controllers/student.controller';
@@ -84,6 +91,7 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
       ContactOrmEntity,
       DisabilityOrmEntity,
       SocialBenefitOrmEntity,
+      SettingOrmEntity,
     ]),
   ],
   controllers: [
@@ -92,6 +100,7 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
     CourseController,
     CompanyController,
     StudentController,
+    SettingController,
     HealthController,
   ],
   providers: [
@@ -202,6 +211,17 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
     {
       provide: IStudentRepository,
       useClass: StudentRepository,
+    },
+    {
+      provide: SettingService,
+      useFactory: (settingRepository: ISettingRepository) => {
+        return new SettingService(settingRepository);
+      },
+      inject: [ISettingRepository],
+    },
+    {
+      provide: ISettingRepository,
+      useClass: SettingRepository,
     },
   ],
 })

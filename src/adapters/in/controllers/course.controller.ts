@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   Post,
 } from '@nestjs/common';
 import {
@@ -21,12 +22,14 @@ import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import { CreateCourseDto } from '../dtos/course/create-course.dto';
 
 @ApiTags('Courses')
-@RequireAuth()
 @Controller('courses')
 export class CourseController {
+  private readonly logger = new Logger(CourseController.name);
+
   constructor(private readonly courseService: CourseService) {}
 
   @Post()
+  @RequireAuth()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Cria um novo curso',
@@ -61,6 +64,7 @@ export class CourseController {
     description: 'Erro de validacao ou inconsistencia de dominio.',
   })
   async create(@Body() createCourseDto: CreateCourseDto) {
+    this.logger.log('POST /courses - iniciando criacao de curso');
     try {
       const command: CreateCourseCommand = { ...createCourseDto };
       return await this.courseService.createCourse(command);
@@ -77,7 +81,7 @@ export class CourseController {
   @ApiOperation({
     summary: 'Lista todos os cursos',
     description:
-      'Retorna a lista completa de todos os cursos persistidos na base de dados.',
+      'Retorna a lista completa de todos os cursos. Endpoint publico, nao requer autenticacao.',
   })
   @ApiOkResponse({
     description: 'Cursos retornados com sucesso.',
@@ -100,6 +104,7 @@ export class CourseController {
     },
   })
   async findAll() {
+    this.logger.log('GET /courses - iniciando listagem de cursos');
     return this.courseService.getAllCourses();
   }
 }
