@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository, IsNull } from 'typeorm';
 
 import { IStudentRepository } from '../../../core/ports/student.repository.interface';
 import { Student } from '../../../core/domain/student.entity';
@@ -55,9 +55,11 @@ export class StudentRepository implements IStudentRepository {
       relations: ['user', 'contact', 'disability', 'socialBenefits'],
     });
 
-    return ormEntities.map((entity) => this.mapToDomain(entity));
-  }
-
+    return ormEntities
+    .filter((entity) => entity.user !== null)
+    .map((entity) => this.mapToDomain(entity));
+  }  
+  
   async findById(id: string): Promise<Student | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { id },
@@ -150,8 +152,8 @@ export class StudentRepository implements IStudentRepository {
     }
   }
 
-  async softDelete(id: string): Promise<void> {
-  await this.ormRepository.manager.softDelete(UserOrmEntity, id);
+  async softDeleteMany(ids: string[]): Promise<void> {
+  await this.ormRepository.manager.softDelete(UserOrmEntity, { id: In(ids) });
 }
 
   private mapToOrm(student: Student): StudentOrmEntity {

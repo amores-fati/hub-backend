@@ -234,7 +234,7 @@ export class StudentController {
     }
   }
 
-  @RequireAuth()
+  /*@RequireAuth()
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Deleta um aluno pelo ID' })
@@ -259,4 +259,5 @@ export class StudentController {
       throw error;
     }
   }
+  */
 }

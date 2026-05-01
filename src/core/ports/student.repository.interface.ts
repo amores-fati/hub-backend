@@ -10,5 +10,5 @@ export interface IStudentRepository {
   findByCpf(cpf: string): Promise<Student | null>;
   update(student: Student): Promise<Student>;
   delete(id: string): Promise<void>;
-  softDelete(id: string): Promise<void>;
+  softDeleteMany(ids: string[]): Promise<void>;
 }
