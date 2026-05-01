@@ -5,10 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { buildDatabaseOptions } from './config/database.config';
-import {
-  AmoresFatiLogger,
-  HttpLoggerInterceptor,
-} from './utils/logger';
+import { AmoresFatiLogger, HttpLoggerInterceptor } from './utils/logger';
 
 // Admin Adapters & Core
 import { AdminController } from './adapters/in/controllers/admin.controller';
@@ -58,6 +55,19 @@ import { StudentRepository } from './adapters/out/repository/student.repository'
 import { StudentOrmEntity } from './adapters/out/orm/student.orm-entity';
 import { IStudentRepository } from './core/ports/student.repository.interface';
 
+// Enrollment Adapters & Core
+import { EnrollmentService } from './core/services/enrollment.service';
+import { EnrollmentRepository } from './adapters/out/repository/enrollment.repository';
+import { EnrollmentOrmEntity } from './adapters/out/orm/enrollment.orm-entity';
+import { IEnrollmentRepository } from './core/ports/enrollment.repository.interface';
+
+// Setting Adapters & Core
+import { SettingController } from './adapters/in/controllers/setting.controller';
+import { SettingService } from './core/services/setting.service';
+import { SettingRepository } from './adapters/out/repository/setting.repository';
+import { SettingOrmEntity } from './adapters/out/orm/setting.orm-entity';
+import { ISettingRepository } from './core/ports/setting.repository.interface';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -89,6 +99,8 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
       ContactOrmEntity,
       DisabilityOrmEntity,
       SocialBenefitOrmEntity,
+      SettingOrmEntity,
+      EnrollmentOrmEntity,
     ]),
   ],
   controllers: [
@@ -98,6 +110,7 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
     CompanyController,
     StudentController,
     HealthController,
+    SettingController,
   ],
   providers: [
     AmoresFatiLogger,
@@ -176,6 +189,20 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
       useClass: CourseRepository,
     },
     {
+      provide: EnrollmentService,
+      useFactory: (
+        enrollmentRepository: IEnrollmentRepository,
+        courseRepository: ICourseRepository,
+      ) => {
+        return new EnrollmentService(enrollmentRepository, courseRepository);
+      },
+      inject: [IEnrollmentRepository, ICourseRepository],
+    },
+    {
+      provide: IEnrollmentRepository,
+      useClass: EnrollmentRepository,
+    },
+    {
       provide: CompanyService,
       useFactory: (
         companyRepository: ICompanyRepository,
@@ -212,6 +239,17 @@ import { IStudentRepository } from './core/ports/student.repository.interface';
     {
       provide: IStudentRepository,
       useClass: StudentRepository,
+    },
+    {
+      provide: SettingService,
+      useFactory: (settingRepository: ISettingRepository) => {
+        return new SettingService(settingRepository);
+      },
+      inject: [ISettingRepository],
+    },
+    {
+      provide: ISettingRepository,
+      useClass: SettingRepository,
     },
   ],
 })

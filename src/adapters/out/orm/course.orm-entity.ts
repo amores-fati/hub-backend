@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity('courses')
 export class CourseOrmEntity {
@@ -31,4 +31,11 @@ export class CourseOrmEntity {
 
   @Column({ name: 'link_access' })
   linkAccess: string;
+
+  @CreateDateColumn({
+    name: 'created_at',
+    type: 'timestamptz',
+    default: () => 'NOW()',
+  })
+  createdAt: Date;
 }

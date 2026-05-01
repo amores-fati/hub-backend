@@ -11,6 +11,7 @@ describe('CourseService', () => {
   const mockRepository: ICourseRepository = {
     create: jest.fn(),
     findAll: jest.fn(),
+    findById: jest.fn(),
   };
 
   const createCommand: CreateCourseCommand = {

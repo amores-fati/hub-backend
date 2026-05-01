@@ -16,6 +16,8 @@ Este documento descreve o schema vigente do projeto com base em:
 - `src/adapters/out/migrations/1776556800000-TrimLegacyContactColumnsAndProtectStudentLists.ts`
 - `src/adapters/out/migrations/1776643200000-HardenProfilesAndRemoveStudentGenderOther.ts`
 - `src/adapters/out/migrations/1776758400000-RemoveLegacyFields.ts`
+- `src/adapters/out/migrations/1776926400000-AddCourseCreatedAt.ts`
+- `src/adapters/out/migrations/1777417844594-CreateSettingsTable.ts`
 - `src/adapters/out/orm/*.ts`
 - `src/config/database.config.ts`
 
@@ -32,7 +34,7 @@ Validado em `api_db_e2e` com:
 - banco manual de teste: `api_db_test`
 - banco automatizado de E2E: `api_db_e2e`
 - extensao usada: `uuid-ossp`
-- tabelas de negocio: `15`
+- tabelas de negocio: `16`
 - tabela tecnica: `migrations`
 - raiz de identidade: `users`
 - especializacoes por PK compartilhada: `admins`, `students`, `companies`
@@ -82,6 +84,8 @@ curriculum
 
 courses
 `- in_person_course_details
+
+settings
 ```
 
 ## Tabelas
@@ -428,6 +432,25 @@ Constraints:
 Observacoes:
 
 - `course_id` e obrigatorio e exclusivo
+ 
+### `settings`
+ 
+Responsabilidade: armazenar configuracoes da plataforma.
+ 
+Colunas:
+ 
+- `id uuid not null`
+- `key varchar not null`
+- `value text not null`
+ 
+Constraints:
+ 
+- `pk_settings`
+- `uq_settings__key`
+ 
+Observacoes:
+ 
+- `key` e unica para garantir que nao existam configuracoes duplicadas.
 
 ### `migrations`
 
