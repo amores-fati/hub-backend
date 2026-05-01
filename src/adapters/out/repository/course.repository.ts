@@ -25,6 +25,12 @@ export class CourseRepository implements ICourseRepository {
     return ormEntities.map((entity) => this.mapToDomain(entity));
   }
 
+  async findById(id: string): Promise<Course | null> {
+    const ormEntity = await this.ormRepository.findOne({ where: { id } });
+    if (!ormEntity) return null;
+    return this.mapToDomain(ormEntity);
+  }
+
   private mapToDomain(ormEntity: CourseOrmEntity): Course {
     return new Course(
       ormEntity.id,
