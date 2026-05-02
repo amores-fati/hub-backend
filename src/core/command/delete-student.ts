@@ -1,3 +1,3 @@
-    export class DeleteStudentCommand {
+export class DeleteStudentCommand {
   constructor(public readonly studentId: string) {}
 }

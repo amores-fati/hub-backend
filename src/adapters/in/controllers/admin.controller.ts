@@ -9,10 +9,6 @@ import {
   HttpStatus,
   Post,
   Delete,
-  Get,
-  NotFoundException,
-  Param,
-  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -22,8 +18,6 @@ import {
   ApiOperation,
   ApiTags,
   ApiOkResponse,
-  ApiNoContentResponse,
-  ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { DomainException } from '../../../core/exceptions/domain.exception';
 import { AdminService } from '../../../core/services/admin.service';
@@ -92,6 +86,4 @@ export class AdminController {
     this.logger.info('Deleting students', { ids: dto.ids });
     return this.studentService.deleteStudents(dto.ids);
   }
-
 }
-

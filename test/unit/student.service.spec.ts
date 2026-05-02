@@ -342,23 +342,25 @@ describe('StudentService', () => {
   });
 
   describe('deleteStudents', () => {
-  it('should soft delete existing students and return empty failed list', async () => {
-    (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
-    (mockRepository.softDeleteMany as jest.Mock).mockResolvedValue(undefined);
+    it('should soft delete existing students and return empty failed list', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
+      (mockRepository.softDeleteMany as jest.Mock).mockResolvedValue(undefined);
 
-    const result = await service.deleteStudents([mockStudent.id]);
+      const result = await service.deleteStudents([mockStudent.id]);
 
-    expect(mockRepository.softDeleteMany).toHaveBeenCalledWith([mockStudent.id]);
-    expect(result.failed).toHaveLength(0);
+      expect(mockRepository.softDeleteMany).toHaveBeenCalledWith([
+        mockStudent.id,
+      ]);
+      expect(result.failed).toHaveLength(0);
+    });
+
+    it('should return failed list for non-existing students', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.deleteStudents(['id-inexistente']);
+
+      expect(mockRepository.softDeleteMany).not.toHaveBeenCalled();
+      expect(result.failed).toContain('id-inexistente');
+    });
   });
-
-  it('should return failed list for non-existing students', async () => {
-    (mockRepository.findById as jest.Mock).mockResolvedValue(null);
-
-    const result = await service.deleteStudents(['id-inexistente']);
-
-    expect(mockRepository.softDeleteMany).not.toHaveBeenCalled();
-    expect(result.failed).toContain('id-inexistente');
-  });
-});
 });

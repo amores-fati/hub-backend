@@ -39,10 +39,10 @@ export class UserOrmEntity {
   createdAt: Date;
 
   @DeleteDateColumn({
-  name: 'deleted_at',
-  type: 'timestamptz',
-  nullable: true,
-})
+    name: 'deleted_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
   deletedAt: Date | null;
 
   @OneToOne(() => StudentOrmEntity, (s) => s.user)

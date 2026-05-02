@@ -248,7 +248,7 @@ export class StudentService {
 
     for (const id of ids) {
       const student = await this.studentRepository.findById(id);
-     if (!student) notFound.push(id);
+      if (!student) notFound.push(id);
       else toDelete.push(id);
     }
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository, IsNull } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import { IStudentRepository } from '../../../core/ports/student.repository.interface';
 import { Student } from '../../../core/domain/student.entity';
@@ -56,17 +56,17 @@ export class StudentRepository implements IStudentRepository {
     });
 
     return ormEntities
-    .filter((entity) => entity.user !== null)
-    .map((entity) => this.mapToDomain(entity));
-  }  
-  
+      .filter((entity) => entity.user !== null)
+      .map((entity) => this.mapToDomain(entity));
+  }
+
   async findById(id: string): Promise<Student | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { id },
       relations: ['user', 'contact', 'disability', 'socialBenefits'],
     });
 
-    return ormEntity ? this.mapToDomain(ormEntity) : null;
+    return ormEntity && ormEntity.user ? this.mapToDomain(ormEntity) : null;
   }
 
   async existsById(id: string): Promise<boolean> {
@@ -79,7 +79,7 @@ export class StudentRepository implements IStudentRepository {
       relations: ['user', 'contact', 'disability', 'socialBenefits'],
     });
 
-    return ormEntity ? this.mapToDomain(ormEntity) : null;
+    return ormEntity && ormEntity.user ? this.mapToDomain(ormEntity) : null;
   }
 
   async update(student: Student): Promise<Student> {
@@ -153,8 +153,8 @@ export class StudentRepository implements IStudentRepository {
   }
 
   async softDeleteMany(ids: string[]): Promise<void> {
-  await this.ormRepository.manager.softDelete(UserOrmEntity, { id: In(ids) });
-}
+    await this.ormRepository.manager.softDelete(UserOrmEntity, { id: In(ids) });
+  }
 
   private mapToOrm(student: Student): StudentOrmEntity {
     const ormEntity = new StudentOrmEntity();
