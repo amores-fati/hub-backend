@@ -164,6 +164,7 @@ export class StudentRepository implements IStudentRepository {
     ormEntity.birthDate = student.birthDate;
     ormEntity.gender = student.gender;
     ormEntity.race = student.race;
+    ormEntity.fullName = student.fullName;
     ormEntity.education = student.education || null;
     ormEntity.courseName = student.courseName || null;
     ormEntity.institution = student.institution || null;
@@ -278,6 +279,7 @@ export class StudentRepository implements IStudentRepository {
       this.coerceRequiredDate(ormEntity.birthDate),
       ormEntity.gender,
       ormEntity.race,
+      ormEntity.fullName,
       ormEntity.education || undefined,
       ormEntity.institution || undefined,
       ormEntity.activityArea || undefined,
