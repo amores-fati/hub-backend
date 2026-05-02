@@ -69,6 +69,7 @@ describe('StudentService', () => {
       new Date('1990-01-01'),
       Gender.MALE,
       Race.WHITE,
+      'João da Silva',
     );
 
     service = new StudentService(
@@ -87,6 +88,7 @@ describe('StudentService', () => {
         birthDate: new Date('1990-01-01'),
         gender: Gender.MALE,
         race: Race.WHITE,
+        fullName: 'João da Silva',
         education: EducationLevel.SECONDARY,
         contact: {
           phone: mockContact.phone,
@@ -125,6 +127,7 @@ describe('StudentService', () => {
         birthDate: new Date('1990-01-01'),
         gender: Gender.MALE,
         race: Race.WHITE,
+        fullName: 'João da Silva',
         contact: { phone: '11999999999' },
       };
 
@@ -143,6 +146,7 @@ describe('StudentService', () => {
         birthDate: new Date('1990-01-01'),
         gender: Gender.MALE,
         race: Race.WHITE,
+        fullName: 'João da Silva',
         contact: { phone: '11999999999' },
       };
 
@@ -210,6 +214,7 @@ describe('StudentService', () => {
   describe('updateStudent', () => {
     const updateCommand: UpdateStudentCommand = {
       email: 'novoaluno@teste.com',
+      fullName: 'João da Silva',
       password: 'newpassword123',
       birthDate: new Date('1995-05-05'),
       gender: Gender.FEMALE,
@@ -258,6 +263,7 @@ describe('StudentService', () => {
           new Date('1991-01-01'),
           Gender.FEMALE,
           Race.BLACK,
+          'Duplicado da Silva',
         ),
       );
 
@@ -282,6 +288,7 @@ describe('StudentService', () => {
           mockStudent.birthDate,
           mockStudent.gender,
           mockStudent.race,
+          mockStudent.fullName,
         ),
       );
       (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
@@ -330,6 +337,7 @@ describe('StudentService', () => {
           new Date('1991-01-01'),
           Gender.FEMALE,
           Race.BLACK,
+          'Duplicado da Silva',
         ),
       );
 
