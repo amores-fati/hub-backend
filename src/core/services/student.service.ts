@@ -129,6 +129,7 @@ export class StudentService {
       const hashedPassword = await this.hashService.hash(command.password);
       student.changePassword(hashedPassword);
     }
+    student.changeSocialName(command.socialName);
 
     student.changeProfileData({
       birthDate: command.birthDate ? new Date(command.birthDate) : undefined,
@@ -188,6 +189,9 @@ export class StudentService {
     if (command.password !== undefined) {
       const hashedPassword = await this.hashService.hash(command.password);
       student.changePassword(hashedPassword);
+    }
+    if (command.socialName !== undefined) {
+      student.changeSocialName(command.socialName);
     }
     student.changeProfileData({
       birthDate:
