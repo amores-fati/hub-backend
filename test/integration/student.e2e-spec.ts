@@ -215,10 +215,10 @@ describe('StudentController (e2e)', () => {
     });
   });
 
-  describe('/admins/students (DELETE)', () => {
+  describe('/students (DELETE)', () => {
     it('should soft-delete students (200)', () => {
       return request(app.getHttpServer() as Server)
-        .delete(`/admins/students`)
+        .delete(`/students`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({ ids: [createdStudentId] })
         .expect(200)

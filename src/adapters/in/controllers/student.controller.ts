@@ -3,6 +3,7 @@ import {
   Body,
   ConflictException,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -33,6 +34,7 @@ import { StudentService } from '../../../core/services/student.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateStudentDto } from '../dtos/student/create-student.dto';
+import { DeleteStudentsDto } from '../dtos/student/delete-student.dto';
 import { PatchStudentDto } from '../dtos/student/patch-student.dto';
 import { UpdateStudentDto } from '../dtos/student/update-student.dto';
 
@@ -232,30 +234,15 @@ export class StudentController {
     }
   }
 
-  /*@RequireAuth()
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Deleta um aluno pelo ID' })
-  @ApiNoContentResponse({ description: 'Aluno deletado com sucesso.' })
-  @ApiNotFoundResponse({ description: 'Aluno nao encontrado.' })
-  async remove(@Param('id', ParseUUIDPipe) id: string) {
-    try {
-      this.logger.info('Deleting student', { id });
-      await this.studentService.deleteStudent(id);
-      this.logger.info('Student deleted', { id });
-    } catch (error) {
-      if (error instanceof Error && error.name === 'StudentNotFoundException') {
-        this.logger.warn('Student not found', { id });
-        throw new NotFoundException(error.message);
-      }
-
-      if (error instanceof Error && error.name === 'DomainException') {
-        this.logger.error('Student deletion domain error');
-        throw new BadRequestException(error.message);
-      }
-
-      throw error;
-    }
+  @RequireAuth()
+  @Delete()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Deleta (soft delete) uma lista de alunos' })
+  @ApiOkResponse({
+    description: 'Retorna um objeto com os IDs que não foram encontrados.',
+  })
+  async removeStudents(@Body() dto: DeleteStudentsDto) {
+    this.logger.info('Deleting students', { ids: dto.ids });
+    return this.studentService.deleteStudents(dto.ids);
   }
-  */
 }
