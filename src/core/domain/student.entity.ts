@@ -174,10 +174,14 @@ export class Student extends User {
   }
 
   public changeProfileData(data: {
+    fullName?: string;
+    socialName?: string;
     birthDate?: Date;
     gender?: Gender;
     race?: Race;
   }): void {
+    if (data.fullName !== undefined) this.#fullName = data.fullName;
+    if (data.socialName !== undefined) this.#socialName = data.socialName;
     if (data.birthDate !== undefined) this.#birthDate = data.birthDate;
     if (data.gender !== undefined) this.#gender = data.gender;
     if (data.race !== undefined) this.#race = data.race;
@@ -248,6 +252,10 @@ export class Student extends User {
   }
 
   private validateProfileData(): void {
+    if (!this.#fullName || this.#fullName.trim().length === 0) {
+      throw new DomainException('O nome legal e obrigatorio.');
+    }
+
     if (!this.#birthDate || Number.isNaN(this.#birthDate.getTime())) {
       throw new DomainException('A data de nascimento informada e invalida.');
     }

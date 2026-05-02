@@ -1,8 +1,8 @@
 export interface FilterStudentCommand {
-  cpf: string;
-  text: string;
-  textFilter?: string;
-  courseType?: string;
-  location?: string;
-  disability?: string;
+  search?: string;
+  city?: string;
+  disabilityType?: string;
+  courseId?: string;
+  page?: number;
+  pageSize?: 20 | 50;
 }

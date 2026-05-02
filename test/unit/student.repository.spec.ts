@@ -29,8 +29,13 @@ describe('StudentRepository', () => {
   };
   let queryBuilder: {
     andWhere: jest.Mock;
-    getMany: jest.Mock;
+    getManyAndCount: jest.Mock;
+    innerJoinAndSelect: jest.Mock;
+    leftJoinAndMapMany: jest.Mock;
+    leftJoinAndMapOne: jest.Mock;
     leftJoinAndSelect: jest.Mock;
+    skip: jest.Mock;
+    take: jest.Mock;
   };
   let ormRepository: Repository<StudentOrmEntity>;
   let repository: StudentRepository;
@@ -44,8 +49,13 @@ describe('StudentRepository', () => {
 
     queryBuilder = {
       andWhere: jest.fn().mockReturnThis(),
-      getMany: jest.fn(),
+      getManyAndCount: jest.fn(),
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndMapMany: jest.fn().mockReturnThis(),
+      leftJoinAndMapOne: jest.fn().mockReturnThis(),
       leftJoinAndSelect: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
     };
 
     ormRepository = {
@@ -123,19 +133,22 @@ describe('StudentRepository', () => {
 
   it('should filter students using the query builder', async () => {
     const ormEntity = buildStudentOrmEntity(buildStudent());
-    queryBuilder.getMany.mockResolvedValue([ormEntity]);
+    queryBuilder.getManyAndCount.mockResolvedValue([[ormEntity], 1]);
 
-    const students = await repository.findAllWithFilter({
-      text: 'student',
-      courseType: 'Backend',
-      location: 'Sao Paulo',
-      disability: { hasDisability: true },
+    const result = await repository.findAllWithFilter({
+      search: 'student',
+      courseId: '123e4567-e89b-12d3-a456-426614174000',
+      city: 'Sao Paulo',
+      disabilityType: 'visual',
+      page: 2,
+      pageSize: 20,
     });
 
     expect(ormRepository.createQueryBuilder).toHaveBeenCalledWith('student');
-    expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+    expect(queryBuilder.innerJoinAndSelect).toHaveBeenCalledWith(
       'student.user',
       'user',
+      'user.deletedAt IS NULL',
     );
     expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
       'student.contact',
@@ -149,36 +162,42 @@ describe('StudentRepository', () => {
       'student.socialBenefits',
       'socialBenefits',
     );
+    expect(queryBuilder.leftJoinAndMapMany).toHaveBeenCalled();
+    expect(queryBuilder.leftJoinAndMapOne).toHaveBeenCalled();
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      'student.courseName ILIKE :courseType',
-      { courseType: '%Backend%' },
+      'enrollment.courseId = :courseId',
+      { courseId: '123e4567-e89b-12d3-a456-426614174000' },
     );
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      'disability.hasDisability = :hasDisability',
-      { hasDisability: true },
-    );
-    expect(students).toHaveLength(1);
-    expect(students[0].email).toBe('student@test.com');
-  });
-
-  it('should filter students by cpf and disability type', async () => {
-    queryBuilder.getMany.mockResolvedValue([
-      buildStudentOrmEntity(buildStudent()),
-    ]);
-
-    await repository.findAllWithFilter({
-      cpf: '12345678909',
-      disability: { type: 'visual' },
-    });
-
-    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      'student.cpf ILIKE :cpf',
-      { cpf: '%12345678909%' },
+      'contact.city ILIKE :city',
+      { city: '%Sao Paulo%' },
     );
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
       'disability.type ILIKE :disabilityType',
       { disabilityType: '%visual%' },
     );
+    expect(queryBuilder.skip).toHaveBeenCalledWith(20);
+    expect(queryBuilder.take).toHaveBeenCalledWith(20);
+    expect(result.items).toHaveLength(1);
+    expect(result.total).toBe(1);
+    expect(result.items[0].email).toBe('student@test.com');
+  });
+
+  it('should filter students by normalized cpf inside search', async () => {
+    queryBuilder.getManyAndCount.mockResolvedValue([
+      [buildStudentOrmEntity(buildStudent())],
+      1,
+    ]);
+
+    await repository.findAllWithFilter({
+      search: '123.456.789-09',
+      page: 1,
+      pageSize: 50,
+    });
+
+    expect(queryBuilder.andWhere).toHaveBeenCalled();
+    expect(queryBuilder.skip).toHaveBeenCalledWith(0);
+    expect(queryBuilder.take).toHaveBeenCalledWith(50);
   });
 });
 

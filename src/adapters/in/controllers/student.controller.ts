@@ -13,6 +13,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -35,10 +36,9 @@ import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateStudentDto } from '../dtos/student/create-student.dto';
 import { DeleteStudentsDto } from '../dtos/student/delete-student.dto';
+import { GetAdminStudentsDto } from '../dtos/student/get-admin-students.dto';
 import { PatchStudentDto } from '../dtos/student/patch-student.dto';
 import { UpdateStudentDto } from '../dtos/student/update-student.dto';
-import { FilterStudentDto } from '../dtos/student/filter-student.dto';
-import { FilterStudentCommand } from 'src/core/command/filterStudent.command';
 
 @ApiTags('Students')
 @Controller('students')
@@ -111,17 +111,21 @@ export class StudentController {
   }
 
   @RequireAuth()
-  @Get()
-  @ApiBody({ type: FilterStudentDto })
-  @ApiOperation({ summary: 'Lista todos os alunos sem os alunos excluídos' })
+  @Get('filter')
+  @ApiOperation({ summary: 'Lista alunos com filtros e paginacao para admins' })
   @ApiOkResponse({
-    description: 'Retorna um array com todos os alunos cadastrados sem os excluídos.',
+    description: 'Retorna alunos paginados, sem usuarios excluidos.',
   })
-  async findAllWithFilter(@Body() filterStudentDto: FilterStudentDto) {
-    this.logger.info('Listing students with soft delete');
-    const command: FilterStudentCommand = { ...filterStudentDto };
-    const students = await this.studentService.findAllStudentsWithFilter(command);
-    this.logger.info('Students listed without deleted students', { count: students.length });
+  async findAllWithFilter(@Query() filters: GetAdminStudentsDto) {
+    this.logger.info('Listing students with admin filters', {
+      page: filters.page,
+      pageSize: filters.pageSize,
+    });
+    const students = await this.studentService.findAllStudentsWithFilter(filters);
+    this.logger.info('Students listed with admin filters', {
+      count: students.items.length,
+      total: students.meta.total,
+    });
     return students;
   }
   

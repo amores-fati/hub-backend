@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, In, Repository } from 'typeorm';
 
 import {
   IStudentRepository,
+  PaginatedStudentListResult,
   StudentFilterQuery,
 } from '../../../core/ports/student.repository.interface';
 import { Student } from '../../../core/domain/student.entity';
@@ -16,6 +17,16 @@ import { UserOrmEntity } from '../orm/user.orm-entity';
 import { ContactOrmEntity } from '../orm/contact.orm-entity';
 import { DisabilityOrmEntity } from '../orm/disability.orm-entity';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
+import { EnrollmentOrmEntity } from '../orm/enrollment.orm-entity';
+import { CourseOrmEntity } from '../orm/course.orm-entity';
+
+type EnrollmentWithCourse = EnrollmentOrmEntity & {
+  course?: CourseOrmEntity;
+};
+
+type StudentWithEnrollments = StudentOrmEntity & {
+  enrollments?: EnrollmentWithCourse[];
+};
 
 @Injectable()
 export class StudentRepository implements IStudentRepository {
@@ -63,72 +74,77 @@ export class StudentRepository implements IStudentRepository {
       .map((entity) => this.mapToDomain(entity));
   }
 
-  async findAllWithFilter(query: StudentFilterQuery): Promise<Student[]> {
+  async findAllWithFilter(
+    query: StudentFilterQuery,
+  ): Promise<PaginatedStudentListResult> {
     const queryBuilder = this.ormRepository
       .createQueryBuilder('student')
-      .leftJoinAndSelect('student.user', 'user')
+      .innerJoinAndSelect('student.user', 'user', 'user.deletedAt IS NULL')
       .leftJoinAndSelect('student.contact', 'contact')
       .leftJoinAndSelect('student.disability', 'disability')
-      .leftJoinAndSelect('student.socialBenefits', 'socialBenefits');
+      .leftJoinAndSelect('student.socialBenefits', 'socialBenefits')
+      .leftJoinAndMapMany(
+        'student.enrollments',
+        EnrollmentOrmEntity,
+        'enrollment',
+        'enrollment.studentId = student.id',
+      )
+      .leftJoinAndMapOne(
+        'enrollment.course',
+        CourseOrmEntity,
+        'course',
+        'course.id = enrollment.courseId',
+      );
 
-    if (query.cpf) {
-      queryBuilder.andWhere('student.cpf ILIKE :cpf', {
-        cpf: this.buildLikeFilter(query.cpf),
-      });
-    }
+    if (query.search) {
+      const search = this.buildLikeFilter(query.search);
+      const normalizedCpf = this.normalizeCpf(query.search);
 
-    if (query.text) {
-      const text = this.buildLikeFilter(query.text);
       queryBuilder.andWhere(
         new Brackets((qb) => {
-          qb.where('student.socialName ILIKE :text', { text }).orWhere(
-            'user.email ILIKE :text',
-            { text },
-          );
+          qb.where('student.socialName ILIKE :search', { search })
+            .orWhere('student.fullName ILIKE :search', { search })
+            .orWhere('user.email ILIKE :search', { search });
+
+          if (normalizedCpf) {
+            qb.orWhere(
+              "regexp_replace(student.cpf, '\\D', '', 'g') ILIKE :cpf",
+              { cpf: this.buildLikeFilter(normalizedCpf) },
+            );
+          }
         }),
       );
     }
 
-    if (query.courseType) {
-      queryBuilder.andWhere('student.courseName ILIKE :courseType', {
-        courseType: this.buildLikeFilter(query.courseType),
+    if (query.courseId) {
+      queryBuilder.andWhere('enrollment.courseId = :courseId', {
+        courseId: query.courseId,
       });
     }
 
-    if (query.location) {
-      const location = this.buildLikeFilter(query.location);
-      queryBuilder.andWhere(
-        new Brackets((qb) => {
-          qb.where('contact.city ILIKE :location', { location })
-            .orWhere('contact.state ILIKE :location', { location })
-            .orWhere('contact.neighbourhood ILIKE :location', { location });
-        }),
-      );
-    }
-
-    const disabilityFilter =
-      typeof query.disability === 'object' && query.disability !== null
-        ? (query.disability as {
-            hasDisability?: boolean;
-            type?: string;
-          })
-        : undefined;
-
-    if (disabilityFilter?.hasDisability !== undefined) {
-      queryBuilder.andWhere('disability.hasDisability = :hasDisability', {
-        hasDisability: disabilityFilter.hasDisability,
+    if (query.city) {
+      queryBuilder.andWhere('contact.city ILIKE :city', {
+        city: this.buildLikeFilter(query.city),
       });
     }
 
-    if (disabilityFilter?.type) {
+    if (query.disabilityType) {
       queryBuilder.andWhere('disability.type ILIKE :disabilityType', {
-        disabilityType: this.buildLikeFilter(disabilityFilter.type),
+        disabilityType: this.buildLikeFilter(query.disabilityType),
       });
     }
 
-    const ormEntities = await queryBuilder.getMany();
+    const [ormEntities, total] = await queryBuilder
+      .skip((query.page - 1) * query.pageSize)
+      .take(query.pageSize)
+      .getManyAndCount();
 
-    return ormEntities.map((entity) => this.mapToDomain(entity));
+    return {
+      items: ormEntities.map((entity) =>
+        this.mapToListProjection(entity as StudentWithEnrollments),
+      ),
+      total,
+    };
   }
 
   async findById(id: string): Promise<Student | null> {
@@ -282,6 +298,29 @@ export class StudentRepository implements IStudentRepository {
     return `%${value}%`;
   }
 
+  private normalizeCpf(value: string): string | undefined {
+    const digits = value.replace(/\D/g, '');
+    return digits ? digits : undefined;
+  }
+
+  private mapToListProjection(ormEntity: StudentWithEnrollments) {
+    return {
+      id: ormEntity.id,
+      email: ormEntity.user.email,
+      cpf: ormEntity.cpf,
+      fullName: ormEntity.fullName,
+      socialName: ormEntity.socialName || undefined,
+      city: ormEntity.contact.city || undefined,
+      state: ormEntity.contact.state || undefined,
+      hasDisability: ormEntity.disability?.hasDisability,
+      disabilityType: ormEntity.disability?.type || undefined,
+      enrollments: (ormEntity.enrollments ?? []).map((enrollment) => ({
+        courseId: enrollment.courseId,
+        courseModality: enrollment.course?.modality ?? 'ONLINE',
+      })),
+    };
+  }
+
   private detachChildRelations(ormEntity: StudentOrmEntity): {
     disability: DisabilityOrmEntity | null;
     socialBenefits: SocialBenefitOrmEntity[];
@@ -316,6 +355,7 @@ export class StudentRepository implements IStudentRepository {
       hasComputer: ormEntity.hasComputer,
       hasInternet: ormEntity.hasInternet,
       committedToParticipate: ormEntity.committedToParticipate,
+      fullName: ormEntity.fullName,
       socialName: ormEntity.socialName,
     };
   }
