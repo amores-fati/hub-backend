@@ -27,6 +27,11 @@ describe('StudentRepository', () => {
     save: jest.Mock;
     update: jest.Mock;
   };
+  let queryBuilder: {
+    andWhere: jest.Mock;
+    getMany: jest.Mock;
+    leftJoinAndSelect: jest.Mock;
+  };
   let ormRepository: Repository<StudentOrmEntity>;
   let repository: StudentRepository;
 
@@ -37,12 +42,19 @@ describe('StudentRepository', () => {
       update: jest.fn().mockResolvedValue(undefined),
     };
 
+    queryBuilder = {
+      andWhere: jest.fn().mockReturnThis(),
+      getMany: jest.fn(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+    };
+
     ormRepository = {
       manager: {
         transaction: jest.fn((callback: TransactionCallback) =>
           callback(transactionalEntityManager),
         ),
       },
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
       find: jest.fn(),
       findOne: jest.fn(),
     } as unknown as Repository<StudentOrmEntity>;
@@ -107,6 +119,66 @@ describe('StudentRepository', () => {
     expect(students).toHaveLength(1);
     expect(students[0].birthDate).toBeInstanceOf(Date);
     expect(students[0].birthDate?.toISOString()).toContain('1990-01-01');
+  });
+
+  it('should filter students using the query builder', async () => {
+    const ormEntity = buildStudentOrmEntity(buildStudent());
+    queryBuilder.getMany.mockResolvedValue([ormEntity]);
+
+    const students = await repository.findAllWithFilter({
+      text: 'student',
+      courseType: 'Backend',
+      location: 'Sao Paulo',
+      disability: { hasDisability: true },
+    });
+
+    expect(ormRepository.createQueryBuilder).toHaveBeenCalledWith('student');
+    expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+      'student.user',
+      'user',
+    );
+    expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+      'student.contact',
+      'contact',
+    );
+    expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+      'student.disability',
+      'disability',
+    );
+    expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+      'student.socialBenefits',
+      'socialBenefits',
+    );
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'student.courseName ILIKE :courseType',
+      { courseType: '%Backend%' },
+    );
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'disability.hasDisability = :hasDisability',
+      { hasDisability: true },
+    );
+    expect(students).toHaveLength(1);
+    expect(students[0].email).toBe('student@test.com');
+  });
+
+  it('should filter students by cpf and disability type', async () => {
+    queryBuilder.getMany.mockResolvedValue([
+      buildStudentOrmEntity(buildStudent()),
+    ]);
+
+    await repository.findAllWithFilter({
+      cpf: '12345678909',
+      disability: { type: 'visual' },
+    });
+
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'student.cpf ILIKE :cpf',
+      { cpf: '%12345678909%' },
+    );
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'disability.type ILIKE :disabilityType',
+      { disabilityType: '%visual%' },
+    );
   });
 });
 

@@ -3,7 +3,7 @@ import { Student } from '../domain/student.entity';
 import { Contact } from '../domain/contact.entity';
 import { Disability } from '../domain/disability.entity';
 import { SocialBenefit } from '../domain/social-benefit.entity';
-import { IStudentRepository } from '../ports/student.repository.interface';
+import { IStudentRepository, StudentFilterQuery } from '../ports/student.repository.interface';
 import { StudentAlreadyExistsException } from '../exceptions/student-already-exists.exception';
 import {
   CreateStudentCommand,
@@ -14,6 +14,7 @@ import { StudentNotFoundException } from '../exceptions/student-not-found.except
 import { IHashService } from '../ports/hash.service.interface';
 import { IUserRepository } from '../ports/user.repository.interface';
 import { UserAlreadyExistsException } from '../exceptions/user-already-exists.exception';
+import { FilterStudentCommand } from '../command/filterStudent.command';
 
 export class StudentService {
   constructor(
@@ -94,6 +95,27 @@ export class StudentService {
 
   async findAllStudents(): Promise<Student[]> {
     return this.studentRepository.findAll();
+  }
+
+  async findAllStudentsWithFilter(command: FilterStudentCommand): Promise<Student[]> {
+    const textFilter = this.normalizeFilterValue(command.textFilter);
+    const query: StudentFilterQuery = {
+      courseType: this.normalizeFilterValue(command.courseType),
+      location: this.normalizeFilterValue(command.location),
+      disability: this.buildDisabilityFilter(command.disability),
+      cpf: '',
+      text: ''
+    };
+
+    if (textFilter) {
+      if (this.containsOnlyDigits(textFilter)) {
+        query.cpf = textFilter;
+      } else {
+        query.text = textFilter;
+      }
+    }
+
+    return this.studentRepository.findAllWithFilter(query);
   }
 
   async getStudentById(id: string): Promise<Student> {
@@ -256,5 +278,51 @@ export class StudentService {
     if (existingUser && existingUser.id !== currentUserId) {
       throw new UserAlreadyExistsException(email);
     }
+  }
+
+  private normalizeFilterValue(value?: string): string | undefined {
+    const normalizedValue = value?.trim();
+    return normalizedValue ? normalizedValue : undefined;
+  }
+
+  private containsOnlyDigits(value: string): boolean {
+    return /^\d+$/.test(value.replace(/\D/g, ''));
+  }
+
+  private buildDisabilityFilter(
+    disability?: string,
+  ): StudentFilterQuery['disability'] {
+    const normalizedDisability = this.normalizeFilterValue(disability);
+
+    if (!normalizedDisability) {
+      return undefined;
+    }
+
+    const hasDisability = this.parseBooleanFilter(normalizedDisability);
+
+    if (hasDisability !== undefined) {
+      return hasDisability ? 'true' : 'false';
+    }
+
+    return normalizedDisability;
+  }
+
+  private parseBooleanFilter(value: string): boolean | undefined {
+    const normalizedValue = value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+
+    if (['1', 'true', 'sim', 'yes', 'com'].includes(normalizedValue)) {
+      return true;
+    }
+
+    if (
+      ['0', 'false', 'nao', 'no', 'sem', 'nenhuma'].includes(normalizedValue)
+    ) {
+      return false;
+    }
+
+    return undefined;
   }
 }

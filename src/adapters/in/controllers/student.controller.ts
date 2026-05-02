@@ -37,6 +37,8 @@ import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateStudentDto } from '../dtos/student/create-student.dto';
 import { PatchStudentDto } from '../dtos/student/patch-student.dto';
 import { UpdateStudentDto } from '../dtos/student/update-student.dto';
+import { FilterStudentDto } from '../dtos/student/filter-student.dto';
+import { FilterStudentCommand } from 'src/core/command/filterStudent.command';
 
 @ApiTags('Students')
 @Controller('students')
@@ -107,6 +109,22 @@ export class StudentController {
     this.logger.info('Students listed', { count: students.length });
     return students;
   }
+
+  @RequireAuth()
+  @Get()
+  @ApiBody({ type: FilterStudentDto })
+  @ApiOperation({ summary: 'Lista todos os alunos sem os alunos excluídos' })
+  @ApiOkResponse({
+    description: 'Retorna um array com todos os alunos cadastrados sem os excluídos.',
+  })
+  async findAllWithFilter(@Body() filterStudentDto: FilterStudentDto) {
+    this.logger.info('Listing students with soft delete');
+    const command: FilterStudentCommand = { ...filterStudentDto };
+    const students = await this.studentService.findAllStudentsWithFilter(command);
+    this.logger.info('Students listed without deleted students', { count: students.length });
+    return students;
+  }
+  
 
   @RequireAuth()
   @Get(':id')

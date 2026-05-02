@@ -25,6 +25,7 @@ describe('StudentService', () => {
   const mockRepository: IStudentRepository = {
     create: jest.fn(),
     findAll: jest.fn(),
+    findAllWithFilter: jest.fn(),
     findById: jest.fn(),
     findByCpf: jest.fn(),
     update: jest.fn(),
@@ -165,6 +166,62 @@ describe('StudentService', () => {
       expect(result).toHaveLength(1);
       expect(result[0].cpf).toBe(mockStudent.cpf);
       expect(mockRepository.findAll).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('findAllStudentsWithFilter', () => {
+    it('should search by cpf when text filter is numeric', async () => {
+      (mockRepository.findAllWithFilter as jest.Mock).mockResolvedValue([
+        mockStudent,
+      ]);
+
+      const result = await service.findAllStudentsWithFilter({
+        textFilter: '12345678909',
+      });
+
+      expect(result).toEqual([mockStudent]);
+      expect(mockRepository.findAllWithFilter).toHaveBeenCalledWith({
+        cpf: '12345678909',
+        courseType: undefined,
+        location: undefined,
+        disability: undefined,
+      });
+    });
+
+    it('should search by text and normalize additional filters', async () => {
+      (mockRepository.findAllWithFilter as jest.Mock).mockResolvedValue([
+        mockStudent,
+      ]);
+
+      await service.findAllStudentsWithFilter({
+        textFilter: ' aluno ',
+        courseType: ' Backend ',
+        location: ' Sao Paulo ',
+        disability: 'sim',
+      });
+
+      expect(mockRepository.findAllWithFilter).toHaveBeenCalledWith({
+        text: 'aluno',
+        courseType: 'Backend',
+        location: 'Sao Paulo',
+        disability: { hasDisability: true },
+      });
+    });
+
+    it('should search disability by type when value is not boolean-like', async () => {
+      (mockRepository.findAllWithFilter as jest.Mock).mockResolvedValue([
+        mockStudent,
+      ]);
+
+      await service.findAllStudentsWithFilter({
+        disability: 'visual',
+      });
+
+      expect(mockRepository.findAllWithFilter).toHaveBeenCalledWith({
+        courseType: undefined,
+        location: undefined,
+        disability: { type: 'visual' },
+      });
     });
   });
 

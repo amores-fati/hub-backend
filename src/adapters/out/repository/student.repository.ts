@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 
-import { IStudentRepository } from '../../../core/ports/student.repository.interface';
+import {
+  IStudentRepository,
+  StudentFilterQuery,
+} from '../../../core/ports/student.repository.interface';
 import { Student } from '../../../core/domain/student.entity';
 import { Contact } from '../../../core/domain/contact.entity';
 import { Disability } from '../../../core/domain/disability.entity';
@@ -54,6 +57,74 @@ export class StudentRepository implements IStudentRepository {
     const ormEntities = await this.ormRepository.find({
       relations: ['user', 'contact', 'disability', 'socialBenefits'],
     });
+
+    return ormEntities.map((entity) => this.mapToDomain(entity));
+  }
+
+  async findAllWithFilter(query: StudentFilterQuery): Promise<Student[]> {
+    const queryBuilder = this.ormRepository
+      .createQueryBuilder('student')
+      .leftJoinAndSelect('student.user', 'user')
+      .leftJoinAndSelect('student.contact', 'contact')
+      .leftJoinAndSelect('student.disability', 'disability')
+      .leftJoinAndSelect('student.socialBenefits', 'socialBenefits');
+
+    if (query.cpf) {
+      queryBuilder.andWhere('student.cpf ILIKE :cpf', {
+        cpf: this.buildLikeFilter(query.cpf),
+      });
+    }
+
+    if (query.text) {
+      const text = this.buildLikeFilter(query.text);
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb.where('student.socialName ILIKE :text', { text }).orWhere(
+            'user.email ILIKE :text',
+            { text },
+          );
+        }),
+      );
+    }
+
+    if (query.courseType) {
+      queryBuilder.andWhere('student.courseName ILIKE :courseType', {
+        courseType: this.buildLikeFilter(query.courseType),
+      });
+    }
+
+    if (query.location) {
+      const location = this.buildLikeFilter(query.location);
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb.where('contact.city ILIKE :location', { location })
+            .orWhere('contact.state ILIKE :location', { location })
+            .orWhere('contact.neighbourhood ILIKE :location', { location });
+        }),
+      );
+    }
+
+    const disabilityFilter =
+      typeof query.disability === 'object' && query.disability !== null
+        ? (query.disability as {
+            hasDisability?: boolean;
+            type?: string;
+          })
+        : undefined;
+
+    if (disabilityFilter?.hasDisability !== undefined) {
+      queryBuilder.andWhere('disability.hasDisability = :hasDisability', {
+        hasDisability: disabilityFilter.hasDisability,
+      });
+    }
+
+    if (disabilityFilter?.type) {
+      queryBuilder.andWhere('disability.type ILIKE :disabilityType', {
+        disabilityType: this.buildLikeFilter(disabilityFilter.type),
+      });
+    }
+
+    const ormEntities = await queryBuilder.getMany();
 
     return ormEntities.map((entity) => this.mapToDomain(entity));
   }
@@ -198,6 +269,10 @@ export class StudentRepository implements IStudentRepository {
     ormEntity.socialName = student.socialName || null;
 
     return ormEntity;
+  }
+
+  private buildLikeFilter(value: string): string {
+    return `%${value}%`;
   }
 
   private detachChildRelations(ormEntity: StudentOrmEntity): {
