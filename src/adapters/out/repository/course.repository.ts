@@ -41,6 +41,7 @@ export class CourseRepository implements ICourseRepository {
       this.coerceDate(ormEntity.endDate),
       this.coerceDate(ormEntity.startRegistrations),
       this.coerceDate(ormEntity.endRegistrations),
+      ormEntity.modality,
       ormEntity.linkAccess,
       ormEntity.description ?? undefined,
     );
@@ -57,6 +58,7 @@ export class CourseRepository implements ICourseRepository {
       endDate: course.endDate,
       startRegistrations: course.startRegistrations,
       endRegistrations: course.endRegistrations,
+      modality: course.modality,
       linkAccess: course.linkAccess,
       createdAt: new Date(),
     };

@@ -73,6 +73,7 @@ export class StudentService {
       birthDate,
       command.gender,
       command.race,
+      command.fullName,
       command.education,
       command.institution,
       command.activityArea,
