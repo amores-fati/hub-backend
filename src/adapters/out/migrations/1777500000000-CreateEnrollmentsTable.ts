@@ -25,7 +25,9 @@ export class CreateEnrollmentsTable1777500000000 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX IF EXISTS "ix_enrollments__student_id"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "ix_enrollments__student_id"`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "enrollments"`);
   }
 }

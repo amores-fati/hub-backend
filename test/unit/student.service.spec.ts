@@ -29,6 +29,7 @@ describe('StudentService', () => {
     findByCpf: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    softDeleteMany: jest.fn(),
     existsById: jest.fn(),
   };
 
@@ -340,14 +341,26 @@ describe('StudentService', () => {
     });
   });
 
-  describe('deleteStudent', () => {
-    it('should delete a student', async () => {
+  describe('deleteStudents', () => {
+    it('should soft delete existing students and return empty failed list', async () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
-      (mockRepository.delete as jest.Mock).mockResolvedValue(undefined);
+      (mockRepository.softDeleteMany as jest.Mock).mockResolvedValue(undefined);
 
-      await service.deleteStudent(mockStudent.id);
+      const result = await service.deleteStudents([mockStudent.id]);
 
-      expect(mockRepository.delete).toHaveBeenCalledWith(mockStudent.id);
+      expect(mockRepository.softDeleteMany).toHaveBeenCalledWith([
+        mockStudent.id,
+      ]);
+      expect(result.failed).toHaveLength(0);
+    });
+
+    it('should return failed list for non-existing students', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.deleteStudents(['id-inexistente']);
+
+      expect(mockRepository.softDeleteMany).not.toHaveBeenCalled();
+      expect(result.failed).toContain('id-inexistente');
     });
   });
 });

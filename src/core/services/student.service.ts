@@ -242,9 +242,21 @@ export class StudentService {
     return this.studentRepository.update(student);
   }
 
-  async deleteStudent(id: string): Promise<void> {
-    const student = await this.getStudentById(id);
-    await this.studentRepository.delete(student.id);
+  async deleteStudents(ids: string[]): Promise<{ failed: string[] }> {
+    const notFound: string[] = [];
+    const toDelete: string[] = [];
+
+    for (const id of ids) {
+      const student = await this.studentRepository.findById(id);
+      if (!student) notFound.push(id);
+      else toDelete.push(id);
+    }
+
+    if (toDelete.length > 0) {
+      await this.studentRepository.softDeleteMany(toDelete);
+    }
+
+    return { failed: notFound };
   }
 
   private async assertEmailAvailable(

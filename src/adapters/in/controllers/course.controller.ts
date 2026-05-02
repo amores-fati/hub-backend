@@ -201,7 +201,10 @@ export class CourseController {
   ) {
     this.logger.info('Registering interest', { userId: user.id, courseId });
     try {
-      const enrollment = await this.enrollmentService.registerInterest(user.id, courseId);
+      const enrollment = await this.enrollmentService.registerInterest(
+        user.id,
+        courseId,
+      );
       return {
         courseId: enrollment.courseId,
         status: 'interested',
@@ -215,7 +218,10 @@ export class CourseController {
           errorKind: 'NOT_FOUND',
         });
       }
-      if (error instanceof Error && error.name === 'EnrollmentAlreadyExistsException') {
+      if (
+        error instanceof Error &&
+        error.name === 'EnrollmentAlreadyExistsException'
+      ) {
         throw new ConflictException({
           statusCode: 409,
           message: 'Você já possui um vínculo com este curso',
@@ -285,7 +291,10 @@ export class CourseController {
           errorKind: 'NOT_FOUND',
         });
       }
-      if (error instanceof Error && error.name === 'EnrollmentAlreadyExistsException') {
+      if (
+        error instanceof Error &&
+        error.name === 'EnrollmentAlreadyExistsException'
+      ) {
         throw new ConflictException({
           statusCode: 409,
           message: 'Você já possui um vínculo com este curso',

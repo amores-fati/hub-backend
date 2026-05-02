@@ -15,7 +15,10 @@ export class EnrollmentService {
     return this.enrollmentRepository.findByStudentId(studentId);
   }
 
-  async registerInterest(studentId: string, courseId: string): Promise<Enrollment> {
+  async registerInterest(
+    studentId: string,
+    courseId: string,
+  ): Promise<Enrollment> {
     return this.register(studentId, courseId, EnrollmentType.INTEREST);
   }
 
@@ -33,7 +36,10 @@ export class EnrollmentService {
       throw new CourseNotFoundException(courseId);
     }
 
-    const existing = await this.enrollmentRepository.findByStudentAndCourse(studentId, courseId);
+    const existing = await this.enrollmentRepository.findByStudentAndCourse(
+      studentId,
+      courseId,
+    );
     if (existing) {
       throw new EnrollmentAlreadyExistsException();
     }
