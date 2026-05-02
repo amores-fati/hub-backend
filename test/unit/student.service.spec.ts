@@ -10,6 +10,7 @@ import {
   CreateStudentCommand,
   PatchStudentCommand,
   UpdateStudentCommand,
+  UpdateStudentMeCommand,
 } from '../../src/core/command/student.command';
 import { StudentAlreadyExistsException } from '../../src/core/exceptions/student-already-exists.exception';
 import { StudentNotFoundException } from '../../src/core/exceptions/student-not-found.exception';
@@ -347,7 +348,7 @@ describe('StudentService', () => {
         Promise.resolve(student),
       );
 
-      const command = {
+      const updateMeCommand: UpdateStudentMeCommand = {
         phone: '11988887777',
         city: 'Rio de Janeiro',
         state: 'RJ',
@@ -360,7 +361,7 @@ describe('StudentService', () => {
 
       const result = await service.updateAuthenticatedStudentProfile(
         mockStudent.id,
-        command as any,
+        updateMeCommand,
       );
 
       expect(result.contact.phone).toBe('11988887777');
@@ -377,7 +378,7 @@ describe('StudentService', () => {
       const originalEmail = mockStudent.email;
       const originalCpf = mockStudent.cpf;
 
-      const command = {
+      const invalidCommand = {
         email: 'hacker@teste.com',
         cpf: '00000000000',
         phone: '11988887777',
@@ -385,7 +386,7 @@ describe('StudentService', () => {
 
       const result = await service.updateAuthenticatedStudentProfile(
         mockStudent.id,
-        command as any,
+        invalidCommand as unknown as UpdateStudentMeCommand,
       );
 
       expect(result.email).toBe(originalEmail);
@@ -396,7 +397,7 @@ describe('StudentService', () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(null);
 
       await expect(
-        service.updateAuthenticatedStudentProfile('invalid-id', {} as any),
+        service.updateAuthenticatedStudentProfile('invalid-id', {} as UpdateStudentMeCommand),
       ).rejects.toThrow();
     });
   });

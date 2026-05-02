@@ -6,6 +6,7 @@ import { createIntegrationApp } from './bootstrap';
 
 interface StudentResponse {
   id: string;
+  email: string;
   cpf: string;
   activityArea?: string;
   motivation?: string;
@@ -215,8 +216,9 @@ describe('/students/me (PUT)', () => {
       })
       .expect(200)
       .expect((res) => {
-        expect(res.body.contact.phone).toBe('11988887777');
-        expect(res.body.contact.city).toBe('Rio de Janeiro');
+        const body = res.body as unknown as StudentResponse;
+        expect(body.contact.phone).toBe('11988887777');
+        expect(body.contact.city).toBe('Rio de Janeiro');
       });
   });
 
@@ -242,9 +244,10 @@ describe('/students/me (PUT)', () => {
       })
       .expect(200)
       .expect((res) => {
-        expect(res.body.email).toBe(currentStudentEmail);
-        expect(res.body.cpf).toBe(dynamicCpf);
-        expect(res.body.contact.phone).toBe('11977776666');
+        const body = res.body as unknown as StudentResponse;
+        expect(body.email).toBe(currentStudentEmail);
+        expect(body.cpf).toBe(dynamicCpf);
+        expect(body.contact.phone).toBe('11977776666');
       });
   });
 
