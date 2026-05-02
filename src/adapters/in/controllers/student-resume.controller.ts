@@ -99,7 +99,9 @@ export class StudentResumeController {
 
   @RequireAuth()
   @Put(['students/me/resume', 'users/student/resume'])
-  @ApiOperation({ summary: 'Cria ou atualiza o curriculo do aluno autenticado' })
+  @ApiOperation({
+    summary: 'Cria ou atualiza o curriculo do aluno autenticado',
+  })
   @ApiBody({ type: UpdateStudentResumeDto })
   @ApiOkResponse({ description: 'Curriculo atualizado com sucesso.' })
   @ApiBadRequestResponse({ description: 'Erro de validacao.' })
@@ -136,7 +138,9 @@ export class StudentResumeController {
   @RequireAuth()
   @Post(['students/me/resume/photo', 'users/student/resume/photo'])
   @UseInterceptors(FileInterceptor('photo'))
-  @ApiOperation({ summary: 'Atualiza a foto do curriculo do aluno autenticado' })
+  @ApiOperation({
+    summary: 'Atualiza a foto do curriculo do aluno autenticado',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {

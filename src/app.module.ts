@@ -245,11 +245,7 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
           resumePhotoStorage,
         );
       },
-      inject: [
-        ICurriculumRepository,
-        IStudentRepository,
-        IResumePhotoStorage,
-      ],
+      inject: [ICurriculumRepository, IStudentRepository, IResumePhotoStorage],
     },
     {
       provide: ICurriculumRepository,

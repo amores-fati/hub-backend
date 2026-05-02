@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class RelaxCurriculumResumeFields1777500000000
-  implements MigrationInterface
-{
+export class RelaxCurriculumResumeFields1777500000000 implements MigrationInterface {
   name = 'RelaxCurriculumResumeFields1777500000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

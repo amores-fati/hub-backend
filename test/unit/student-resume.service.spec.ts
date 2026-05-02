@@ -240,10 +240,9 @@ describe('StudentResumeService', () => {
 
       await service.removeSkill(studentId, 'skill-id');
 
-      expect(curriculumRepository.removeSkillFromCurriculum).toHaveBeenCalledWith(
-        'resume-id',
-        'skill-id',
-      );
+      expect(
+        curriculumRepository.removeSkillFromCurriculum,
+      ).toHaveBeenCalledWith('resume-id', 'skill-id');
     });
 
     it('should throw ResumeSkillNotFoundException when resume does not exist', async () => {
@@ -261,9 +260,9 @@ describe('StudentResumeService', () => {
     it('should throw ResumeSkillNotFoundException when skill does not belong to the resume', async () => {
       curriculumRepository.findByStudentId.mockResolvedValue(buildCurriculum());
 
-      await expect(service.removeSkill(studentId, 'other-skill-id')).rejects.toThrow(
-        ResumeSkillNotFoundException,
-      );
+      await expect(
+        service.removeSkill(studentId, 'other-skill-id'),
+      ).rejects.toThrow(ResumeSkillNotFoundException);
 
       expect(
         curriculumRepository.removeSkillFromCurriculum,

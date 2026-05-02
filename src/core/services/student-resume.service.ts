@@ -33,9 +33,8 @@ export class StudentResumeService {
   ) {}
 
   async getResume(studentId: string): Promise<Curriculum> {
-    const curriculum = await this.curriculumRepository.findByStudentId(
-      studentId,
-    );
+    const curriculum =
+      await this.curriculumRepository.findByStudentId(studentId);
 
     if (!curriculum) {
       throw new ResumeNotFoundException(studentId);
@@ -101,9 +100,8 @@ export class StudentResumeService {
   }
 
   async removeSkill(studentId: string, skillId: string): Promise<void> {
-    const curriculum = await this.curriculumRepository.findByStudentId(
-      studentId,
-    );
+    const curriculum =
+      await this.curriculumRepository.findByStudentId(studentId);
 
     if (!curriculum || !curriculum.hasSkill(skillId)) {
       throw new ResumeSkillNotFoundException(skillId);
