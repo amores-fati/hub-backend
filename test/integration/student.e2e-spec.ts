@@ -215,12 +215,16 @@ describe('StudentController (e2e)', () => {
     });
   });
 
-  describe('/students/:id (DELETE)', () => {
-    it('should delete a student (204)', () => {
+  describe('/admins/students (DELETE)', () => {
+    it('should soft-delete students (200)', () => {
       return request(app.getHttpServer() as Server)
-        .delete(`/students/${createdStudentId}`)
+        .delete(`/admins/students`)
         .set('Authorization', `Bearer ${accessToken}`)
-        .expect(204);
+        .send({ ids: [createdStudentId] })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body).toEqual({ failed: [] });
+        });
     });
   });
 });
