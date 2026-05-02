@@ -12,6 +12,8 @@ import { AdminController } from './adapters/in/controllers/admin.controller';
 import { AdminService } from './core/services/admin.service';
 import { AdminRepository } from './adapters/out/repository/admin.repository';
 import { IAdminRepository } from './core/ports/admin.repository.interface';
+import { ICurriculumRepository } from './core/ports/curriculum.repository.interface';
+import { CurriculumRepository } from './adapters/out/repository/curriculum.repository';
 
 // User Adapters & Core
 import { UserRepository } from './adapters/out/repository/user.repository';
@@ -46,6 +48,8 @@ import { CompanyRepository } from './adapters/out/repository/company.repository'
 import { ContactOrmEntity } from './adapters/out/orm/contact.orm-entity';
 import { DisabilityOrmEntity } from './adapters/out/orm/disability.orm-entity';
 import { SocialBenefitOrmEntity } from './adapters/out/orm/social-benefit.orm-entity';
+import { CurriculumOrmEntity } from './adapters/out/orm/curriculum.orm-entity';
+import { CurriculumSkillOrmEntity } from './adapters/out/orm/curriculum-skill.orm-entity';
 
 // Student Adapters & Core
 import { HealthController } from './adapters/in/controllers/health.controller';
@@ -101,6 +105,8 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       SocialBenefitOrmEntity,
       SettingOrmEntity,
       EnrollmentOrmEntity,
+      CurriculumOrmEntity,
+      CurriculumSkillOrmEntity,
     ]),
   ],
   controllers: [
@@ -124,14 +130,24 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         userRepository: IUserRepository,
         adminRepository: IAdminRepository,
         hashService: IHashService,
+        curriculumRepository: ICurriculumRepository,
       ) => {
-        return new AdminService(userRepository, adminRepository, hashService);
+        return new AdminService(
+          userRepository, 
+          adminRepository, 
+          hashService, 
+          curriculumRepository
+        );
       },
-      inject: [IUserRepository, IAdminRepository, IHashService],
+      inject: [IUserRepository, IAdminRepository, IHashService, ICurriculumRepository],
     },
     {
       provide: IAdminRepository,
       useClass: AdminRepository,
+    },
+    {
+      provide: ICurriculumRepository,
+      useClass: CurriculumRepository,
     },
     {
       provide: AuthService,
