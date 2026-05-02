@@ -80,6 +80,154 @@ Endpoints locais:
 
 Os tres bancos precisam continuar separados.
 
+## Diagrama do banco (ER)
+
+Diagrama do schema atual em Postgres. Renderiza nativamente no GitHub. Para editar fora do README, copie o bloco para [mermaid.live](https://mermaid.live) ou abra `docs/er-diagram.mmd`.
+
+```mermaid
+erDiagram
+    USERS ||--o| ADMINS : "is admin"
+    USERS ||--o| COMPANIES : "is company"
+    USERS ||--o| STUDENTS : "is student"
+
+    STUDENTS ||--|| CONTACTS : "lives at"
+    COMPANIES ||--|| CONTACTS : "located at"
+
+    STUDENTS ||--o| DISABILITIES : "declares"
+    STUDENTS ||--o{ SOCIAL_BENEFITS : "receives"
+    STUDENTS ||--o| CURRICULUM : "owns"
+
+    CURRICULUM ||--o{ CURRICULUM_SKILLS : "lists"
+    SKILLS ||--o{ CURRICULUM_SKILLS : "is listed in"
+
+    COURSES ||--o| IN_PERSON_COURSE_DETAILS : "extends"
+
+    COMPANIES ||--o{ JOB_OPENINGS : "publishes"
+    JOB_OPENINGS ||--o{ JOB_SKILLS : "requires"
+    SKILLS ||--o{ JOB_SKILLS : "is required in"
+
+    USERS {
+        uuid id PK
+        varchar email UK
+        varchar password_hash
+        varchar role
+        timestamptz created_at
+    }
+    ADMINS {
+        uuid id PK
+    }
+    COMPANIES {
+        uuid id PK
+        varchar cnpj UK
+        varchar name
+        varchar responsible_name
+        uuid contact_id FK
+    }
+    STUDENTS {
+        uuid id PK
+        uuid contact_id FK
+        varchar cpf UK
+        varchar social_name
+        date date_of_birth
+        varchar gender
+        varchar race
+        varchar education
+        varchar course_name
+        varchar institution
+        varchar activity_area
+        boolean has_programming_experience
+        varchar family_income
+        text motivation
+        varchar how_heard
+        boolean has_computer
+        boolean has_internet
+        boolean committed_to_participate
+    }
+    CONTACTS {
+        uuid id PK
+        varchar phone
+        varchar neighbourhood
+        char state
+        varchar city
+        varchar address
+        varchar cep
+        varchar complement
+    }
+    DISABILITIES {
+        uuid student_id PK
+        boolean has_disability
+        varchar type
+    }
+    SOCIAL_BENEFITS {
+        int id PK
+        uuid student_id FK
+        varchar benefit
+    }
+    COURSES {
+        uuid id PK
+        varchar name
+        varchar banner
+        text description
+        varchar course_load
+        date start_date
+        date end_date
+        date start_registrations
+        date end_registrations
+        varchar link_access
+    }
+    IN_PERSON_COURSE_DETAILS {
+        uuid id PK
+        uuid course_id FK
+        varchar address
+        date start_date
+        varchar shift
+        varchar room
+        int vacancies
+    }
+    CURRICULUM {
+        uuid id PK
+        uuid student_id FK
+        boolean is_available
+        text about
+        varchar linkedin
+        varchar github
+        varchar profile_photo
+        varchar video_presentation
+    }
+    CURRICULUM_SKILLS {
+        uuid curriculum_id PK
+        uuid skill_id PK
+    }
+    SKILLS {
+        uuid id PK
+        varchar name UK
+    }
+    JOB_OPENINGS {
+        uuid id PK
+        uuid company_id FK
+        varchar name
+        text description
+        int openings_count
+        varchar application_link
+        boolean is_pcd
+    }
+    JOB_SKILLS {
+        uuid job_id PK
+        uuid skill_id PK
+    }
+    SETTINGS {
+        uuid id PK
+        varchar key UK
+        varchar value
+    }
+
+## Endpoints Públicos
+
+| Método | Rota | Descrição |
+| --- | --- | --- |
+| `GET` | `/settings/public/:key` | Retorna o valor de uma configuração pública (ex: `whatsapp_phone`) |
+```
+
 ## E2E
 
 Fluxo local padrao:
@@ -121,6 +269,7 @@ Quando o banco principal esta vazio e o seed roda com sucesso, ele cria:
 - `10` skills
 - `2` curriculos
 - `5` vagas
+- `1` configuração de WhatsApp
 
 ## Credenciais documentadas
 
@@ -159,3 +308,4 @@ ALUNOS
 - `docs/guia-mudancas-no-banco.md`
 - `docs/esquema-banco-atual.md`
 - `docs/modelo-alvo-banco.md`
+- `docs/er-diagram.mmd`

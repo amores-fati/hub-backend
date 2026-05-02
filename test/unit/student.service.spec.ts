@@ -30,6 +30,7 @@ describe('StudentService', () => {
     findByCpf: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    softDeleteMany: jest.fn(),
     existsById: jest.fn(),
   };
 
@@ -69,6 +70,7 @@ describe('StudentService', () => {
       new Date('1990-01-01'),
       Gender.MALE,
       Race.WHITE,
+      'João da Silva',
     );
 
     service = new StudentService(
@@ -87,6 +89,7 @@ describe('StudentService', () => {
         birthDate: new Date('1990-01-01'),
         gender: Gender.MALE,
         race: Race.WHITE,
+        fullName: 'João da Silva',
         education: EducationLevel.SECONDARY,
         contact: {
           phone: mockContact.phone,
@@ -125,6 +128,7 @@ describe('StudentService', () => {
         birthDate: new Date('1990-01-01'),
         gender: Gender.MALE,
         race: Race.WHITE,
+        fullName: 'João da Silva',
         contact: { phone: '11999999999' },
       };
 
@@ -143,6 +147,7 @@ describe('StudentService', () => {
         birthDate: new Date('1990-01-01'),
         gender: Gender.MALE,
         race: Race.WHITE,
+        fullName: 'João da Silva',
         contact: { phone: '11999999999' },
       };
 
@@ -266,6 +271,7 @@ describe('StudentService', () => {
   describe('updateStudent', () => {
     const updateCommand: UpdateStudentCommand = {
       email: 'novoaluno@teste.com',
+      fullName: 'João da Silva',
       password: 'newpassword123',
       birthDate: new Date('1995-05-05'),
       gender: Gender.FEMALE,
@@ -314,6 +320,7 @@ describe('StudentService', () => {
           new Date('1991-01-01'),
           Gender.FEMALE,
           Race.BLACK,
+          'Duplicado da Silva',
         ),
       );
 
@@ -338,6 +345,7 @@ describe('StudentService', () => {
           mockStudent.birthDate,
           mockStudent.gender,
           mockStudent.race,
+          mockStudent.fullName,
         ),
       );
       (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
@@ -386,6 +394,7 @@ describe('StudentService', () => {
           new Date('1991-01-01'),
           Gender.FEMALE,
           Race.BLACK,
+          'Duplicado da Silva',
         ),
       );
 
@@ -397,14 +406,26 @@ describe('StudentService', () => {
     });
   });
 
-  describe('deleteStudent', () => {
-    it('should delete a student', async () => {
+  describe('deleteStudents', () => {
+    it('should soft delete existing students and return empty failed list', async () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
-      (mockRepository.delete as jest.Mock).mockResolvedValue(undefined);
+      (mockRepository.softDeleteMany as jest.Mock).mockResolvedValue(undefined);
 
-      await service.deleteStudent(mockStudent.id);
+      const result = await service.deleteStudents([mockStudent.id]);
 
-      expect(mockRepository.delete).toHaveBeenCalledWith(mockStudent.id);
+      expect(mockRepository.softDeleteMany).toHaveBeenCalledWith([
+        mockStudent.id,
+      ]);
+      expect(result.failed).toHaveLength(0);
+    });
+
+    it('should return failed list for non-existing students', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.deleteStudents(['id-inexistente']);
+
+      expect(mockRepository.softDeleteMany).not.toHaveBeenCalled();
+      expect(result.failed).toContain('id-inexistente');
     });
   });
 });

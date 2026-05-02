@@ -7,5 +7,6 @@ export interface CreateCourseCommand {
   endDate: string;
   startRegistrations: string;
   endRegistrations: string;
+  modality: string;
   linkAccess: string;
 }

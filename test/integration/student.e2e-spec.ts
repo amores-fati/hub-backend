@@ -41,6 +41,7 @@ describe('StudentController (e2e)', () => {
         .send({
           email: studentEmail,
           password: studentPassword,
+          fullName: 'Student Full Name',
           cpf: dynamicCpf,
           birthDate: '1995-05-20',
           gender: 'MALE',
@@ -96,6 +97,7 @@ describe('StudentController (e2e)', () => {
         .send({
           email: `anotherstudent-${Date.now()}@test.com`,
           password: 'securepassword123',
+          fullName: 'Another Full Name',
           cpf: dynamicCpf,
           birthDate: '1995-05-20',
           gender: 'FEMALE',
@@ -177,6 +179,7 @@ describe('StudentController (e2e)', () => {
         .send({
           email: `updatedstudent-${Date.now()}@test.com`,
           password: 'newpassword123',
+          fullName: 'Updated Full Name',
           birthDate: '1995-05-20',
           gender: 'MALE',
           race: 'BROWN',
@@ -215,12 +218,16 @@ describe('StudentController (e2e)', () => {
     });
   });
 
-  describe('/students/:id (DELETE)', () => {
-    it('should delete a student (204)', () => {
+  describe('/students (DELETE)', () => {
+    it('should soft-delete students (200)', () => {
       return request(app.getHttpServer() as Server)
-        .delete(`/students/${createdStudentId}`)
+        .delete(`/students`)
         .set('Authorization', `Bearer ${accessToken}`)
-        .expect(204);
+        .send({ ids: [createdStudentId] })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body).toEqual({ failed: [] });
+        });
     });
   });
 });

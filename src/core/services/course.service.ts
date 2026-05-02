@@ -16,6 +16,7 @@ export class CourseService {
       new Date(command.endDate),
       new Date(command.startRegistrations),
       new Date(command.endRegistrations),
+      command.modality,
       command.linkAccess,
       command.description,
     );

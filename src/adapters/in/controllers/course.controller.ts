@@ -1,37 +1,48 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
+  Param,
+  ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateCourseCommand } from '../../../core/command/course.command';
 import { CourseService } from '../../../core/services/course.service';
+import { EnrollmentService } from '../../../core/services/enrollment.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
+import { CurrentUser } from '../../../utils/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCourseDto } from '../dtos/course/create-course.dto';
 
 @ApiTags('Courses')
-@RequireAuth()
 @Controller('courses')
 export class CourseController {
   constructor(
     private readonly courseService: CourseService,
+    private readonly enrollmentService: EnrollmentService,
     private readonly logger: AmoresFatiLogger,
   ) {
     this.logger.setContext(CourseController.name);
   }
 
+  @RequireAuth()
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -117,5 +128,180 @@ export class CourseController {
     const courses = await this.courseService.getAllCourses();
     this.logger.info('Courses listed', { count: courses.length });
     return courses;
+  }
+
+  @RequireAuth()
+  @Get('me/enrollments')
+  @ApiOperation({
+    summary: 'Lista os vínculos do aluno autenticado',
+    description:
+      'Retorna todos os registros de matrícula e interesse do aluno autenticado. Requer perfil student.',
+  })
+  @ApiOkResponse({
+    description: 'Vínculos retornados com sucesso.',
+    schema: {
+      example: [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          studentId: 'abc12345-e89b-12d3-a456-426614174000',
+          courseId: 'def12345-e89b-12d3-a456-426614174000',
+          type: 'ENROLLMENT',
+          createdAt: '2025-01-15T10:00:00.000Z',
+        },
+      ],
+    },
+  })
+  async findMyEnrollments(@CurrentUser() user: AuthenticatedUser) {
+    this.logger.info('Listing enrollments for student', { userId: user.id });
+    return this.enrollmentService.getEnrollmentsByStudentId(user.id);
+  }
+
+  @RequireAuth()
+  @Post(':id/interest')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Registra interesse do aluno em um curso',
+    description:
+      'Manifesta interesse do aluno autenticado no curso informado. Requer perfil student.',
+  })
+  @ApiParam({ name: 'id', description: 'UUID do curso', type: String })
+  @ApiCreatedResponse({
+    description: 'Interesse registrado com sucesso.',
+    schema: {
+      example: {
+        courseId: 'uuid-do-curso',
+        status: 'interested',
+        enrolledAt: '2024-01-16T09:00:00.000Z',
+      },
+    },
+  })
+  @ApiNotFoundResponse({
+    description: 'Curso não encontrado.',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'Curso não encontrado',
+        errorKind: 'NOT_FOUND',
+      },
+    },
+  })
+  @ApiConflictResponse({
+    description: 'Aluno já possui vínculo com este curso.',
+    schema: {
+      example: {
+        statusCode: 409,
+        message: 'Você já possui um vínculo com este curso',
+        errorKind: 'CONFLICT',
+      },
+    },
+  })
+  async registerInterest(
+    @Param('id', ParseUUIDPipe) courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    this.logger.info('Registering interest', { userId: user.id, courseId });
+    try {
+      const enrollment = await this.enrollmentService.registerInterest(
+        user.id,
+        courseId,
+      );
+      return {
+        courseId: enrollment.courseId,
+        status: 'interested',
+        enrolledAt: enrollment.createdAt,
+      };
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CourseNotFoundException') {
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Curso não encontrado',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+      if (
+        error instanceof Error &&
+        error.name === 'EnrollmentAlreadyExistsException'
+      ) {
+        throw new ConflictException({
+          statusCode: 409,
+          message: 'Você já possui um vínculo com este curso',
+          errorKind: 'CONFLICT',
+        });
+      }
+      throw error;
+    }
+  }
+
+  @RequireAuth()
+  @Post(':id/enroll')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Matricula o aluno em um curso',
+    description:
+      'Realiza a matrícula do aluno autenticado no curso informado. Requer perfil student.',
+  })
+  @ApiParam({ name: 'id', description: 'UUID do curso', type: String })
+  @ApiCreatedResponse({
+    description: 'Matrícula realizada com sucesso.',
+    schema: {
+      example: {
+        courseId: 'uuid-do-curso',
+        status: 'enrolled',
+        enrolledAt: '2024-01-15T10:30:00.000Z',
+      },
+    },
+  })
+  @ApiNotFoundResponse({
+    description: 'Curso não encontrado.',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'Curso não encontrado',
+        errorKind: 'NOT_FOUND',
+      },
+    },
+  })
+  @ApiConflictResponse({
+    description: 'Aluno já possui vínculo com este curso.',
+    schema: {
+      example: {
+        statusCode: 409,
+        message: 'Você já possui um vínculo com este curso',
+        errorKind: 'CONFLICT',
+      },
+    },
+  })
+  async enroll(
+    @Param('id', ParseUUIDPipe) courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    this.logger.info('Enrolling student', { userId: user.id, courseId });
+    try {
+      const enrollment = await this.enrollmentService.enroll(user.id, courseId);
+      return {
+        courseId: enrollment.courseId,
+        status: 'enrolled',
+        enrolledAt: enrollment.createdAt,
+      };
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CourseNotFoundException') {
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Curso não encontrado',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+      if (
+        error instanceof Error &&
+        error.name === 'EnrollmentAlreadyExistsException'
+      ) {
+        throw new ConflictException({
+          statusCode: 409,
+          message: 'Você já possui um vínculo com este curso',
+          errorKind: 'CONFLICT',
+        });
+      }
+      throw error;
+    }
   }
 }

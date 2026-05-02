@@ -10,11 +10,8 @@ describe('HealthController', () => {
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
-
     const module: TestingModule = await Test.createTestingModule({
       controllers: [HealthController],
-      providers: [{ provide: AmoresFatiLogger, useValue: logger }],
     }).compile();
 
     controller = module.get<HealthController>(HealthController);
