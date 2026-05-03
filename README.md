@@ -304,6 +304,7 @@ ALUNOS
 
 ## Referencias
 
+- `docs/arquitetura-de-pastas.md`
 - `docs/guia-execucao-e-ambientes.md`
 - `docs/guia-mudancas-no-banco.md`
 - `docs/esquema-banco-atual.md`

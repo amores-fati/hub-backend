@@ -46,14 +46,23 @@ import { CompanyRepository } from './adapters/out/repository/company.repository'
 import { ContactOrmEntity } from './adapters/out/orm/contact.orm-entity';
 import { DisabilityOrmEntity } from './adapters/out/orm/disability.orm-entity';
 import { SocialBenefitOrmEntity } from './adapters/out/orm/social-benefit.orm-entity';
+import { CurriculumOrmEntity } from './adapters/out/orm/curriculum.orm-entity';
+import { CurriculumSkillOrmEntity } from './adapters/out/orm/curriculum-skill.orm-entity';
+import { SkillOrmEntity } from './adapters/out/orm/skill.orm-entity';
 
 // Student Adapters & Core
 import { HealthController } from './adapters/in/controllers/health.controller';
 import { StudentController } from './adapters/in/controllers/student.controller';
+import { StudentResumeController } from './adapters/in/controllers/student-resume.controller';
 import { StudentService } from './core/services/student.service';
+import { StudentResumeService } from './core/services/student-resume.service';
 import { StudentRepository } from './adapters/out/repository/student.repository';
 import { StudentOrmEntity } from './adapters/out/orm/student.orm-entity';
 import { IStudentRepository } from './core/ports/student.repository.interface';
+import { CurriculumRepository } from './adapters/out/repository/curriculum.repository';
+import { ICurriculumRepository } from './core/ports/curriculum.repository.interface';
+import { LocalResumePhotoStorage } from './adapters/out/storage/local-resume-photo.storage';
+import { IResumePhotoStorage } from './core/ports/resume-photo-storage.interface';
 
 // Enrollment Adapters & Core
 import { EnrollmentService } from './core/services/enrollment.service';
@@ -99,6 +108,9 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       ContactOrmEntity,
       DisabilityOrmEntity,
       SocialBenefitOrmEntity,
+      CurriculumOrmEntity,
+      CurriculumSkillOrmEntity,
+      SkillOrmEntity,
       SettingOrmEntity,
       EnrollmentOrmEntity,
     ]),
@@ -109,6 +121,7 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
     CourseController,
     CompanyController,
     StudentController,
+    StudentResumeController,
     HealthController,
     SettingController,
   ],
@@ -239,6 +252,29 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
     {
       provide: IStudentRepository,
       useClass: StudentRepository,
+    },
+    {
+      provide: StudentResumeService,
+      useFactory: (
+        curriculumRepository: ICurriculumRepository,
+        studentRepository: IStudentRepository,
+        resumePhotoStorage: IResumePhotoStorage,
+      ) => {
+        return new StudentResumeService(
+          curriculumRepository,
+          studentRepository,
+          resumePhotoStorage,
+        );
+      },
+      inject: [ICurriculumRepository, IStudentRepository, IResumePhotoStorage],
+    },
+    {
+      provide: ICurriculumRepository,
+      useClass: CurriculumRepository,
+    },
+    {
+      provide: IResumePhotoStorage,
+      useClass: LocalResumePhotoStorage,
     },
     {
       provide: SettingService,

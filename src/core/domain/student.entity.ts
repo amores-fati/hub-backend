@@ -233,6 +233,10 @@ export class Student extends User {
     this.#disability = disability;
   }
 
+  public changeSocialName(socialName?: string): void {
+    this.#socialName = socialName?.trim() || undefined;
+  }
+
   public replaceSocialBenefits(benefits: SocialBenefit[]): void {
     this.#socialBenefits = benefits;
   }
