@@ -211,6 +211,7 @@ describe('StudentService', () => {
             email: mockStudent.email,
             cpf: mockStudent.cpf,
             fullName: mockStudent.fullName,
+            phoneNumber: mockStudent.contact.phone,
             city: mockStudent.contact.city,
             state: mockStudent.contact.state,
             enrollments: [{ courseId: 'course-id', courseModality: 'ONLINE' }],
@@ -229,6 +230,7 @@ describe('StudentService', () => {
       expect(result.items[0]).toMatchObject({
         id: mockStudent.id,
         cpf: '123.***.***-09',
+        phoneNumber: mockStudent.contact.phone,
         enrollmentStatus: 'ONLINE',
       });
       expect(result.meta).toEqual({

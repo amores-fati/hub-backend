@@ -184,6 +184,7 @@ describe('StudentRepository', () => {
     expect(result.items).toHaveLength(1);
     expect(result.total).toBe(1);
     expect(result.items[0].email).toBe('student@test.com');
+    expect(result.items[0].phoneNumber).toBe('11999999999');
   });
 
   it('should filter students by normalized cpf inside search', async () => {
