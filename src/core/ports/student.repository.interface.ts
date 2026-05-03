@@ -41,7 +41,7 @@ export interface IStudentRepository {
   ): Promise<PaginatedStudentListResult>;
   findById(id: string): Promise<Student | null>;
   existsById(id: string): Promise<boolean>;
-  findByCpf(cpf: string): Promise<Student | null>;
+  findByCpf(cpf: string, includeDeleted?: boolean): Promise<Student | null>;
   update(student: Student): Promise<Student>;
   delete(id: string): Promise<void>;
   softDeleteMany(ids: string[]): Promise<void>;

@@ -60,7 +60,10 @@ export class StudentService {
   ) {}
 
   async createStudent(command: CreateStudentCommand): Promise<Student> {
-    const existingStudent = await this.studentRepository.findByCpf(command.cpf);
+    const existingStudent = await this.studentRepository.findByCpf(
+      command.cpf,
+      true,
+    );
 
     if (existingStudent) {
       throw new StudentAlreadyExistsException(command.cpf);
@@ -396,7 +399,7 @@ export class StudentService {
     email: string,
     currentUserId?: string,
   ): Promise<void> {
-    const existingUser = await this.userRepository.findByEmail(email);
+    const existingUser = await this.userRepository.findByEmail(email, true);
 
     if (existingUser && existingUser.id !== currentUserId) {
       throw new UserAlreadyExistsException(email);

@@ -30,6 +30,7 @@ import { CurrentUser } from '../../../utils/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCourseDto } from '../dtos/course/create-course.dto';
+import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @ApiTags('Courses')
 @Controller('courses')
@@ -42,7 +43,7 @@ export class CourseController {
     this.logger.setContext(CourseController.name);
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.ADMIN)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -130,7 +131,7 @@ export class CourseController {
     return courses;
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.STUDENT)
   @Get('me/enrollments')
   @ApiOperation({
     summary: 'Lista os vínculos do aluno autenticado',
@@ -156,7 +157,7 @@ export class CourseController {
     return this.enrollmentService.getEnrollmentsByStudentId(user.id);
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.STUDENT)
   @Post(':id/interest')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -232,7 +233,7 @@ export class CourseController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.STUDENT)
   @Post(':id/enroll')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
