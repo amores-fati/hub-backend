@@ -167,7 +167,7 @@ describe('StudentController (e2e)', () => {
     it('should return an array of students (200)', () => {
       return request(app.getHttpServer() as Server)
         .get('/students')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
         .expect(200)
         .expect((res) => {
           const body = res.body as unknown as StudentResponse[];
@@ -264,7 +264,7 @@ describe('StudentController (e2e)', () => {
     it('should return a student by ID (200)', () => {
       return request(app.getHttpServer() as Server)
         .get(`/students/${createdStudentId}`)
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
         .expect(200)
         .expect((res) => {
           const body = res.body as unknown as StudentResponse;
@@ -277,7 +277,7 @@ describe('StudentController (e2e)', () => {
       const nonExistentUuid = '123e4567-e89b-12d3-a456-426614174000';
       return request(app.getHttpServer() as Server)
         .get(`/students/${nonExistentUuid}`)
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
         .expect(404);
     });
   });
@@ -286,7 +286,7 @@ describe('StudentController (e2e)', () => {
     it('should return a student by CPF (200)', () => {
       return request(app.getHttpServer() as Server)
         .get(`/students/cpf/${dynamicCpf}`)
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
         .expect(200)
         .expect((res) => {
           const body = res.body as unknown as StudentResponse;
@@ -299,7 +299,7 @@ describe('StudentController (e2e)', () => {
       const nonExistentCpf = cpf.generate();
       return request(app.getHttpServer() as Server)
         .get(`/students/cpf/${nonExistentCpf}`)
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
         .expect(404);
     });
   });
