@@ -37,6 +37,7 @@ export class Student extends User {
   #committedToParticipate?: boolean;
   #disability?: Disability;
   #socialBenefits: SocialBenefit[];
+  #householdSize?: number;
 
   constructor(
     id: string,
@@ -62,6 +63,7 @@ export class Student extends User {
     socialName?: string,
     courseName?: string,
     familyIncome?: FamilyIncome,
+    householdSize?: number,
   ) {
     super(id, email, password);
     this.#cpf = cpf;
@@ -85,6 +87,7 @@ export class Student extends User {
     this.#socialName = socialName;
     this.#courseName = courseName;
     this.#familyIncome = familyIncome;
+    this.#householdSize = householdSize;
     this.validateStudent();
   }
 
@@ -138,6 +141,10 @@ export class Student extends User {
 
   get familyIncome(): FamilyIncome | undefined {
     return this.#familyIncome;
+  }
+
+  get householdSize(): number | undefined {
+    return this.#householdSize;
   }
 
   get motivation(): string | undefined {
@@ -209,6 +216,7 @@ export class Student extends User {
     hasInternet?: boolean;
     committedToParticipate?: boolean;
     familyIncome?: FamilyIncome;
+    householdSize?: number;
   }): void {
     if (data.motivation !== undefined) {
       this.#motivation = data.motivation;
@@ -227,6 +235,9 @@ export class Student extends User {
     }
     if (data.familyIncome !== undefined) {
       this.#familyIncome = data.familyIncome;
+    }
+    if (data.householdSize !== undefined) {
+      this.#householdSize = data.householdSize;
     }
     this.validateControlledValues();
   }
@@ -358,6 +369,7 @@ export class Student extends User {
       socialName: this.socialName,
       courseName: this.courseName,
       familyIncome: this.familyIncome,
+      householdSize: this.householdSize,
     };
   }
 }

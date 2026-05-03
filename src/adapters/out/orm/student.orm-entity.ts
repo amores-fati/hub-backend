@@ -124,6 +124,9 @@ export class StudentOrmEntity {
   })
   committedToParticipate: boolean | null;
 
+  @Column({ name: 'household_size', type: 'int', nullable: true })
+  householdSize: number | null;
+
   @OneToOne(() => DisabilityOrmEntity, (disability) => disability.student)
   disability: DisabilityOrmEntity | null;
 

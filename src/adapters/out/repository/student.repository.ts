@@ -268,6 +268,7 @@ export class StudentRepository implements IStudentRepository {
     ormEntity.hasComputer = student.hasComputer ?? null;
     ormEntity.hasInternet = student.hasInternet ?? null;
     ormEntity.committedToParticipate = student.committedToParticipate ?? null;
+    ormEntity.householdSize = student.householdSize ?? null;
 
     ormEntity.user = new UserOrmEntity();
     ormEntity.user.id = student.id;
@@ -361,6 +362,7 @@ export class StudentRepository implements IStudentRepository {
       committedToParticipate: ormEntity.committedToParticipate,
       fullName: ormEntity.fullName,
       socialName: ormEntity.socialName,
+      householdSize: ormEntity.householdSize,
     };
   }
 
@@ -413,6 +415,7 @@ export class StudentRepository implements IStudentRepository {
       ormEntity.socialName || undefined,
       ormEntity.courseName || undefined,
       ormEntity.familyIncome || undefined,
+      ormEntity.householdSize || undefined,
     );
   }
 
