@@ -7,6 +7,7 @@
     "^.+\\.(t|j)s$": "ts-jest"
   },
   "moduleNameMapper": {
+    "^uuid$": "<rootDir>/mocks/uuid.ts",
     "^src/(.*)$": "<rootDir>/../src/$1"
   }
 }

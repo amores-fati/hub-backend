@@ -16,9 +16,25 @@ interface StudentResponse {
   };
 }
 
+interface AdminStudentsResponse {
+  items: Array<{
+    id: string;
+    cpf: string;
+    fullName: string;
+    enrollmentStatus: string;
+  }>;
+  meta: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 describe('StudentController (e2e)', () => {
   let app: INestApplication;
   let createdStudentId: string;
+  let softDeletedStudentId: string;
   let dynamicCpf: string;
   let accessToken: string;
   const studentEmail = `student-${Date.now()}@test.com`;
@@ -125,6 +141,89 @@ describe('StudentController (e2e)', () => {
           const body = res.body as unknown as StudentResponse[];
           expect(Array.isArray(body)).toBe(true);
           expect(body.length).toBeGreaterThan(0);
+        });
+    });
+  });
+
+  describe('/students/filter (GET)', () => {
+    it('should return paginated admin list with masked cpf (200)', () => {
+      return request(app.getHttpServer() as Server)
+        .get('/students/filter')
+        .query({ search: dynamicCpf, page: 1, pageSize: 20 })
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res) => {
+          const body = res.body as unknown as AdminStudentsResponse;
+          expect(Array.isArray(body.items)).toBe(true);
+          expect(body.meta).toMatchObject({
+            page: 1,
+            pageSize: 20,
+          });
+          expect(body.items[0].cpf).toMatch(/^\d{3}\.\*\*\*\.\*\*\*-\d{2}$/);
+        });
+    });
+
+    it('should filter by modality (200)', () => {
+      return request(app.getHttpServer() as Server)
+        .get('/students/filter')
+        .query({ modality: 'ONLINE', page: 1, pageSize: 20 })
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res) => {
+          const body = res.body as unknown as AdminStudentsResponse;
+          expect(Array.isArray(body.items)).toBe(true);
+        });
+    });
+
+    it('should return 400 Bad Request when pageSize is invalid', () => {
+      return request(app.getHttpServer() as Server)
+        .get('/students/filter')
+        .query({ pageSize: 30 })
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(400);
+    });
+
+    it('should not list soft-deleted students', async () => {
+      const cpfToDelete = cpf.generate();
+      const emailToDelete = `deleted-student-${Date.now()}@test.com`;
+
+      const createResponse = await request(app.getHttpServer() as Server)
+        .post('/students')
+        .send({
+          email: emailToDelete,
+          password: studentPassword,
+          fullName: 'Deleted Student Full Name',
+          cpf: cpfToDelete,
+          birthDate: '1995-05-20',
+          gender: 'MALE',
+          race: 'BROWN',
+          contact: {
+            city: 'Sao Paulo',
+            state: 'SP',
+            address: 'Rua de Teste',
+            neighbourhood: 'Centro',
+            cep: '01001000',
+            phone: '11977777777',
+          },
+        })
+        .expect(201);
+
+      softDeletedStudentId = (createResponse.body as StudentResponse).id;
+
+      await request(app.getHttpServer() as Server)
+        .delete('/students')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ ids: [softDeletedStudentId] })
+        .expect(200);
+
+      await request(app.getHttpServer() as Server)
+        .get('/students/filter')
+        .query({ search: cpfToDelete, page: 1, pageSize: 20 })
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res) => {
+          const body = res.body as unknown as AdminStudentsResponse;
+          expect(body.items).toHaveLength(0);
         });
     });
   });

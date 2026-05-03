@@ -3,7 +3,11 @@ import { Student } from '../domain/student.entity';
 import { Contact } from '../domain/contact.entity';
 import { Disability } from '../domain/disability.entity';
 import { SocialBenefit } from '../domain/social-benefit.entity';
-import { IStudentRepository } from '../ports/student.repository.interface';
+import {
+  IStudentRepository,
+  StudentFilterQuery,
+  StudentListProjection,
+} from '../ports/student.repository.interface';
 import { StudentAlreadyExistsException } from '../exceptions/student-already-exists.exception';
 import {
   CreateStudentCommand,
@@ -23,6 +27,30 @@ import {
   Race,
 } from '../domain/enums/student-profile.enum';
 import { SocialBenefitType } from '../domain/enums/social-benefit.enum';
+import { FilterStudentCommand } from '../command/filterStudent.command';
+
+export interface StudentListItem {
+  id: string;
+  email: string;
+  cpf: string;
+  fullName: string;
+  socialName?: string;
+  city?: string;
+  state?: string;
+  hasDisability?: boolean;
+  disabilityType?: string;
+  enrollmentStatus: 'ONLINE' | 'PRESENCIAL' | 'NAO_INSCRITO';
+}
+
+export interface PaginatedStudentsResponse {
+  items: StudentListItem[];
+  meta: {
+    page: number;
+    pageSize: 20 | 50;
+    total: number;
+    totalPages: number;
+  };
+}
 
 export class StudentService {
   constructor(
@@ -106,6 +134,33 @@ export class StudentService {
     return this.studentRepository.findAll();
   }
 
+  async findAllStudentsWithFilter(
+    command: FilterStudentCommand,
+  ): Promise<PaginatedStudentsResponse> {
+    const query: StudentFilterQuery = {
+      search: this.normalizeFilterValue(command.search),
+      city: this.normalizeFilterValue(command.city),
+      disabilityType: this.normalizeFilterValue(command.disabilityType),
+      modality: this.normalizeFilterValue(command.modality),
+      page: command.page ?? 1,
+      pageSize: command.pageSize ?? 20,
+    };
+
+    const result = await this.studentRepository.findAllWithFilter(query);
+
+    return {
+      items: result.items.map((student) =>
+        this.mapStudentListItem(student, query.modality),
+      ),
+      meta: {
+        page: query.page,
+        pageSize: query.pageSize,
+        total: result.total,
+        totalPages: Math.ceil(result.total / query.pageSize),
+      },
+    };
+  }
+
   async getStudentById(id: string): Promise<Student> {
     const student = await this.studentRepository.findById(id);
 
@@ -142,6 +197,8 @@ export class StudentService {
     student.changeSocialName(command.socialName);
 
     student.changeProfileData({
+      fullName: command.fullName,
+      socialName: command.socialName,
       birthDate: command.birthDate ? new Date(command.birthDate) : undefined,
       gender: command.gender,
       race: command.race,
@@ -264,6 +321,8 @@ export class StudentService {
       student.changeSocialName(command.socialName);
     }
     student.changeProfileData({
+      fullName: command.fullName,
+      socialName: command.socialName,
       birthDate:
         command.birthDate !== undefined
           ? new Date(command.birthDate)
@@ -421,5 +480,53 @@ export class StudentService {
       Outro: SocialBenefitType.OTHERS,
     };
     return map[value] ?? SocialBenefitType.OTHERS;
+  }
+
+  private normalizeFilterValue(value?: string): string | undefined {
+    const normalizedValue = value?.trim();
+    return normalizedValue ? normalizedValue : undefined;
+  }
+
+  private mapStudentListItem(
+    student: StudentListProjection,
+    modality?: string,
+  ): StudentListItem {
+    return {
+      id: student.id,
+      email: student.email,
+      cpf: this.maskCpf(student.cpf),
+      fullName: student.fullName,
+      socialName: student.socialName,
+      city: student.city,
+      state: student.state,
+      hasDisability: student.hasDisability,
+      disabilityType: student.disabilityType,
+      enrollmentStatus: this.deriveEnrollmentStatus(student, modality),
+    };
+  }
+
+  private deriveEnrollmentStatus(
+    student: StudentListProjection,
+    modality?: string,
+  ): StudentListItem['enrollmentStatus'] {
+    const enrollment = modality
+      ? student.enrollments.find((item) => item.courseModality === modality)
+      : student.enrollments[0];
+
+    if (!enrollment) {
+      return 'NAO_INSCRITO';
+    }
+
+    return enrollment.courseModality === 'PRESENCIAL' ? 'PRESENCIAL' : 'ONLINE';
+  }
+
+  private maskCpf(cpf: string): string {
+    const digits = cpf.replace(/\D/g, '');
+
+    if (digits.length !== 11) {
+      return cpf;
+    }
+
+    return `${digits.slice(0, 3)}.***.***-${digits.slice(9, 11)}`;
   }
 }
