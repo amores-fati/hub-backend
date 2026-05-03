@@ -144,7 +144,10 @@ describe('StudentRepository', () => {
       pageSize: 20,
     });
 
-    expect(ormRepository.createQueryBuilder).toHaveBeenCalledWith('student');
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(ormRepository.createQueryBuilder as jest.Mock).toHaveBeenCalledWith(
+      'student',
+    );
     expect(queryBuilder.innerJoinAndSelect).toHaveBeenCalledWith(
       'student.user',
       'user',

@@ -55,6 +55,7 @@ describe('StudentService - getMyProfile (getStudentById)', () => {
       new Date('1998-03-15'),
       Gender.FEMALE,
       Race.BROWN,
+      'Aluno Full Name',
     );
 
     service = new StudentService(

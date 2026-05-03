@@ -185,6 +185,7 @@ export class StudentController {
       req.user.id,
       command,
     );
+  }
 
   @RequireAuth()
   @Get('filter')
