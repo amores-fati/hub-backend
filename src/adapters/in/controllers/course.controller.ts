@@ -25,11 +25,13 @@ import {
 import { CreateCourseCommand } from '../../../core/command/course.command';
 import { CourseService } from '../../../core/services/course.service';
 import { EnrollmentService } from '../../../core/services/enrollment.service';
+import { EnrollmentType } from '../../../core/domain/enrollment.entity';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import { CurrentUser } from '../../../utils/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCourseDto } from '../dtos/course/create-course.dto';
+import { toCourseResponse } from '../dtos/course/course-response.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @ApiTags('Courses')
@@ -102,7 +104,7 @@ export class CourseController {
   @ApiOperation({
     summary: 'Lista todos os cursos',
     description:
-      'Retorna a lista completa de todos os cursos persistidos na base de dados.',
+      'Retorna a lista completa de todos os cursos persistidos na base de dados, ja em formato pronto para consumo do frontend.',
   })
   @ApiOkResponse({
     description: 'Cursos retornados com sucesso.',
@@ -110,25 +112,30 @@ export class CourseController {
       example: [
         {
           id: '123e4567-e89b-12d3-a456-426614174000',
-          name: 'Desenvolvimento Web Full Stack',
-          banner: 'https://fatilab.com/banners/web.jpg',
+          title: 'Desenvolvimento Web Full Stack',
           description:
             'Curso completo de desenvolvimento web com React e Node.js.',
-          courseLoad: '120h',
+          modality: 'presencial',
+          workloadHours: 120,
+          vacancyCount: 30,
           startDate: '2025-02-01T00:00:00.000Z',
           endDate: '2025-06-30T00:00:00.000Z',
-          startRegistrations: '2025-01-01T00:00:00.000Z',
-          endRegistrations: '2025-01-28T00:00:00.000Z',
-          linkAccess: 'https://fatilab.com/cursos/web',
+          enrollmentStart: '2025-01-01T00:00:00.000Z',
+          enrollmentEnd: '2025-01-28T00:00:00.000Z',
+          location: 'Porto Alegre',
+          imageUrl: 'https://fatilab.com/banners/web.jpg',
+          externalLink: 'https://fatilab.com/cursos/web',
         },
       ],
     },
   })
   async findAll() {
     this.logger.info('Listing courses');
-    const courses = await this.courseService.getAllCourses();
+    const courses = await this.courseService.getAllCoursesWithLocation();
     this.logger.info('Courses listed', { count: courses.length });
-    return courses;
+    return courses.map(({ course, location }) =>
+      toCourseResponse(course, location),
+    );
   }
 
   @RequireAuth(UserRoleEnum.STUDENT)
@@ -143,18 +150,26 @@ export class CourseController {
     schema: {
       example: [
         {
-          id: '123e4567-e89b-12d3-a456-426614174000',
-          studentId: 'abc12345-e89b-12d3-a456-426614174000',
           courseId: 'def12345-e89b-12d3-a456-426614174000',
-          type: 'ENROLLMENT',
-          createdAt: '2025-01-15T10:00:00.000Z',
+          status: 'enrolled',
+          enrolledAt: '2025-01-15T10:00:00.000Z',
         },
       ],
     },
   })
   async findMyEnrollments(@CurrentUser() user: AuthenticatedUser) {
     this.logger.info('Listing enrollments for student', { userId: user.id });
-    return this.enrollmentService.getEnrollmentsByStudentId(user.id);
+    const enrollments = await this.enrollmentService.getEnrollmentsByStudentId(
+      user.id,
+    );
+    return enrollments.map((enrollment) => ({
+      courseId: enrollment.courseId,
+      status:
+        enrollment.type === EnrollmentType.ENROLLMENT
+          ? 'enrolled'
+          : 'interested',
+      enrolledAt: enrollment.createdAt,
+    }));
   }
 
   @RequireAuth(UserRoleEnum.STUDENT)

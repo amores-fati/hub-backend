@@ -1,34 +1,34 @@
-import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as dotenv from 'dotenv';
+import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { buildDatabaseOptions } from '../../../config/database.config';
 
-import { UserOrmEntity } from '../orm/user.orm-entity';
-import { AdminOrmEntity } from '../orm/admin.orm-entity';
-import { ContactOrmEntity } from '../orm/contact.orm-entity';
-import { CompanyOrmEntity } from '../orm/company.orm-entity';
-import { StudentOrmEntity } from '../orm/student.orm-entity';
-import { SocialBenefitOrmEntity } from '../orm/social-benefit.orm-entity';
-import { DisabilityOrmEntity } from '../orm/disability.orm-entity';
-import { CourseOrmEntity } from '../orm/course.orm-entity';
-import { InPersonCourseDetailOrmEntity } from '../orm/in-person-course-detail.orm-entity';
-import { SettingOrmEntity } from '../orm/setting.orm-entity';
-import { SkillOrmEntity } from '../orm/skill.orm-entity';
-import { CurriculumOrmEntity } from '../orm/curriculum.orm-entity';
-import { CurriculumSkillOrmEntity } from '../orm/curriculum-skill.orm-entity';
-import { JobOpeningOrmEntity } from '../orm/job-opening.orm-entity';
-import { JobSkillOrmEntity } from '../orm/job-skill.orm-entity';
 import { SocialBenefitType } from '../../../core/domain/enums/social-benefit.enum';
 import {
   EducationLevel,
+  FamilyIncome,
   Gender,
   HowHeardChannel,
   Race,
-  FamilyIncome,
 } from '../../../core/domain/enums/student-profile.enum';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 import { AmoresFatiLogger } from '../../../utils/logger';
+import { AdminOrmEntity } from '../orm/admin.orm-entity';
+import { CompanyOrmEntity } from '../orm/company.orm-entity';
+import { ContactOrmEntity } from '../orm/contact.orm-entity';
+import { CourseOrmEntity } from '../orm/course.orm-entity';
+import { CurriculumSkillOrmEntity } from '../orm/curriculum-skill.orm-entity';
+import { CurriculumOrmEntity } from '../orm/curriculum.orm-entity';
+import { DisabilityOrmEntity } from '../orm/disability.orm-entity';
+import { InPersonCourseDetailOrmEntity } from '../orm/in-person-course-detail.orm-entity';
+import { JobOpeningOrmEntity } from '../orm/job-opening.orm-entity';
+import { JobSkillOrmEntity } from '../orm/job-skill.orm-entity';
+import { SettingOrmEntity } from '../orm/setting.orm-entity';
+import { SkillOrmEntity } from '../orm/skill.orm-entity';
+import { SocialBenefitOrmEntity } from '../orm/social-benefit.orm-entity';
+import { StudentOrmEntity } from '../orm/student.orm-entity';
+import { UserOrmEntity } from '../orm/user.orm-entity';
 
 dotenv.config({
   path: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
@@ -162,7 +162,7 @@ export async function seed(): Promise<void> {
   const whatsappSetting = appDataSource.getRepository(SettingOrmEntity).create({
     id: uuidv4(),
     key: 'whatsapp_phone',
-    value: '(51) 99266-9381',
+    value: '555192669381',
   });
   await appDataSource.getRepository(SettingOrmEntity).save(whatsappSetting);
   logger.info('Configuração de WhatsApp seedada.');
@@ -230,64 +230,34 @@ export async function seed(): Promise<void> {
   // 3. CURSOS
   const cursosData = [
     {
-      name: 'Desenvolvimento Web Full Stack',
-      banner: 'https://fatilab.com/banners/web.jpg',
-      description: 'Curso completo de desenvolvimento web com React e Node.js.',
-      courseLoad: '120h',
-      startDate: new Date('2025-02-01'),
-      endDate: new Date('2025-06-30'),
-      startRegistrations: new Date('2025-01-01'),
-      endRegistrations: new Date('2025-01-28'),
-      linkAccess: 'https://fatilab.com/cursos/web',
-      modality: 'PRESENCIAL',
-    },
-    {
-      name: 'Ciência de Dados com Python',
-      banner: 'https://fatilab.com/banners/data.jpg',
-      description: 'Introdução à análise de dados, pandas e machine learning.',
+      name: 'Curso de Programação Online',
+      banner:
+        'https://static.wixstatic.com/media/cca81f_2df90b312b0a42fa87083d7a6ad190a7~mv2.png/v1/fill/w_933,h_400,al_c,q_90,enc_avif,quality_auto/cca81f_2df90b312b0a42fa87083d7a6ad190a7~mv2.png',
+      description:
+        'Curso de Programação 100% online e gratuito. Para todos os públicos, sem pré-requisitos: o único requisito é querer aprender a programar. Aulas de maio a agosto, com certificado emitido pelo Instituto Amores Fati em parceria com FIAP + Alura.',
       courseLoad: '80h',
-      startDate: new Date('2025-03-01'),
-      endDate: new Date('2025-05-31'),
-      startRegistrations: new Date('2025-02-01'),
-      endRegistrations: new Date('2025-02-25'),
-      linkAccess: 'https://fatilab.com/cursos/data',
+      startDate: new Date('2026-05-05'),
+      endDate: new Date('2026-08-31'),
+      startRegistrations: new Date('2026-04-01'),
+      endRegistrations: new Date('2026-05-05'),
+      linkAccess: 'https://fatilab.com/cursos/programacao-online',
+      modality: 'ONLINE',
+      vacancyCount: 100,
+    },
+    {
+      name: 'Curso de Programação Presencial',
+      banner:
+        'https://static.wixstatic.com/media/cca81f_0f46bbf3d18c417baccced47010dea1f~mv2.png/v1/fill/w_933,h_400,al_c,q_90,enc_avif,quality_auto/cca81f_0f46bbf3d18c417baccced47010dea1f~mv2.png',
+      description:
+        'Curso de Programação Presencial e gratuito, voltado a jovens com deficiência física ou neurodivergentes de 14 a 29 anos. Aulas de maio a agosto, às terças e quintas, em turmas de manhã ou tarde, no Instituto Caldeira em Porto Alegre. Certificado emitido pelo Instituto Amores Fati em parceria com AldeIA, Alura+Língua, FIAP+Alura e Tramontina.',
+      courseLoad: '120h',
+      startDate: new Date('2026-05-05'),
+      endDate: new Date('2026-08-31'),
+      startRegistrations: new Date('2026-04-01'),
+      endRegistrations: new Date('2026-05-03'),
+      linkAccess: 'https://fatilab.com/cursos/programacao-presencial',
       modality: 'PRESENCIAL',
-    },
-    {
-      name: 'UX/UI Design',
-      banner: 'https://fatilab.com/banners/ux.jpg',
-      description: 'Design de interfaces e experiência do usuário com Figma.',
-      courseLoad: '60h',
-      startDate: new Date('2025-04-01'),
-      endDate: new Date('2025-05-31'),
-      startRegistrations: new Date('2025-03-01'),
-      endRegistrations: new Date('2025-03-28'),
-      linkAccess: 'https://fatilab.com/cursos/ux',
-      modality: 'ONLINE',
-    },
-    {
-      name: 'Infraestrutura e DevOps',
-      banner: 'https://fatilab.com/banners/devops.jpg',
-      description: 'Docker, Kubernetes, CI/CD e cloud na prática.',
-      courseLoad: '100h',
-      startDate: new Date('2025-05-01'),
-      endDate: new Date('2025-08-31'),
-      startRegistrations: new Date('2025-04-01'),
-      endRegistrations: new Date('2025-04-28'),
-      linkAccess: 'https://fatilab.com/cursos/devops',
-      modality: 'ONLINE',
-    },
-    {
-      name: 'Introdução à Programação',
-      banner: 'https://fatilab.com/banners/intro.jpg',
-      description: 'Lógica de programação e primeiros passos com JavaScript.',
-      courseLoad: '40h',
-      startDate: new Date('2025-01-15'),
-      endDate: new Date('2025-02-28'),
-      startRegistrations: new Date('2025-01-01'),
-      endRegistrations: new Date('2025-01-12'),
-      linkAccess: 'https://fatilab.com/cursos/intro',
-      modality: 'ONLINE',
+      vacancyCount: 30,
     },
   ];
 
@@ -300,7 +270,7 @@ export async function seed(): Promise<void> {
     await appDataSource.getRepository(CourseOrmEntity).save(curso);
     cursos.push(curso);
   }
-  logger.info('5 cursos criados.');
+  logger.info('2 cursos criados.');
 
   // 4. ALUNOS (15)
   const alunosData = [
@@ -550,24 +520,24 @@ export async function seed(): Promise<void> {
   logger.info('15 alunos criados.');
 
   // CURSOS PRESENCIAIS
-  const cursosPresenciais = [cursos[0], cursos[1]];
-  for (let pc = 0; pc < cursosPresenciais.length; pc++) {
+  const cursosPresenciais = cursos.filter((c) => c.modality === 'PRESENCIAL');
+  for (const presencial of cursosPresenciais) {
     const personCourse = appDataSource
       .getRepository(InPersonCourseDetailOrmEntity)
       .create({
         id: uuidv4(),
-        course: cursosPresenciais[pc],
-        address: ['Porto Alegre', 'Canoas'][pc],
-        startDate: cursosPresenciais[pc].startDate,
-        shift: ['manha', 'tarde'][pc],
-        room: `Sala ${pc + 1}`,
-        vacancies: 30,
+        course: presencial,
+        address: 'Instituto Caldeira - Porto Alegre/RS',
+        startDate: presencial.startDate,
+        shift: 'manha-tarde',
+        room: 'Terças e Quintas',
+        vacancies: presencial.vacancyCount,
       });
     await appDataSource
       .getRepository(InPersonCourseDetailOrmEntity)
       .save(personCourse);
   }
-  logger.info('2 cursos presenciais criados.');
+  logger.info(`${cursosPresenciais.length} cursos presenciais criados.`);
 
   // 5. SKILLS
   const skillNames = [

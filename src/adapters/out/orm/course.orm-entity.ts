@@ -35,6 +35,9 @@ export class CourseOrmEntity {
   @Column({ name: 'link_access' })
   linkAccess: string;
 
+  @Column({ name: 'vacancy_count', type: 'int', default: 0 })
+  vacancyCount: number;
+
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamptz',

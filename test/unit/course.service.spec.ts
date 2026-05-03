@@ -11,6 +11,7 @@ describe('CourseService', () => {
   const mockRepository: ICourseRepository = {
     create: jest.fn(),
     findAll: jest.fn(),
+    findAllWithLocation: jest.fn(),
     findById: jest.fn(),
   };
 
@@ -25,6 +26,7 @@ describe('CourseService', () => {
     endRegistrations: '2025-01-28T00:00:00.000Z',
     modality: 'ONLINE',
     linkAccess: 'https://fatilab.com/cursos/web',
+    vacancyCount: 30,
   };
 
   beforeEach(() => {
@@ -74,6 +76,7 @@ describe('CourseService', () => {
         new Date(createCommand.endRegistrations),
         createCommand.modality,
         createCommand.linkAccess,
+        createCommand.vacancyCount,
         createCommand.description,
       );
 

@@ -11,6 +11,7 @@ export class Course {
   #endRegistrations: Date;
   #modality: string;
   #linkAccess: string;
+  #vacancyCount: number;
   #description?: string;
 
   constructor(
@@ -24,6 +25,7 @@ export class Course {
     endRegistrations: Date,
     modality: string,
     linkAccess: string,
+    vacancyCount: number,
     description?: string,
   ) {
     this.#id = id;
@@ -36,6 +38,7 @@ export class Course {
     this.#endRegistrations = endRegistrations;
     this.#modality = modality;
     this.#linkAccess = linkAccess;
+    this.#vacancyCount = vacancyCount;
     this.#description = description;
     this.validateCourse();
   }
@@ -84,6 +87,10 @@ export class Course {
     return this.#linkAccess;
   }
 
+  get vacancyCount(): number {
+    return this.#vacancyCount;
+  }
+
   private validateCourse(): void {
     this.validateRequiredText(this.#name, 'O nome do curso e obrigatorio.');
     this.validateRequiredText(this.#banner, 'O banner do curso e obrigatorio.');
@@ -100,6 +107,7 @@ export class Course {
       'O link de acesso do curso e obrigatorio.',
     );
     this.validateOptionalText(this.#description);
+    this.validateVacancyCount(this.#vacancyCount);
     this.validateDateRange(
       this.#startDate,
       this.#endDate,
@@ -122,6 +130,14 @@ export class Course {
     if (value !== undefined && value.trim().length === 0) {
       throw new DomainException(
         'A descricao do curso nao pode ser uma string vazia.',
+      );
+    }
+  }
+
+  private validateVacancyCount(value: number): void {
+    if (!Number.isInteger(value) || value < 0) {
+      throw new DomainException(
+        'A quantidade de vagas precisa ser um inteiro maior ou igual a zero.',
       );
     }
   }
@@ -153,6 +169,7 @@ export class Course {
       endRegistrations: this.endRegistrations,
       modality: this.modality,
       linkAccess: this.linkAccess,
+      vacancyCount: this.vacancyCount,
     };
   }
 }

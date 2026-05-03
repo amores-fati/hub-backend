@@ -49,6 +49,7 @@ import { SocialBenefitOrmEntity } from './adapters/out/orm/social-benefit.orm-en
 import { CurriculumOrmEntity } from './adapters/out/orm/curriculum.orm-entity';
 import { CurriculumSkillOrmEntity } from './adapters/out/orm/curriculum-skill.orm-entity';
 import { SkillOrmEntity } from './adapters/out/orm/skill.orm-entity';
+import { InPersonCourseDetailOrmEntity } from './adapters/out/orm/in-person-course-detail.orm-entity';
 
 // Student Adapters & Core
 import { HealthController } from './adapters/in/controllers/health.controller';
@@ -113,6 +114,7 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       SkillOrmEntity,
       SettingOrmEntity,
       EnrollmentOrmEntity,
+      InPersonCourseDetailOrmEntity,
     ]),
   ],
   controllers: [

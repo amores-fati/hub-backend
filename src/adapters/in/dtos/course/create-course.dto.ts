@@ -1,8 +1,10 @@
 import {
   IsDateString,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
+  Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -82,4 +84,12 @@ export class CreateCourseDto {
   @IsString()
   @IsNotEmpty()
   linkAccess: string;
+
+  @ApiProperty({
+    example: 30,
+    description: 'Quantidade de vagas oferecidas no curso.',
+  })
+  @IsInt()
+  @Min(0)
+  vacancyCount: number;
 }
