@@ -177,11 +177,27 @@ export class Student extends User {
     birthDate?: Date;
     gender?: Gender;
     race?: Race;
+    socialName?: string;
+    education?: EducationLevel;
+    courseName?: string;
+    institution?: string;
+    activityArea?: string;
+    hasProgrammingExperience?: boolean;
   }): void {
     if (data.birthDate !== undefined) this.#birthDate = data.birthDate;
     if (data.gender !== undefined) this.#gender = data.gender;
     if (data.race !== undefined) this.#race = data.race;
+    if (data.socialName !== undefined) this.#socialName = data.socialName;
+    if (data.education !== undefined) this.#education = data.education;
+    if (data.courseName !== undefined) this.#courseName = data.courseName;
+    if (data.institution !== undefined) this.#institution = data.institution;
+    if (data.activityArea !== undefined) this.#activityArea = data.activityArea;
+    if (data.hasProgrammingExperience !== undefined) {
+      this.#hasProgrammingExperience = data.hasProgrammingExperience;
+    }
+
     this.validateProfileData();
+    this.validateControlledValues();
   }
 
   public changeParticipationData(data: {
@@ -215,6 +231,10 @@ export class Student extends User {
 
   public changeDisability(disability?: Disability): void {
     this.#disability = disability;
+  }
+
+  public changeSocialName(socialName?: string): void {
+    this.#socialName = socialName?.trim() || undefined;
   }
 
   public replaceSocialBenefits(benefits: SocialBenefit[]): void {

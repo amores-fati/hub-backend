@@ -10,6 +10,7 @@ import {
   CreateStudentCommand,
   PatchStudentCommand,
   UpdateStudentCommand,
+  UpdateStudentMeCommand,
 } from '../../src/core/command/student.command';
 import { StudentAlreadyExistsException } from '../../src/core/exceptions/student-already-exists.exception';
 import { StudentNotFoundException } from '../../src/core/exceptions/student-not-found.exception';
@@ -346,6 +347,67 @@ describe('StudentService', () => {
           email: 'duplicado@teste.com',
         }),
       ).rejects.toThrow(UserAlreadyExistsException);
+    });
+  });
+
+  describe('updateAuthenticatedStudentProfile', () => {
+    it('should update student profile successfully', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
+      (mockRepository.update as jest.Mock).mockImplementation((student) =>
+        Promise.resolve(student),
+      );
+
+      const updateMeCommand: UpdateStudentMeCommand = {
+        phone: '11988887777',
+        city: 'Rio de Janeiro',
+        state: 'RJ',
+        address: 'Av Atlântica',
+        cep: '22070000',
+        gender: 'Masculino',
+        race: 'Pardo',
+        fatilabMotivation: 'Nova motivação',
+      };
+
+      const result = await service.updateAuthenticatedStudentProfile(
+        mockStudent.id,
+        updateMeCommand,
+      );
+
+      expect(result.contact.phone).toBe('11988887777');
+      expect(result.contact.city).toBe('Rio de Janeiro');
+      expect(mockRepository.update).toHaveBeenCalled();
+    });
+
+    it('should ignore cpf and email updates', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
+      (mockRepository.update as jest.Mock).mockImplementation((student) =>
+        Promise.resolve(student),
+      );
+
+      const originalEmail = mockStudent.email;
+      const originalCpf = mockStudent.cpf;
+
+      const invalidCommand = {
+        email: 'hacker@teste.com',
+        cpf: '00000000000',
+        phone: '11988887777',
+      };
+
+      const result = await service.updateAuthenticatedStudentProfile(
+        mockStudent.id,
+        invalidCommand as unknown as UpdateStudentMeCommand,
+      );
+
+      expect(result.email).toBe(originalEmail);
+      expect(result.cpf).toBe(originalCpf);
+    });
+
+    it('should throw error if student not found', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.updateAuthenticatedStudentProfile('invalid-id', {} as UpdateStudentMeCommand),
+      ).rejects.toThrow();
     });
   });
 

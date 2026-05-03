@@ -1,80 +1,89 @@
-import { DomainException } from '../exceptions/domain.exception';
-import { Skill } from './skill.entity';
-import { Student } from './student.entity';
+export interface CurriculumSkill {
+  id: string;
+  skillName: string;
+}
 
 export class Curriculum {
-  readonly #id: string;
-  readonly #isAvailable: boolean;
-  readonly #about: string | null;
-  readonly #linkedin: string;
-  readonly #github: string;
-  readonly #profilePhoto: string | null;
-  readonly #videoPresentation: string;
-  readonly #skills: Skill[];
-  readonly #student: Student;
-
   constructor(
-    id: string,
-    isAvailable: boolean,
-    linkedin: string,
-    github: string,
-    videoPresentation: string,
-    student: Student,
-    skills: Skill[] = [],
-    about?: string | null,
-    profilePhoto?: string | null,
-  ) {
-    this.#id = id;
-    this.#isAvailable = isAvailable;
-    this.#linkedin = linkedin;
-    this.#github = github;
-    this.#videoPresentation = videoPresentation;
-    this.#student = student;
-    this.#skills = skills;
-    this.#about = about ?? null;
-    this.#profilePhoto = profilePhoto ?? null;
-    this.validate();
+    readonly id: string,
+    readonly studentId: string,
+    private aboutValue: string | null = null,
+    private linkedinUrlValue: string | null = null,
+    private githubUrlValue: string | null = null,
+    private photoUrlValue: string | null = null,
+    private skillValues: CurriculumSkill[] = [],
+  ) {}
+
+  get about(): string | null {
+    return this.aboutValue;
   }
 
-  get id(): string { return this.#id; }
-  get isAvailable(): boolean { return this.#isAvailable; }
-  get about(): string | null { return this.#about; }
-  get linkedin(): string { return this.#linkedin; }
-  get github(): string { return this.#github; }
-  get profilePhoto(): string | null { return this.#profilePhoto; }
-  get videoPresentation(): string { return this.#videoPresentation; }
-  get skills(): Skill[] { return this.#skills; }
-  get student(): Student { return this.#student; }
+  get linkedinUrl(): string | null {
+    return this.linkedinUrlValue;
+  }
 
-  private validate(): void {
-    if (!this.#id || this.#id.trim().length === 0) {
-      throw new DomainException('O id do currículo é obrigatório.');
+  get githubUrl(): string | null {
+    return this.githubUrlValue;
+  }
+
+  get photoUrl(): string | null {
+    return this.photoUrlValue;
+  }
+
+  get skills(): CurriculumSkill[] {
+    return [...this.skillValues];
+  }
+
+  updateProfile(data: {
+    about?: string | null;
+    linkedinUrl?: string | null;
+    githubUrl?: string | null;
+  }): void {
+    if (data.about !== undefined) {
+      this.aboutValue = data.about;
     }
-    if (!this.#linkedin || this.#linkedin.trim().length === 0) {
-      throw new DomainException('O LinkedIn é obrigatório.');
+
+    if (data.linkedinUrl !== undefined) {
+      this.linkedinUrlValue = data.linkedinUrl;
     }
-    if (!this.#github || this.#github.trim().length === 0) {
-      throw new DomainException('O GitHub é obrigatório.');
+
+    if (data.githubUrl !== undefined) {
+      this.githubUrlValue = data.githubUrl;
     }
-    if (!this.#videoPresentation || this.#videoPresentation.trim().length === 0) {
-      throw new DomainException('O vídeo de apresentação é obrigatório.');
-    }
-    if (!Array.isArray(this.#skills)) {
-      throw new DomainException('As habilidades devem ser uma lista válida.');
-    }
+  }
+
+  changePhotoUrl(photoUrl: string): void {
+    this.photoUrlValue = photoUrl;
+  }
+
+  hasSkillName(skillName: string): boolean {
+    const normalizedSkillName = skillName.trim().toLowerCase();
+
+    return this.skillValues.some(
+      (skill) => skill.skillName.trim().toLowerCase() === normalizedSkillName,
+    );
+  }
+
+  hasSkill(skillId: string): boolean {
+    return this.skillValues.some((skill) => skill.id === skillId);
+  }
+
+  addSkill(skill: CurriculumSkill): void {
+    this.skillValues = [...this.skillValues, skill];
+  }
+
+  removeSkill(skillId: string): void {
+    this.skillValues = this.skillValues.filter((skill) => skill.id !== skillId);
   }
 
   toJSON() {
     return {
       id: this.id,
-      isAvailable: this.isAvailable,
       about: this.about,
-      linkedin: this.linkedin,
-      github: this.github,
-      profilePhoto: this.profilePhoto,
-      videoPresentation: this.videoPresentation,
-      skills: this.skills.map((s) => s.toJSON()),
-      student: this.student.toJSON(),
+      linkedinUrl: this.linkedinUrl,
+      githubUrl: this.githubUrl,
+      photoUrl: this.photoUrl,
+      skills: this.skills,
     };
   }
 }

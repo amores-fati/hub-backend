@@ -1,94 +1,130 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { randomUUID } from 'crypto';
+
+import {
+  Curriculum,
+  CurriculumSkill,
+} from '../../../core/domain/curriculum.entity';
 import { ICurriculumRepository } from '../../../core/ports/curriculum.repository.interface';
-import { Curriculum } from '../../../core/domain/curriculum.entity';
-import { Skill } from '../../../core/domain/skill.entity';
-import { Student } from '../../../core/domain/student.entity';
-import { Contact } from '../../../core/domain/contact.entity';
-import { CurriculumOrmEntity } from '../orm/curriculum.orm-entity';
 import { CurriculumSkillOrmEntity } from '../orm/curriculum-skill.orm-entity';
+import { CurriculumOrmEntity } from '../orm/curriculum.orm-entity';
+import { SkillOrmEntity } from '../orm/skill.orm-entity';
+import { StudentOrmEntity } from '../orm/student.orm-entity';
 
 @Injectable()
 export class CurriculumRepository implements ICurriculumRepository {
   constructor(
     @InjectRepository(CurriculumOrmEntity)
-    private readonly curriculumRepo: Repository<CurriculumOrmEntity>,
-    @InjectRepository(CurriculumSkillOrmEntity)
-    private readonly curriculumSkillRepo: Repository<CurriculumSkillOrmEntity>,
+    private readonly ormRepository: Repository<CurriculumOrmEntity>,
   ) {}
 
-  async findActiveResumeByStudentId(
-    studentId: string,
-  ): Promise<Curriculum | null> {
-    const curriculum = await this.curriculumRepo
-      .createQueryBuilder('curriculum')
-      .innerJoinAndSelect('curriculum.student', 'student')
-      .innerJoinAndSelect('student.user', 'user')
-      .innerJoinAndSelect('student.contact', 'contact')
-      .where('student.id = :studentId', { studentId })
-      .andWhere('user.deletedAt IS NULL')
+  async findByStudentId(studentId: string): Promise<Curriculum | null> {
+    const ormEntity = await this.ormRepository.findOne({
+      where: { student: { id: studentId } },
+      relations: ['curriculumSkills', 'curriculumSkills.skill'],
+    });
+
+    return ormEntity ? this.mapToDomain(ormEntity, studentId) : null;
+  }
+
+  async save(curriculum: Curriculum): Promise<Curriculum> {
+    await this.ormRepository.save(this.mapToOrm(curriculum));
+    const saved = await this.findByStudentId(curriculum.studentId);
+
+    return saved!;
+  }
+
+  async findOrCreateSkillByName(skillName: string): Promise<CurriculumSkill> {
+    const normalizedSkillName = skillName.trim();
+    const skillRepository =
+      this.ormRepository.manager.getRepository(SkillOrmEntity);
+
+    const existingSkill = await skillRepository
+      .createQueryBuilder('skill')
+      .where('LOWER(skill.name) = LOWER(:skillName)', {
+        skillName: normalizedSkillName,
+      })
       .getOne();
 
-    if (!curriculum) return null;
+    if (existingSkill) {
+      return this.mapSkillToDomain(existingSkill);
+    }
 
-    const curriculumSkills = await this.curriculumSkillRepo
-      .createQueryBuilder('cs')
-      .innerJoinAndSelect('cs.skill', 'skill')
-      .where('cs.curriculumId = :curriculumId', { curriculumId: curriculum.id })
-      .getMany();
+    const skill = skillRepository.create({
+      id: randomUUID(),
+      name: normalizedSkillName,
+    });
 
-    const skills = curriculumSkills.map(
-      (cs) => new Skill(cs.skill.id, cs.skill.name),
+    const savedSkill = await skillRepository.save(skill);
+
+    return this.mapSkillToDomain(savedSkill);
+  }
+
+  async addSkillToCurriculum(
+    curriculumId: string,
+    skillId: string,
+  ): Promise<void> {
+    const curriculumSkillRepository = this.ormRepository.manager.getRepository(
+      CurriculumSkillOrmEntity,
     );
+    const curriculumSkill = curriculumSkillRepository.create({
+      curriculumId,
+      skillId,
+    });
 
-    const contact = new Contact(
-      curriculum.student.contact.id,
-      curriculum.student.contact.phone,
-      curriculum.student.contact.neighbourhood ?? undefined,
-      curriculum.student.contact.state ?? undefined,
-      curriculum.student.contact.city ?? undefined,
-      curriculum.student.contact.address ?? undefined,
-      curriculum.student.contact.cep ?? undefined,
-      curriculum.student.contact.complement ?? undefined,
-    );
+    await curriculumSkillRepository.save(curriculumSkill);
+  }
 
-    const student = new Student(
-      curriculum.student.id,
-      curriculum.student.user.password,
-      curriculum.student.user.email,
-      curriculum.student.cpf,
-      contact,
-      curriculum.student.birthDate,
-      curriculum.student.gender,
-      curriculum.student.race,
-      curriculum.student.fullName,
-      curriculum.student.education ?? undefined,
-      curriculum.student.institution ?? undefined,
-      curriculum.student.activityArea ?? undefined,
-      curriculum.student.hasProgrammingExperience ?? undefined,
-      curriculum.student.motivation ?? undefined,
-      curriculum.student.howHeard ?? undefined,
-      curriculum.student.hasComputer ?? undefined,
-      curriculum.student.hasInternet ?? undefined,
-      curriculum.student.committedToParticipate ?? undefined,
-      undefined,
-      [],
-      curriculum.student.socialName ?? undefined,
-      curriculum.student.courseName ?? undefined,
-      curriculum.student.familyIncome ?? undefined,
-    );
+  async removeSkillFromCurriculum(
+    curriculumId: string,
+    skillId: string,
+  ): Promise<void> {
+    await this.ormRepository.manager
+      .getRepository(CurriculumSkillOrmEntity)
+      .delete({
+        curriculumId,
+        skillId,
+      });
+  }
 
+  private mapToOrm(curriculum: Curriculum): CurriculumOrmEntity {
+    const ormEntity = new CurriculumOrmEntity();
+
+    ormEntity.id = curriculum.id;
+    ormEntity.student = { id: curriculum.studentId } as StudentOrmEntity;
+    ormEntity.isAvailable = true;
+    ormEntity.about = curriculum.about;
+    ormEntity.linkedin = curriculum.linkedinUrl;
+    ormEntity.github = curriculum.githubUrl;
+    ormEntity.profilePhoto = curriculum.photoUrl;
+
+    return ormEntity;
+  }
+
+  private mapToDomain(
+    ormEntity: CurriculumOrmEntity,
+    fallbackStudentId?: string,
+  ): Curriculum {
     return new Curriculum(
-      curriculum.id,
-      curriculum.isAvailable,
-      curriculum.linkedin,
-      curriculum.github,
-      curriculum.videoPresentation,
-      student,
-      skills,
-      curriculum.about,
-      curriculum.profilePhoto,
+      ormEntity.id,
+      ormEntity.student?.id ?? fallbackStudentId!,
+      ormEntity.about,
+      ormEntity.linkedin,
+      ormEntity.github,
+      ormEntity.profilePhoto,
+      (ormEntity.curriculumSkills ?? []).map((curriculumSkill) => ({
+        id: curriculumSkill.skill.id,
+        skillName: curriculumSkill.skill.name,
+      })),
     );
+  }
+
+  private mapSkillToDomain(skill: SkillOrmEntity): CurriculumSkill {
+    return {
+      id: skill.id,
+      skillName: skill.name,
+    };
   }
 }

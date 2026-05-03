@@ -11,7 +11,10 @@ export class CurriculumSkillOrmEntity {
   @PrimaryColumn({ name: 'skill_id' })
   skillId: string;
 
-  @ManyToOne(() => CurriculumOrmEntity)
+  @ManyToOne(
+    () => CurriculumOrmEntity,
+    (curriculum) => curriculum.curriculumSkills,
+  )
   @JoinColumn({
     name: 'curriculum_id',
     foreignKeyConstraintName: 'fk_curriculum_skills__curriculum_id__curriculum',

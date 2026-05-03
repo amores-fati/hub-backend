@@ -1,5 +1,13 @@
-import { Entity, Column, PrimaryColumn, OneToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryColumn,
+  OneToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
 import { StudentOrmEntity } from './student.orm-entity';
+import { CurriculumSkillOrmEntity } from './curriculum-skill.orm-entity';
 
 @Entity('curriculum')
 export class CurriculumOrmEntity {
@@ -20,17 +28,23 @@ export class CurriculumOrmEntity {
   isAvailable: boolean;
 
   @Column({ type: 'text', nullable: true })
-  about: string;
+  about: string | null;
 
-  @Column()
-  linkedin: string;
+  @Column({ type: 'varchar', nullable: true })
+  linkedin: string | null;
 
-  @Column()
-  github: string;
+  @Column({ type: 'varchar', nullable: true })
+  github: string | null;
 
-  @Column({ name: 'profile_photo', nullable: true })
-  profilePhoto: string;
+  @Column({ name: 'profile_photo', type: 'varchar', nullable: true })
+  profilePhoto: string | null;
 
-  @Column({ name: 'video_presentation' })
-  videoPresentation: string;
+  @Column({ name: 'video_presentation', type: 'varchar', nullable: true })
+  videoPresentation: string | null;
+
+  @OneToMany(
+    () => CurriculumSkillOrmEntity,
+    (curriculumSkill) => curriculumSkill.curriculum,
+  )
+  curriculumSkills: CurriculumSkillOrmEntity[];
 }
