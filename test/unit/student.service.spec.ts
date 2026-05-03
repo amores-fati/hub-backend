@@ -118,7 +118,34 @@ describe('StudentService', () => {
       expect(result.contact.id).toBe(result.id);
       expect(result.gender).toBe(Gender.MALE);
       expect(result.race).toBe(Race.WHITE);
+      expect(result.fullName).toBe('João da Silva');
+      expect(result.education).toBe(EducationLevel.SECONDARY);
       expect(mockRepository.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('should create a student with householdSize if provided', async () => {
+      const command: CreateStudentCommand = {
+        email: mockStudent.email,
+        password: 'password123',
+        cpf: mockStudent.cpf,
+        birthDate: new Date('1990-01-01'),
+        gender: Gender.MALE,
+        race: Race.WHITE,
+        fullName: 'João da Silva',
+        contact: { phone: mockContact.phone },
+        householdSize: 5,
+      };
+
+      (mockRepository.findByCpf as jest.Mock).mockResolvedValue(null);
+      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
+      (mockHashService.hash as jest.Mock).mockResolvedValue('hashedPassword');
+      (mockRepository.create as jest.Mock).mockImplementation((student) =>
+        Promise.resolve(student),
+      );
+
+      const result = await service.createStudent(command);
+
+      expect(result.householdSize).toBe(5);
     });
 
     it('should throw StudentAlreadyExistsException if CPF already exists', async () => {
@@ -464,6 +491,26 @@ describe('StudentService', () => {
 
       expect(result.contact.phone).toBe('11988887777');
       expect(result.contact.city).toBe('Rio de Janeiro');
+      expect(result.motivation).toBe('Nova motivação');
+      expect(mockRepository.update).toHaveBeenCalled();
+    });
+
+    it('should update householdSize in profile update', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
+      (mockRepository.update as jest.Mock).mockImplementation((student) =>
+        Promise.resolve(student),
+      );
+
+      const updateMeCommand: UpdateStudentMeCommand = {
+        householdSize: 6,
+      };
+
+      const result = await service.updateAuthenticatedStudentProfile(
+        mockStudent.id,
+        updateMeCommand,
+      );
+
+      expect(result.householdSize).toBe(6);
       expect(mockRepository.update).toHaveBeenCalled();
     });
 
