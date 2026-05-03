@@ -1,0 +1,251 @@
+// ER diagram for hub-backend
+// Paste this entire file into https://dbdiagram.io/d to render the diagram.
+// Generated from the TypeORM entities under src/adapters/out/orm.
+
+Project hub_backend {
+  database_type: 'PostgreSQL'
+  Note: 'Amores Fati hub-backend schema. Roles (admin/student/company) inherit from users via shared PK.'
+}
+
+// =====================================================================
+// Enums (stored as varchar with CHECK constraints in the database).
+// =====================================================================
+
+Enum user_role {
+  ADMIN
+  STUDENT
+  COMPANY
+}
+
+Enum gender {
+  MALE
+  FEMALE
+  NON_BINARY
+  PREFER_NOT_TO_SAY
+  OTHER
+}
+
+Enum race {
+  WHITE
+  BLACK
+  BROWN
+  INDIGENOUS
+  PREFER_NOT_TO_SAY
+}
+
+Enum education_level {
+  NO_EDUCATION
+  PRIMARY
+  SECONDARY
+  HIGHER
+  POSTGRADUATE
+}
+
+Enum how_heard_channel {
+  INSTAGRAM
+  REFEREE
+  LINKEDIN
+  OTHERS
+} 
+
+Enum family_income {
+  TO1_SALARY
+  BETWEEN_1_3
+  MORE_THAN_3
+
+
+Enum social_benefit_type {
+  BOLSA_FAMILIA
+  BPC
+  NONE
+  OTHERS
+}
+
+// =====================================================================
+// Identity / users
+// =====================================================================
+
+Table users {
+  id uuid [pk]
+  email varchar(100) [not null, unique]
+  password_hash varchar(255) [not null]
+  role user_role [not null]
+  created_at timestamptz [not null, default: `NOW()`]
+  deleted_at timestamptz
+}
+
+Table admins {
+  id uuid [pk, ref: - users.id]
+}
+
+Table companies {
+  id uuid [pk, ref: - users.id]
+  cnpj varchar(18) [not null, unique]
+  name varchar(100) [not null]
+  responsible_name varchar(100) [not null]
+  contact_id uuid [not null, ref: - contacts.id]
+}
+
+Table students {
+  id uuid [pk, ref: - users.id]
+  contact_id uuid [not null, ref: - contacts.id]
+  cpf varchar [not null, unique]
+  full_name varchar [not null]
+  social_name varchar
+  date_of_birth date [not null]
+  gender gender [not null]
+  race race [not null]
+  education education_level
+  course_name varchar
+  institution varchar
+  activity_area varchar
+  has_programming_experience boolean
+  family_income family_income
+  motivation text
+  how_heard how_heard_channel
+  has_computer boolean
+  has_internet boolean
+  committed_to_participate boolean
+  household_size int
+}
+
+// =====================================================================
+// Shared contact info (used by students and companies)
+// =====================================================================
+
+Table contacts {
+  id uuid [pk]
+  phone varchar(20) [not null]
+  neighbourhood varchar
+  state char(2)
+  city varchar(100)
+  address varchar(255)
+  cep varchar(9)
+  complement varchar(255)
+}
+
+// =====================================================================
+// Student profile extras
+// =====================================================================
+
+Table disabilities {
+  student_id uuid [pk, ref: - students.id]
+  has_disability boolean [not null, default: false]
+  type varchar
+}
+
+Table social_benefits {
+  id int [pk, increment]
+  student_id uuid [not null, ref: > students.id]
+  benefit social_benefit_type [not null]
+
+  Indexes {
+    student_id [name: 'ix_social_benefits__student_id']
+  }
+}
+
+// =====================================================================
+// Curriculum / skills
+// =====================================================================
+
+Table curriculum {
+  id uuid [pk]
+  student_id uuid [not null, ref: - students.id]
+  is_available boolean [not null]
+  about text
+  linkedin varchar
+  github varchar
+  profile_photo varchar
+  video_presentation varchar
+}
+
+Table skills {
+  id uuid [pk]
+  name varchar(100) [not null, unique]
+}
+
+Table curriculum_skills {
+  curriculum_id uuid [not null, ref: > curriculum.id]
+  skill_id uuid [not null, ref: > skills.id]
+
+  Indexes {
+    (curriculum_id, skill_id) [pk]
+    skill_id [name: 'ix_curriculum_skills__skill_id']
+  }
+}
+
+// =====================================================================
+// Courses
+// =====================================================================
+
+Table courses {
+  id uuid [pk]
+  name varchar [not null]
+  banner varchar [not null]
+  description text
+  course_load varchar [not null]
+  start_date date [not null]
+  end_date date [not null]
+  start_registrations date [not null]
+  end_registrations date [not null]
+  modality varchar [not null, default: 'ONLINE']
+  link_access varchar [not null]
+  created_at timestamptz [not null, default: `NOW()`]
+}
+
+Table in_person_course_details {
+  id uuid [pk]
+  course_id uuid [not null, ref: - courses.id]
+  address varchar [not null]
+  start_date date [not null]
+  shift varchar [not null]
+  room varchar [not null]
+  vacancies int [not null]
+}
+
+Table enrollments {
+  id uuid [pk]
+  // No FK constraint declared in the ORM, but logically references students/courses.
+  student_id uuid [not null, ref: > students.id]
+  course_id uuid [not null, ref: > courses.id]
+  type varchar(20) [not null]
+  created_at timestamptz [not null, default: `NOW()`]
+}
+
+// =====================================================================
+// Job openings (company side)
+// =====================================================================
+
+Table job_openings {
+  id uuid [pk]
+  company_id uuid [not null, ref: > companies.id]
+  name varchar [not null]
+  description text
+  openings_count int [not null, default: 1]
+  application_link varchar(255)
+  is_pcd boolean [not null, default: false]
+
+  Indexes {
+    company_id [name: 'ix_job_openings__company_id']
+  }
+}
+
+Table job_skills {
+  job_id uuid [not null, ref: > job_openings.id]
+  skill_id uuid [not null, ref: > skills.id]
+
+  Indexes {
+    (job_id, skill_id) [pk]
+    skill_id [name: 'ix_job_skills__skill_id']
+  }
+}
+
+// =====================================================================
+// Settings (key/value)
+// =====================================================================
+
+Table settings {
+  id uuid [pk]
+  key varchar [not null, unique]
+  value text [not null]
+}

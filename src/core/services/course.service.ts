@@ -1,7 +1,10 @@
 import { randomUUID } from 'crypto';
 import { CreateCourseCommand } from '../command/course.command';
 import { Course } from '../domain/course.entity';
-import { ICourseRepository } from '../ports/course.repository.interface';
+import {
+  CourseWithLocation,
+  ICourseRepository,
+} from '../ports/course.repository.interface';
 
 export class CourseService {
   constructor(private readonly courseRepository: ICourseRepository) {}
@@ -18,6 +21,7 @@ export class CourseService {
       new Date(command.endRegistrations),
       command.modality,
       command.linkAccess,
+      command.vacancyCount,
       command.description,
     );
 
@@ -26,5 +30,9 @@ export class CourseService {
 
   async getAllCourses(): Promise<Course[]> {
     return this.courseRepository.findAll();
+  }
+
+  async getAllCoursesWithLocation(): Promise<CourseWithLocation[]> {
+    return this.courseRepository.findAllWithLocation();
   }
 }

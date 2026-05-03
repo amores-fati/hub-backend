@@ -1,8 +1,10 @@
 import {
   IsDateString,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
+  Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -77,9 +79,18 @@ export class CreateCourseDto {
 
   @ApiProperty({
     example: 'https://fatilab.com/cursos/web',
-    description: 'Link de acesso ou landing page do curso.',
+    description:
+      'URL do formulário de inscrição no site do parceiro responsável pelo curso. O aluno é redirecionado para este link ao se inscrever.',
   })
   @IsString()
   @IsNotEmpty()
   linkAccess: string;
+
+  @ApiProperty({
+    example: 30,
+    description: 'Quantidade de vagas oferecidas no curso.',
+  })
+  @IsInt()
+  @Min(0)
+  vacancyCount: number;
 }

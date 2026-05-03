@@ -9,4 +9,5 @@ export interface CreateCourseCommand {
   endRegistrations: string;
   modality: string;
   linkAccess: string;
+  vacancyCount: number;
 }
