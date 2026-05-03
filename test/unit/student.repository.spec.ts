@@ -27,6 +27,16 @@ describe('StudentRepository', () => {
     save: jest.Mock;
     update: jest.Mock;
   };
+  let queryBuilder: {
+    andWhere: jest.Mock;
+    getManyAndCount: jest.Mock;
+    innerJoinAndSelect: jest.Mock;
+    leftJoinAndMapMany: jest.Mock;
+    leftJoinAndMapOne: jest.Mock;
+    leftJoinAndSelect: jest.Mock;
+    skip: jest.Mock;
+    take: jest.Mock;
+  };
   let ormRepository: Repository<StudentOrmEntity>;
   let repository: StudentRepository;
 
@@ -37,12 +47,24 @@ describe('StudentRepository', () => {
       update: jest.fn().mockResolvedValue(undefined),
     };
 
+    queryBuilder = {
+      andWhere: jest.fn().mockReturnThis(),
+      getManyAndCount: jest.fn(),
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndMapMany: jest.fn().mockReturnThis(),
+      leftJoinAndMapOne: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+    };
+
     ormRepository = {
       manager: {
         transaction: jest.fn((callback: TransactionCallback) =>
           callback(transactionalEntityManager),
         ),
       },
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
       find: jest.fn(),
       findOne: jest.fn(),
     } as unknown as Repository<StudentOrmEntity>;
@@ -107,6 +129,78 @@ describe('StudentRepository', () => {
     expect(students).toHaveLength(1);
     expect(students[0].birthDate).toBeInstanceOf(Date);
     expect(students[0].birthDate?.toISOString()).toContain('1990-01-01');
+  });
+
+  it('should filter students using the query builder', async () => {
+    const ormEntity = buildStudentOrmEntity(buildStudent());
+    queryBuilder.getManyAndCount.mockResolvedValue([[ormEntity], 1]);
+
+    const result = await repository.findAllWithFilter({
+      search: 'student',
+      modality: 'PRESENCIAL',
+      city: 'Sao Paulo',
+      disabilityType: 'visual',
+      page: 2,
+      pageSize: 20,
+    });
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(ormRepository.createQueryBuilder as jest.Mock).toHaveBeenCalledWith(
+      'student',
+    );
+    expect(queryBuilder.innerJoinAndSelect).toHaveBeenCalledWith(
+      'student.user',
+      'user',
+      'user.deletedAt IS NULL',
+    );
+    expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+      'student.contact',
+      'contact',
+    );
+    expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+      'student.disability',
+      'disability',
+    );
+    expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+      'student.socialBenefits',
+      'socialBenefits',
+    );
+    expect(queryBuilder.leftJoinAndMapMany).toHaveBeenCalled();
+    expect(queryBuilder.leftJoinAndMapOne).toHaveBeenCalled();
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'course.modality = :modality',
+      { modality: 'PRESENCIAL' },
+    );
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'contact.city ILIKE :city',
+      { city: '%Sao Paulo%' },
+    );
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'disability.type ILIKE :disabilityType',
+      { disabilityType: '%visual%' },
+    );
+    expect(queryBuilder.skip).toHaveBeenCalledWith(20);
+    expect(queryBuilder.take).toHaveBeenCalledWith(20);
+    expect(result.items).toHaveLength(1);
+    expect(result.total).toBe(1);
+    expect(result.items[0].email).toBe('student@test.com');
+  });
+
+  it('should filter students by normalized cpf inside search', async () => {
+    queryBuilder.getManyAndCount.mockResolvedValue([
+      [buildStudentOrmEntity(buildStudent())],
+      1,
+    ]);
+
+    await repository.findAllWithFilter({
+      search: '123.456.789-09',
+      page: 1,
+      pageSize: 50,
+    });
+
+    expect(queryBuilder.andWhere).toHaveBeenCalled();
+    expect(queryBuilder.skip).toHaveBeenCalledWith(0);
+    expect(queryBuilder.take).toHaveBeenCalledWith(50);
   });
 });
 

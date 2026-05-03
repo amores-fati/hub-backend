@@ -14,6 +14,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   Req,
 } from '@nestjs/common';
 import {
@@ -43,6 +44,8 @@ import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateStudentDto } from '../dtos/student/create-student.dto';
 import { DeleteStudentsDto } from '../dtos/student/delete-student.dto';
+import { GetAdminStudentsDto } from '../dtos/student/get-admin-students.dto';
+import { PaginatedStudentsResponseDto } from '../dtos/student/paginated-students-response.dto';
 import { PatchStudentDto } from '../dtos/student/patch-student.dto';
 import { UpdateStudentDto } from '../dtos/student/update-student.dto';
 import { UpdateStudentMeDto } from '../dtos/student/update-student-me.dto';
@@ -185,6 +188,36 @@ export class StudentController {
   }
 
   @RequireAuth()
+  @Get('filter')
+  @ApiOperation({ summary: 'Lista alunos com filtros e paginacao para admins' })
+  @ApiOkResponse({
+    description: 'Retorna alunos paginados, sem usuarios excluidos.',
+    type: PaginatedStudentsResponseDto,
+  })
+  async findAllWithFilter(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() filters: GetAdminStudentsDto,
+  ) {
+    if (user.role !== UserRoleEnum.ADMIN) {
+      throw new ForbiddenException(
+        'Acesso restrito a administradores para listagem filtrada.',
+      );
+    }
+    this.logger.info('Listing students with admin filters', {
+      page: filters.page,
+      pageSize: filters.pageSize,
+      adminId: user.id,
+    });
+    const students =
+      await this.studentService.findAllStudentsWithFilter(filters);
+    this.logger.info('Students listed with admin filters', {
+      count: students.items.length,
+      total: students.meta.total,
+    });
+    return students;
+  }
+
+  @RequireAuth()
   @Get(':id')
   @ApiOperation({ summary: 'Busca um aluno por ID' })
   @ApiOkResponse({ description: 'Aluno encontrado com sucesso.' })
@@ -313,12 +346,22 @@ export class StudentController {
   @RequireAuth()
   @Delete()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Deleta (soft delete) uma lista de alunos' })
+  @ApiOperation({
+    summary: 'Deleta (soft delete) uma lista de alunos (Admin apenas)',
+  })
   @ApiOkResponse({
     description: 'Retorna um objeto com os IDs que não foram encontrados.',
   })
-  async removeStudents(@Body() dto: DeleteStudentsDto) {
-    this.logger.info('Deleting students', { ids: dto.ids });
+  async removeStudents(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: DeleteStudentsDto,
+  ) {
+    if (user.role !== UserRoleEnum.ADMIN) {
+      throw new ForbiddenException(
+        'Apenas administradores podem deletar alunos.',
+      );
+    }
+    this.logger.info('Deleting students', { ids: dto.ids, adminId: user.id });
     return this.studentService.deleteStudents(dto.ids);
   }
 }

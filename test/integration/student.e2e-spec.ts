@@ -3,6 +3,9 @@ import request from 'supertest';
 import { Server } from 'http';
 import { cpf } from 'cpf-cnpj-validator';
 import { createIntegrationApp } from './bootstrap';
+import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
+import { DataSource } from 'typeorm';
 
 interface StudentResponse {
   id: string;
@@ -16,17 +19,48 @@ interface StudentResponse {
   };
 }
 
+interface AdminStudentsResponse {
+  items: Array<{
+    id: string;
+    cpf: string;
+    fullName: string;
+    enrollmentStatus: string;
+  }>;
+  meta: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 describe('StudentController (e2e)', () => {
   let app: INestApplication;
   let createdStudentId: string;
+  let softDeletedStudentId: string;
   let dynamicCpf: string;
   let accessToken: string;
   const studentEmail = `student-${Date.now()}@test.com`;
   let currentStudentEmail = studentEmail;
   const studentPassword = 'securepassword123';
+  let adminAccessToken: string;
+  const adminEmail = 'admin@test.com';
+  const adminPassword = 'adminpassword123';
 
   beforeAll(async () => {
-    app = await createIntegrationApp();
+    const adminSeed = async (dataSource: DataSource) => {
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+      const adminId = randomUUID();
+      await dataSource.query(
+        `INSERT INTO "users" (id, email, password_hash, role) VALUES ($1, $2, $3, $4)`,
+        [adminId, adminEmail, hashedPassword, 'ADMIN'],
+      );
+      await dataSource.query(`INSERT INTO "admins" (id) VALUES ($1)`, [
+        adminId,
+      ]);
+    };
+
+    app = await createIntegrationApp({ seed: adminSeed });
     dynamicCpf = cpf.generate();
   }, 30000);
 
@@ -84,6 +118,20 @@ describe('StudentController (e2e)', () => {
       expect(accessToken).toBeDefined();
     });
 
+    it('should login as admin and obtain an access token', async () => {
+      const response = await request(app.getHttpServer() as Server)
+        .post('/auth/login')
+        .send({
+          email: adminEmail,
+          password: adminPassword,
+        })
+        .expect(200);
+
+      const body = response.body as { accessToken: string };
+      adminAccessToken = body.accessToken;
+      expect(adminAccessToken).toBeDefined();
+    });
+
     it('should return 400 Bad Request for invalid payload', () => {
       return request(app.getHttpServer() as Server)
         .post('/students')
@@ -125,6 +173,89 @@ describe('StudentController (e2e)', () => {
           const body = res.body as unknown as StudentResponse[];
           expect(Array.isArray(body)).toBe(true);
           expect(body.length).toBeGreaterThan(0);
+        });
+    });
+  });
+
+  describe('/students/filter (GET)', () => {
+    it('should return paginated admin list with masked cpf (200)', () => {
+      return request(app.getHttpServer() as Server)
+        .get('/students/filter')
+        .query({ search: dynamicCpf, page: 1, pageSize: 20 })
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .expect(200)
+        .expect((res) => {
+          const body = res.body as unknown as AdminStudentsResponse;
+          expect(Array.isArray(body.items)).toBe(true);
+          expect(body.meta).toMatchObject({
+            page: 1,
+            pageSize: 20,
+          });
+          expect(body.items[0].cpf).toMatch(/^\d{3}\.\*\*\*\.\*\*\*-\d{2}$/);
+        });
+    });
+
+    it('should filter by modality (200)', () => {
+      return request(app.getHttpServer() as Server)
+        .get('/students/filter')
+        .query({ modality: 'ONLINE', page: 1, pageSize: 20 })
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .expect(200)
+        .expect((res) => {
+          const body = res.body as unknown as AdminStudentsResponse;
+          expect(Array.isArray(body.items)).toBe(true);
+        });
+    });
+
+    it('should return 400 Bad Request when pageSize is invalid', () => {
+      return request(app.getHttpServer() as Server)
+        .get('/students/filter')
+        .query({ pageSize: 30 })
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .expect(400);
+    });
+
+    it('should not list soft-deleted students', async () => {
+      const cpfToDelete = cpf.generate();
+      const emailToDelete = `deleted-student-${Date.now()}@test.com`;
+
+      const createResponse = await request(app.getHttpServer() as Server)
+        .post('/students')
+        .send({
+          email: emailToDelete,
+          password: studentPassword,
+          fullName: 'Deleted Student Full Name',
+          cpf: cpfToDelete,
+          birthDate: '1995-05-20',
+          gender: 'MALE',
+          race: 'BROWN',
+          contact: {
+            city: 'Sao Paulo',
+            state: 'SP',
+            address: 'Rua de Teste',
+            neighbourhood: 'Centro',
+            cep: '01001000',
+            phone: '11977777777',
+          },
+        })
+        .expect(201);
+
+      softDeletedStudentId = (createResponse.body as StudentResponse).id;
+
+      await request(app.getHttpServer() as Server)
+        .delete('/students')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send({ ids: [softDeletedStudentId] })
+        .expect(200);
+
+      await request(app.getHttpServer() as Server)
+        .get('/students/filter')
+        .query({ search: cpfToDelete, page: 1, pageSize: 20 })
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .expect(200)
+        .expect((res) => {
+          const body = res.body as unknown as AdminStudentsResponse;
+          expect(body.items).toHaveLength(0);
         });
     });
   });
@@ -278,7 +409,7 @@ describe('StudentController (e2e)', () => {
     it('should soft-delete students (200)', () => {
       return request(app.getHttpServer() as Server)
         .delete(`/students`)
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
         .send({ ids: [createdStudentId] })
         .expect(200)
         .expect((res) => {

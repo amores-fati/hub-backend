@@ -26,6 +26,7 @@ describe('StudentService', () => {
   const mockRepository: IStudentRepository = {
     create: jest.fn(),
     findAll: jest.fn(),
+    findAllWithFilter: jest.fn(),
     findById: jest.fn(),
     findByCpf: jest.fn(),
     update: jest.fn(),
@@ -171,6 +172,94 @@ describe('StudentService', () => {
       expect(result).toHaveLength(1);
       expect(result[0].cpf).toBe(mockStudent.cpf);
       expect(mockRepository.findAll).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('findAllStudentsWithFilter', () => {
+    it('should search and return paginated masked students', async () => {
+      (mockRepository.findAllWithFilter as jest.Mock).mockResolvedValue({
+        items: [
+          {
+            id: mockStudent.id,
+            email: mockStudent.email,
+            cpf: mockStudent.cpf,
+            fullName: mockStudent.fullName,
+            city: mockStudent.contact.city,
+            state: mockStudent.contact.state,
+            enrollments: [{ courseId: 'course-id', courseModality: 'ONLINE' }],
+          },
+        ],
+        total: 1,
+      });
+
+      const result = await service.findAllStudentsWithFilter({
+        search: '12345678909',
+        page: 1,
+        pageSize: 20,
+      });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0]).toMatchObject({
+        id: mockStudent.id,
+        cpf: '123.***.***-09',
+        enrollmentStatus: 'ONLINE',
+      });
+      expect(result.meta).toEqual({
+        page: 1,
+        pageSize: 20,
+        total: 1,
+        totalPages: 1,
+      });
+      expect(mockRepository.findAllWithFilter).toHaveBeenCalledWith({
+        search: '12345678909',
+        city: undefined,
+        disabilityType: undefined,
+        modality: undefined,
+        page: 1,
+        pageSize: 20,
+      });
+    });
+
+    it('should search by text and normalize additional filters', async () => {
+      (mockRepository.findAllWithFilter as jest.Mock).mockResolvedValue({
+        items: [],
+        total: 0,
+      });
+
+      await service.findAllStudentsWithFilter({
+        search: ' aluno ',
+        city: ' Sao Paulo ',
+        disabilityType: ' visual ',
+        modality: 'ONLINE',
+      });
+
+      expect(mockRepository.findAllWithFilter).toHaveBeenCalledWith({
+        search: 'aluno',
+        city: 'Sao Paulo',
+        disabilityType: 'visual',
+        modality: 'ONLINE',
+        page: 1,
+        pageSize: 20,
+      });
+    });
+
+    it('should return NAO_INSCRITO when the student has no enrollments', async () => {
+      (mockRepository.findAllWithFilter as jest.Mock).mockResolvedValue({
+        items: [
+          {
+            id: mockStudent.id,
+            email: mockStudent.email,
+            cpf: mockStudent.cpf,
+            fullName: mockStudent.fullName,
+            enrollments: [],
+          },
+        ],
+        total: 1,
+      });
+
+      const result = await service.findAllStudentsWithFilter({});
+
+      expect(result.items[0].enrollmentStatus).toBe('NAO_INSCRITO');
     });
   });
 

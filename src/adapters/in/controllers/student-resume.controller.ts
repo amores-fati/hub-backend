@@ -62,7 +62,7 @@ export class StudentResumeController {
   }
 
   @RequireAuth()
-  @Get(['students/me/resume', 'users/student/resume'])
+  @Get('students/me/resume')
   @ApiOperation({ summary: 'Consulta o curriculo do aluno autenticado' })
   @ApiOkResponse({
     description: 'Curriculo encontrado com sucesso.',
@@ -98,7 +98,7 @@ export class StudentResumeController {
   }
 
   @RequireAuth()
-  @Put(['students/me/resume', 'users/student/resume'])
+  @Put('students/me/resume')
   @ApiOperation({
     summary: 'Cria ou atualiza o curriculo do aluno autenticado',
   })
@@ -136,7 +136,7 @@ export class StudentResumeController {
   }
 
   @RequireAuth()
-  @Post(['students/me/resume/photo', 'users/student/resume/photo'])
+  @Post('students/me/resume/photo')
   @UseInterceptors(FileInterceptor('photo'))
   @ApiOperation({
     summary: 'Atualiza a foto do curriculo do aluno autenticado',
@@ -201,7 +201,7 @@ export class StudentResumeController {
   }
 
   @RequireAuth()
-  @Post(['users/student/resume/skills', 'students/me/resume/skills'])
+  @Post('students/me/resume/skills')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Adiciona uma habilidade ao curriculo do aluno autenticado',
@@ -252,10 +252,7 @@ export class StudentResumeController {
   }
 
   @RequireAuth()
-  @Delete([
-    'students/me/resume/skills/:skillId',
-    'users/student/resume/skills/:skillId',
-  ])
+  @Delete('students/me/resume/skills/:skillId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Remove uma habilidade do curriculo do aluno autenticado',
