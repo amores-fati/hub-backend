@@ -41,6 +41,7 @@ export interface CreateStudentCommand {
   contact: CreateContactCommand;
   disability?: CreateDisabilityCommand;
   socialBenefits?: CreateSocialBenefitCommand[];
+  fullName: string;
   socialName?: string;
   familyIncome?: FamilyIncome;
 }

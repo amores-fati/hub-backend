@@ -133,6 +133,7 @@ function buildStudent({
     new Date('1990-01-01'),
     Gender.MALE,
     Race.WHITE,
+    'Student Name',
     undefined, // education
     undefined, // institution
     undefined, // activityArea
@@ -180,6 +181,7 @@ function buildStudentOrmEntity(
   ormEntity.birthDate = student.birthDate ?? null;
   ormEntity.gender = student.gender ?? null;
   ormEntity.race = student.race ?? null;
+  ormEntity.fullName = student.fullName ?? null;
   ormEntity.education = student.education ?? null;
   ormEntity.institution = student.institution ?? null;
   ormEntity.activityArea = student.activityArea ?? null;

@@ -26,6 +26,7 @@ describe('CourseRepository', () => {
     ormEntity.endDate = '2025-06-30' as unknown as Date;
     ormEntity.startRegistrations = '2025-01-01' as unknown as Date;
     ormEntity.endRegistrations = '2025-01-28' as unknown as Date;
+    ormEntity.modality = 'ONLINE';
     ormEntity.linkAccess = 'https://fatilab.com/cursos/teste';
 
     (ormRepository.find as jest.Mock).mockResolvedValue([ormEntity]);

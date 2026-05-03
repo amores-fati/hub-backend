@@ -68,6 +68,9 @@ export class StudentOrmEntity {
   @Column({ unique: true })
   cpf: string;
 
+  @Column({ name: 'full_name', type: 'varchar' })
+  fullName: string;
+
   @Column({ name: 'social_name', type: 'varchar', nullable: true })
   socialName: string | null;
 

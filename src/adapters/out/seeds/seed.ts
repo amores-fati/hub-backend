@@ -13,6 +13,7 @@ import { SocialBenefitOrmEntity } from '../orm/social-benefit.orm-entity';
 import { DisabilityOrmEntity } from '../orm/disability.orm-entity';
 import { CourseOrmEntity } from '../orm/course.orm-entity';
 import { InPersonCourseDetailOrmEntity } from '../orm/in-person-course-detail.orm-entity';
+import { SettingOrmEntity } from '../orm/setting.orm-entity';
 import { SkillOrmEntity } from '../orm/skill.orm-entity';
 import { CurriculumOrmEntity } from '../orm/curriculum.orm-entity';
 import { CurriculumSkillOrmEntity } from '../orm/curriculum-skill.orm-entity';
@@ -113,7 +114,7 @@ async function ensureSeedMode(appDataSource: DataSource): Promise<boolean> {
       job_skills, curriculum_skills, skills, job_openings, curriculum,
       in_person_course_details, courses, disabilities,
       social_benefits,
-      students, admins, companies, contacts, users
+      students, admins, companies, contacts, users, settings
       RESTART IDENTITY CASCADE`);
     logger.info('Dados anteriores removidos.');
   } else {
@@ -156,6 +157,15 @@ export async function seed(): Promise<void> {
   });
   await appDataSource.getRepository(AdminOrmEntity).save(admin);
   logger.info('Admin criado.');
+
+  // 1.1 CONFIGURAÇÕES GERAIS
+  const whatsappSetting = appDataSource.getRepository(SettingOrmEntity).create({
+    id: uuidv4(),
+    key: 'whatsapp_phone',
+    value: '(51) 99266-9381',
+  });
+  await appDataSource.getRepository(SettingOrmEntity).save(whatsappSetting);
+  logger.info('Configuração de WhatsApp seedada.');
 
   // 2. EMPRESAS
   const empresasData = [
@@ -229,6 +239,7 @@ export async function seed(): Promise<void> {
       startRegistrations: new Date('2025-01-01'),
       endRegistrations: new Date('2025-01-28'),
       linkAccess: 'https://fatilab.com/cursos/web',
+      modality: 'PRESENCIAL',
     },
     {
       name: 'Ciência de Dados com Python',
@@ -240,6 +251,7 @@ export async function seed(): Promise<void> {
       startRegistrations: new Date('2025-02-01'),
       endRegistrations: new Date('2025-02-25'),
       linkAccess: 'https://fatilab.com/cursos/data',
+      modality: 'PRESENCIAL',
     },
     {
       name: 'UX/UI Design',
@@ -251,6 +263,7 @@ export async function seed(): Promise<void> {
       startRegistrations: new Date('2025-03-01'),
       endRegistrations: new Date('2025-03-28'),
       linkAccess: 'https://fatilab.com/cursos/ux',
+      modality: 'ONLINE',
     },
     {
       name: 'Infraestrutura e DevOps',
@@ -262,6 +275,7 @@ export async function seed(): Promise<void> {
       startRegistrations: new Date('2025-04-01'),
       endRegistrations: new Date('2025-04-28'),
       linkAccess: 'https://fatilab.com/cursos/devops',
+      modality: 'ONLINE',
     },
     {
       name: 'Introdução à Programação',
@@ -273,6 +287,7 @@ export async function seed(): Promise<void> {
       startRegistrations: new Date('2025-01-01'),
       endRegistrations: new Date('2025-01-12'),
       linkAccess: 'https://fatilab.com/cursos/intro',
+      modality: 'ONLINE',
     },
   ];
 
@@ -498,6 +513,7 @@ export async function seed(): Promise<void> {
       education: a.education,
       gender: a.gender,
       race: a.race,
+      fullName: a.name,
       activityArea: a.area,
       hasProgrammingExperience: i % 2 === 0,
       familyIncome: FamilyIncome.BETWEEN_1_3,
@@ -667,6 +683,7 @@ export async function seed(): Promise<void> {
   logger.info('- 10 skills');
   logger.info('- 2 curriculos');
   logger.info('- 5 vagas');
+  logger.info('- 1 configuração de WhatsApp');
   logger.info('\nExemplos reais do seed:');
   logger.info('- Admin: admin@fatilab.com | senha: Admin@123 | role: ADMIN');
   logger.info(

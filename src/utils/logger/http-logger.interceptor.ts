@@ -30,10 +30,13 @@ export class HttpLoggerInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap({
-        next: () => this.logResponse(method, originalUrl, res.statusCode, start),
+        next: () =>
+          this.logResponse(method, originalUrl, res.statusCode, start),
         error: (err: unknown) => {
           const status =
-            err instanceof Error && 'status' in err && typeof err.status === 'number'
+            err instanceof Error &&
+            'status' in err &&
+            typeof err.status === 'number'
               ? err.status
               : 500;
           this.logResponse(method, originalUrl, status, start, err);

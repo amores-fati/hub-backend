@@ -41,13 +41,10 @@ export class AmoresFatiLogger implements LoggerService {
     const line = `${ts} [${level}]${ctx} ${text}${metaStr}`;
 
     if (level === LogLevel.ERROR || level === LogLevel.CRITICAL) {
-      // eslint-disable-next-line no-console
       console.error(line);
     } else if (level === LogLevel.WARN) {
-      // eslint-disable-next-line no-console
       console.warn(line);
     } else {
-      // eslint-disable-next-line no-console
       console.log(line);
     }
   }

@@ -19,6 +19,7 @@ import { User } from './user.entity';
 export class Student extends User {
   readonly #cpf: string;
   #contact: Contact;
+  #fullName: string;
   #socialName?: string;
   #birthDate: Date;
   #gender: Gender;
@@ -46,6 +47,7 @@ export class Student extends User {
     birthDate: Date | string,
     gender: Gender,
     race: Race,
+    fullName: string,
     education?: EducationLevel,
     institution?: string,
     activityArea?: string,
@@ -79,6 +81,7 @@ export class Student extends User {
     this.#committedToParticipate = committedToParticipate;
     this.#disability = disability;
     this.#socialBenefits = socialBenefits;
+    this.#fullName = fullName;
     this.#socialName = socialName;
     this.#courseName = courseName;
     this.#familyIncome = familyIncome;
@@ -95,6 +98,10 @@ export class Student extends User {
 
   get socialName(): string | undefined {
     return this.#socialName;
+  }
+
+  get fullName(): string {
+    return this.#fullName;
   }
 
   get birthDate(): Date {
@@ -337,6 +344,7 @@ export class Student extends User {
       committedToParticipate: this.committedToParticipate,
       disability: this.disability,
       socialBenefits: this.socialBenefits,
+      fullName: this.fullName,
       socialName: this.socialName,
       courseName: this.courseName,
       familyIncome: this.familyIncome,

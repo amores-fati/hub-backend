@@ -44,6 +44,15 @@ export class CreateStudentDto {
   @MaxLength(100)
   password: string;
 
+  @ApiProperty({
+    example: 'João da Silva',
+    description: 'Nome legal do aluno',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  fullName: string;
+
   @ApiPropertyOptional({
     example: 'Joãozinho',
     description: 'Nome social do aluno',

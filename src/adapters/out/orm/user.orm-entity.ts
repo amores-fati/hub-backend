@@ -2,6 +2,7 @@ import {
   Check,
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   OneToOne,
   PrimaryColumn,
@@ -36,6 +37,13 @@ export class UserOrmEntity {
     default: () => 'NOW()',
   })
   createdAt: Date;
+
+  @DeleteDateColumn({
+    name: 'deleted_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
+  deletedAt: Date | null;
 
   @OneToOne(() => StudentOrmEntity, (s) => s.user)
   student: StudentOrmEntity | null;

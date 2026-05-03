@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -16,12 +17,15 @@ import {
   ApiCreatedResponse,
   ApiOperation,
   ApiTags,
+  ApiOkResponse,
 } from '@nestjs/swagger';
 import { DomainException } from '../../../core/exceptions/domain.exception';
 import { AdminService } from '../../../core/services/admin.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateAdminDto } from '../dtos/admin/create-admin.dto';
+import { StudentService } from '../../../core/services/student.service';
+import { DeleteStudentsDto } from '../dtos/student/delete-student.dto';
 
 @ApiTags('Admins')
 @RequireAuth()
@@ -30,6 +34,7 @@ export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly logger: AmoresFatiLogger,
+    private readonly studentService: StudentService,
   ) {
     this.logger.setContext(AdminController.name);
   }
@@ -72,5 +77,13 @@ export class AdminController {
       }
       throw error;
     }
+  }
+  @Delete('students')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Deleta (soft delete) uma lista de alunos' })
+  @ApiOkResponse({ description: 'IDs que não foram encontrados.' })
+  async removeStudents(@Body() dto: DeleteStudentsDto) {
+    this.logger.info('Deleting students', { ids: dto.ids });
+    return this.studentService.deleteStudents(dto.ids);
   }
 }

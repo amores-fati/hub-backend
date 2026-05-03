@@ -19,8 +19,16 @@ export class CourseRepository implements ICourseRepository {
   }
 
   async findAll(): Promise<Course[]> {
-    const ormEntities = await this.ormRepository.find();
+    const ormEntities = await this.ormRepository.find({
+      order: { createdAt: 'DESC' },
+    });
     return ormEntities.map((entity) => this.mapToDomain(entity));
+  }
+
+  async findById(id: string): Promise<Course | null> {
+    const ormEntity = await this.ormRepository.findOne({ where: { id } });
+    if (!ormEntity) return null;
+    return this.mapToDomain(ormEntity);
   }
 
   private mapToDomain(ormEntity: CourseOrmEntity): Course {
@@ -33,6 +41,7 @@ export class CourseRepository implements ICourseRepository {
       this.coerceDate(ormEntity.endDate),
       this.coerceDate(ormEntity.startRegistrations),
       this.coerceDate(ormEntity.endRegistrations),
+      ormEntity.modality,
       ormEntity.linkAccess,
       ormEntity.description ?? undefined,
     );
@@ -49,7 +58,9 @@ export class CourseRepository implements ICourseRepository {
       endDate: course.endDate,
       startRegistrations: course.startRegistrations,
       endRegistrations: course.endRegistrations,
+      modality: course.modality,
       linkAccess: course.linkAccess,
+      createdAt: new Date(),
     };
   }
 

@@ -9,6 +9,7 @@ export class Course {
   #endDate: Date;
   #startRegistrations: Date;
   #endRegistrations: Date;
+  #modality: string;
   #linkAccess: string;
   #description?: string;
 
@@ -21,6 +22,7 @@ export class Course {
     endDate: Date,
     startRegistrations: Date,
     endRegistrations: Date,
+    modality: string,
     linkAccess: string,
     description?: string,
   ) {
@@ -32,6 +34,7 @@ export class Course {
     this.#endDate = endDate;
     this.#startRegistrations = startRegistrations;
     this.#endRegistrations = endRegistrations;
+    this.#modality = modality;
     this.#linkAccess = linkAccess;
     this.#description = description;
     this.validateCourse();
@@ -73,6 +76,10 @@ export class Course {
     return this.#endRegistrations;
   }
 
+  get modality(): string {
+    return this.#modality;
+  }
+
   get linkAccess(): string {
     return this.#linkAccess;
   }
@@ -83,6 +90,10 @@ export class Course {
     this.validateRequiredText(
       this.#courseLoad,
       'A carga horaria do curso e obrigatoria.',
+    );
+    this.validateRequiredText(
+      this.#modality,
+      'A modalidade do curso e obrigatoria.',
     );
     this.validateRequiredText(
       this.#linkAccess,
@@ -140,6 +151,7 @@ export class Course {
       endDate: this.endDate,
       startRegistrations: this.startRegistrations,
       endRegistrations: this.endRegistrations,
+      modality: this.modality,
       linkAccess: this.linkAccess,
     };
   }
