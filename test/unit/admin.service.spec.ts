@@ -42,8 +42,8 @@ describe('AdminService', () => {
       mockUserRepository,
       mockAdminRepository,
       mockHashService,
-      mockCurriculumRepository as any,
-      mockStudentRepository as any,
+      mockCurriculumRepository as unknown as ICurriculumRepository,
+      mockStudentRepository as unknown as IStudentRepository,
     );
   });
 
@@ -94,23 +94,27 @@ describe('AdminService', () => {
         photoUrl: 'photo.jpg',
         skills: [
           { id: 's1', skillName: 'Node.js' },
-          { id: 's2', skillName: 'TypeScript' }
-        ]
+          { id: 's2', skillName: 'TypeScript' },
+        ],
       };
 
       const mockStudent = {
         fullName: 'Tarciso Mota',
-        email: 'tarciso@test.com'
+        email: 'tarciso@test.com',
       };
 
-      mockCurriculumRepository.findByStudentId.mockResolvedValue(mockCurriculum);
+      mockCurriculumRepository.findByStudentId.mockResolvedValue(
+        mockCurriculum,
+      );
       mockStudentRepository.findById.mockResolvedValue(mockStudent);
 
       const result = await service.getStudentResume(studentId);
 
       expect(result.id).toBe('curr-1');
       expect(result.student.fullName).toBe('Tarciso Mota');
-      expect(mockCurriculumRepository.findByStudentId).toHaveBeenCalledWith(studentId);
+      expect(mockCurriculumRepository.findByStudentId).toHaveBeenCalledWith(
+        studentId,
+      );
       expect(mockStudentRepository.findById).toHaveBeenCalledWith(studentId);
     });
 
@@ -118,14 +122,18 @@ describe('AdminService', () => {
       mockCurriculumRepository.findByStudentId.mockResolvedValue(null);
       mockStudentRepository.findById.mockResolvedValue({});
 
-      await expect(service.getStudentResume(studentId)).rejects.toThrow(NotFoundException);
+      await expect(service.getStudentResume(studentId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw NotFoundException if student does not exist', async () => {
       mockCurriculumRepository.findByStudentId.mockResolvedValue({});
       mockStudentRepository.findById.mockResolvedValue(null);
 
-      await expect(service.getStudentResume(studentId)).rejects.toThrow(NotFoundException);
+      await expect(service.getStudentResume(studentId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

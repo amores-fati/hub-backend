@@ -12,8 +12,6 @@ import { AdminController } from './adapters/in/controllers/admin.controller';
 import { AdminService } from './core/services/admin.service';
 import { AdminRepository } from './adapters/out/repository/admin.repository';
 import { IAdminRepository } from './core/ports/admin.repository.interface';
-import { ICurriculumRepository } from './core/ports/curriculum.repository.interface';
-import { CurriculumRepository } from './adapters/out/repository/curriculum.repository';
 
 // User Adapters & Core
 import { UserRepository } from './adapters/out/repository/user.repository';
@@ -115,8 +113,6 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       SkillOrmEntity,
       SettingOrmEntity,
       EnrollmentOrmEntity,
-      CurriculumOrmEntity,
-      CurriculumSkillOrmEntity,
     ]),
   ],
   controllers: [
@@ -145,23 +141,26 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         studentRepository: IStudentRepository,
       ) => {
         return new AdminService(
-          userRepository, 
-          adminRepository, 
-          hashService, 
+          userRepository,
+          adminRepository,
+          hashService,
           curriculumRepository,
-          studentRepository
+          studentRepository,
         );
       },
-      inject: [IUserRepository, IAdminRepository, IHashService, ICurriculumRepository, IStudentRepository],
+      inject: [
+        IUserRepository,
+        IAdminRepository,
+        IHashService,
+        ICurriculumRepository,
+        IStudentRepository,
+      ],
     },
     {
       provide: IAdminRepository,
       useClass: AdminRepository,
     },
-    {
-      provide: ICurriculumRepository,
-      useClass: CurriculumRepository,
-    },
+
     {
       provide: AuthService,
       useFactory: (
