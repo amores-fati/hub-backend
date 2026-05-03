@@ -13,6 +13,7 @@ export interface StudentListProjection {
   cpf: string;
   fullName: string;
   socialName?: string;
+  phoneNumber: string;
   city?: string;
   state?: string;
   hasDisability?: boolean;

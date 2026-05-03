@@ -315,6 +315,7 @@ export class StudentRepository implements IStudentRepository {
       cpf: ormEntity.cpf,
       fullName: ormEntity.fullName,
       socialName: ormEntity.socialName || undefined,
+      phoneNumber: ormEntity.contact.phone,
       city: ormEntity.contact.city || undefined,
       state: ormEntity.contact.state || undefined,
       hasDisability: ormEntity.disability?.hasDisability,

@@ -35,6 +35,7 @@ export interface StudentListItem {
   cpf: string;
   fullName: string;
   socialName?: string;
+  phoneNumber: string;
   city?: string;
   state?: string;
   hasDisability?: boolean;
@@ -502,6 +503,7 @@ export class StudentService {
       cpf: this.maskCpf(student.cpf),
       fullName: student.fullName,
       socialName: student.socialName,
+      phoneNumber: student.phoneNumber,
       city: student.city,
       state: student.state,
       hasDisability: student.hasDisability,
