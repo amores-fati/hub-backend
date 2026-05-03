@@ -19,6 +19,8 @@ describe('StudentService - getMyProfile (getStudentById)', () => {
     update: jest.fn(),
     delete: jest.fn(),
     existsById: jest.fn(),
+    findAllWithFilter: jest.fn(),
+    softDeleteMany: jest.fn(),
   };
 
   const mockUserRepository: IUserRepository = {
