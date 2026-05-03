@@ -1,29 +1,60 @@
-import { Admin } from '../domain/admin.entity';
-import { IUserRepository } from '../ports/user.repository.interface';
-import { UserAlreadyExistsException } from '../exceptions/user-already-exists.exception';
-import { IHashService } from '../ports/hash.service.interface';
-import { CreateAdminCommand } from '../command/admin.command';
+import { NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import { Admin } from '../domain/admin.entity';
 import { IAdminRepository } from '../ports/admin.repository.interface';
+import { ICurriculumRepository } from '../ports/curriculum.repository.interface';
+import { IHashService } from '../ports/hash.service.interface';
+import { IStudentRepository } from '../ports/student.repository.interface';
+import { IUserRepository } from '../ports/user.repository.interface';
+import { CreateAdminCommand } from '../command/admin.command';
+import { UserAlreadyExistsException } from '../exceptions/user-already-exists.exception';
+import { StudentResumeResponseDto } from '../../adapters/in/dtos/admin/student-resume-response.dto';
 
 export class AdminService {
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly adminRepository: IAdminRepository,
     private readonly hashService: IHashService,
+    private readonly curriculumRepository: ICurriculumRepository,
+    private readonly studentRepository: IStudentRepository,
   ) {}
 
   async createAdmin(command: CreateAdminCommand): Promise<Admin> {
     const existingUser = await this.userRepository.findByEmail(command.email);
-
     if (existingUser) {
       throw new UserAlreadyExistsException(command.email);
     }
-
     const hashedPassword = await this.hashService.hash(command.password);
-
     const adminUser = new Admin(randomUUID(), command.email, hashedPassword);
-
     return this.adminRepository.create(adminUser);
+  }
+
+  async getStudentResume(studentId: string): Promise<StudentResumeResponseDto> {
+    const [curriculum, student] = await Promise.all([
+      this.curriculumRepository.findByStudentId(studentId),
+      this.studentRepository.findById(studentId),
+    ]);
+
+    if (!curriculum || !student) {
+      throw new NotFoundException(
+        'Aluno não encontrado ou sem currículo cadastrado',
+      );
+    }
+
+    return {
+      id: curriculum.id,
+      about: curriculum.about,
+      linkedinUrl: curriculum.linkedinUrl || '',
+      githubUrl: curriculum.githubUrl || '',
+      photoUrl: curriculum.photoUrl,
+      skills: curriculum.skills.map((s) => ({
+        id: s.id,
+        skillName: s.skillName,
+      })),
+      student: {
+        fullName: student.fullName,
+        email: student.email,
+      },
+    };
   }
 }

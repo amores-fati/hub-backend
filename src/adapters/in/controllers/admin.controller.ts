@@ -1,23 +1,25 @@
-// Substitui o antigo: src/adapters/in/controllers/user.controller.ts
 // src/adapters/in/controllers/admin.controller.ts
 import {
   BadRequestException,
   Body,
   ConflictException,
   Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
-  Delete,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
-  ApiOkResponse,
 } from '@nestjs/swagger';
 import { DomainException } from '../../../core/exceptions/domain.exception';
 import { AdminService } from '../../../core/services/admin.service';
@@ -26,6 +28,7 @@ import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateAdminDto } from '../dtos/admin/create-admin.dto';
 import { StudentService } from '../../../core/services/student.service';
 import { DeleteStudentsDto } from '../dtos/student/delete-student.dto';
+import { StudentResumeResponseDto } from '../dtos/admin/student-resume-response.dto';
 
 @ApiTags('Admins')
 @RequireAuth()
@@ -47,9 +50,7 @@ export class AdminController {
     description: 'Cria uma conta de acesso com privilégios administrativos.',
   })
   @ApiBody({ type: CreateAdminDto })
-  @ApiCreatedResponse({
-    description: 'Administrador criado com sucesso.',
-  })
+  @ApiCreatedResponse({ description: 'Administrador criado com sucesso.' })
   @ApiBadRequestResponse({ description: 'Erro de validação nos dados.' })
   @ApiConflictResponse({ description: 'O e-mail fornecido já está em uso.' })
   async create(@Body() createAdminDto: CreateAdminDto) {
@@ -57,10 +58,7 @@ export class AdminController {
       this.logger.info('Creating admin', { email: createAdminDto.email });
       const admin = await this.adminService.createAdmin(createAdminDto);
       this.logger.info('Admin created', { id: admin.id, email: admin.email });
-      return {
-        id: admin.id,
-        email: admin.email,
-      };
+      return { id: admin.id, email: admin.email };
     } catch (error) {
       if (
         error instanceof Error &&
@@ -78,6 +76,7 @@ export class AdminController {
       throw error;
     }
   }
+
   @Delete('students')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Deleta (soft delete) uma lista de alunos' })
@@ -85,5 +84,18 @@ export class AdminController {
   async removeStudents(@Body() dto: DeleteStudentsDto) {
     this.logger.info('Deleting students', { ids: dto.ids });
     return this.studentService.deleteStudents(dto.ids);
+  }
+
+  @Get('students/:id/resume')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Retorna o currículo de um aluno em modo leitura' })
+  @ApiOkResponse({ type: StudentResumeResponseDto })
+  @ApiNotFoundResponse({
+    description: 'Aluno não encontrado ou sem currículo cadastrado.',
+  })
+  async getStudentResume(
+    @Param('id') id: string,
+  ): Promise<StudentResumeResponseDto> {
+    return this.adminService.getStudentResume(id);
   }
 }

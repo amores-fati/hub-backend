@@ -223,10 +223,7 @@ export class StudentService {
       familyIncome: this.mapFamilyIncome(command.familyIncome),
     });
 
-    if (
-      command.isPcd !== undefined ||
-      command.disabilityType !== undefined
-    ) {
+    if (command.isPcd !== undefined || command.disabilityType !== undefined) {
       student.changeDisability(
         new Disability(
           student.id,

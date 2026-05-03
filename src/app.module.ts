@@ -137,15 +137,30 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         userRepository: IUserRepository,
         adminRepository: IAdminRepository,
         hashService: IHashService,
+        curriculumRepository: ICurriculumRepository,
+        studentRepository: IStudentRepository,
       ) => {
-        return new AdminService(userRepository, adminRepository, hashService);
+        return new AdminService(
+          userRepository,
+          adminRepository,
+          hashService,
+          curriculumRepository,
+          studentRepository,
+        );
       },
-      inject: [IUserRepository, IAdminRepository, IHashService],
+      inject: [
+        IUserRepository,
+        IAdminRepository,
+        IHashService,
+        ICurriculumRepository,
+        IStudentRepository,
+      ],
     },
     {
       provide: IAdminRepository,
       useClass: AdminRepository,
     },
+
     {
       provide: AuthService,
       useFactory: (

@@ -14,7 +14,6 @@ import {
   Patch,
   Post,
   Put,
-  
   Req,
 } from '@nestjs/common';
 import {
@@ -36,7 +35,10 @@ import {
 } from '../../../core/command/student.command';
 import { StudentService } from '../../../core/services/student.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
-import { CurrentUser, type AuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  type AuthenticatedUser,
+} from '../../../utils/decorators/current-user.decorator';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateStudentDto } from '../dtos/student/create-student.dto';
@@ -117,8 +119,6 @@ export class StudentController {
     return students;
   }
 
-
-
   @RequireAuth()
   @Get('me')
   @ApiOperation({ summary: 'Retorna o perfil do aluno autenticado' })
@@ -142,12 +142,6 @@ export class StudentController {
       throw error;
     }
   }
-
-
-
-
-
-
 
   @RequireAuth()
   @Put('me')
@@ -173,7 +167,9 @@ export class StudentController {
     @Body() updateStudentMeDto: UpdateStudentMeDto,
   ) {
     if (req.user.role !== UserRoleEnum.STUDENT) {
-      throw new ForbiddenException('Apenas estudantes podem atualizar este perfil.');
+      throw new ForbiddenException(
+        'Apenas estudantes podem atualizar este perfil.',
+      );
     }
 
     this.logger.info('Updating authenticated student profile', {

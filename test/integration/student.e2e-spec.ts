@@ -24,12 +24,11 @@ describe('StudentController (e2e)', () => {
   const studentEmail = `student-${Date.now()}@test.com`;
   let currentStudentEmail = studentEmail;
   const studentPassword = 'securepassword123';
-  
 
   beforeAll(async () => {
     app = await createIntegrationApp();
     dynamicCpf = cpf.generate();
-  },30000);
+  }, 30000);
 
   afterAll(async () => {
     if (app) {
@@ -175,89 +174,89 @@ describe('StudentController (e2e)', () => {
   });
 
   describe('/students/:id (PUT)', () => {
-  it('should update a student completely (200)', () => {
-    const updatedEmail = `updatedstudent-${Date.now()}@test.com`;
+    it('should update a student completely (200)', () => {
+      const updatedEmail = `updatedstudent-${Date.now()}@test.com`;
 
-    return request(app.getHttpServer() as Server)
-      .put(`/students/${createdStudentId}`)
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({
-        email: updatedEmail,
-        password: 'newpassword123',
-        fullName: 'Updated Full Name',
-        birthDate: '1995-05-20',
-        gender: 'MALE',
-        race: 'BROWN',
-        courseName: 'New Course',
-        familyIncome: 'TO1_SALARY',
-        contact: {
+      return request(app.getHttpServer() as Server)
+        .put(`/students/${createdStudentId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          email: updatedEmail,
+          password: 'newpassword123',
+          fullName: 'Updated Full Name',
+          birthDate: '1995-05-20',
+          gender: 'MALE',
+          race: 'BROWN',
+          courseName: 'New Course',
+          familyIncome: 'TO1_SALARY',
+          contact: {
+            city: 'Rio de Janeiro',
+            state: 'RJ',
+            address: 'Avenida Atlântica',
+            neighbourhood: 'Copacabana',
+            cep: '22070000',
+            phone: '21999999999',
+          },
+        })
+        .expect(200)
+        .expect((res) => {
+          const body = res.body as unknown as StudentResponse;
+          currentStudentEmail = updatedEmail;
+          expect(body.contact.city).toBe('Rio de Janeiro');
+        });
+    });
+  });
+
+  describe('/students/me (PUT)', () => {
+    it('should update authenticated student profile (200)', () => {
+      return request(app.getHttpServer() as Server)
+        .put('/students/me')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          phone: '11988887777',
           city: 'Rio de Janeiro',
-          state: 'RJ',
-          address: 'Avenida Atlântica',
-          neighbourhood: 'Copacabana',
-          cep: '22070000',
-          phone: '21999999999',
-        },
-      })
-      .expect(200)
-      .expect((res) => {
-        const body = res.body as unknown as StudentResponse;
-        currentStudentEmail = updatedEmail;
-        expect(body.contact.city).toBe('Rio de Janeiro');
-      });
-  });
-});
+        })
+        .expect(200)
+        .expect((res) => {
+          const body = res.body as unknown as StudentResponse;
+          expect(body.contact.phone).toBe('11988887777');
+          expect(body.contact.city).toBe('Rio de Janeiro');
+        });
+    });
 
-describe('/students/me (PUT)', () => {
-  it('should update authenticated student profile (200)', () => {
-    return request(app.getHttpServer() as Server)
-      .put('/students/me')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({
-        phone: '11988887777',
-        city: 'Rio de Janeiro',
-      })
-      .expect(200)
-      .expect((res) => {
-        const body = res.body as unknown as StudentResponse;
-        expect(body.contact.phone).toBe('11988887777');
-        expect(body.contact.city).toBe('Rio de Janeiro');
-      });
-  });
+    it('should return 400 for invalid data', () => {
+      return request(app.getHttpServer() as Server)
+        .put('/students/me')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          phone: 'telefone-invalido',
+          householdSize: -1,
+        })
+        .expect(400);
+    });
 
-  it('should return 400 for invalid data', () => {
-    return request(app.getHttpServer() as Server)
-      .put('/students/me')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({
-        phone: 'telefone-invalido',
-        householdSize: -1,
-      })
-      .expect(400);
-  });
+    it('should ignore cpf and email updates', () => {
+      return request(app.getHttpServer() as Server)
+        .put('/students/me')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          email: 'hacker@teste.com',
+          cpf: '00000000000',
+          phone: '11977776666',
+        })
+        .expect(200)
+        .expect((res) => {
+          const body = res.body as unknown as StudentResponse;
+          expect(body.email).toBe(currentStudentEmail);
+          expect(body.cpf).toBe(dynamicCpf);
+          expect(body.contact.phone).toBe('11977776666');
+        });
+    });
 
-  it('should ignore cpf and email updates', () => {
-    return request(app.getHttpServer() as Server)
-      .put('/students/me')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({
-        email: 'hacker@teste.com',
-        cpf: '00000000000',
-        phone: '11977776666',
-      })
-      .expect(200)
-      .expect((res) => {
-        const body = res.body as unknown as StudentResponse;
-        expect(body.email).toBe(currentStudentEmail);
-        expect(body.cpf).toBe(dynamicCpf);
-        expect(body.contact.phone).toBe('11977776666');
-      });
+    it('should return 403 if user is not student', async () => {
+      // Aqui entra o teste com token de ADMIN ou COMPANY.
+    });
   });
-
-  it('should return 403 if user is not student', async () => {
-    // Aqui entra o teste com token de ADMIN ou COMPANY.
-  });
-});
 
   describe('/students/:id (PATCH)', () => {
     it('should update a student partially (200)', () => {

@@ -406,7 +406,10 @@ describe('StudentService', () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(null);
 
       await expect(
-        service.updateAuthenticatedStudentProfile('invalid-id', {} as UpdateStudentMeCommand),
+        service.updateAuthenticatedStudentProfile(
+          'invalid-id',
+          {} as UpdateStudentMeCommand,
+        ),
       ).rejects.toThrow();
     });
   });
