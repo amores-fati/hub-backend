@@ -28,8 +28,8 @@ export interface PaginatedStudentListResult {
 
 export interface StudentFilterQuery {
   search?: string;
-  city?: string;
-  disabilityType?: string;
+  city?: string[];
+  disabilityType?: string[];
   modality?: string;
   page: number;
   pageSize: 20 | 50;

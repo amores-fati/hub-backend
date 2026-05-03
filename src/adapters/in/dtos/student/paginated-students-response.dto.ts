@@ -15,10 +15,10 @@ export class StudentListItemDto {
 
   @ApiProperty({ example: 'Joãozinho', required: false })
   socialName?: string;
- 
+
   @ApiProperty({ example: '51999999999' })
   phoneNumber: string;
- 
+
   @ApiProperty({ example: 'Porto Alegre', required: false })
   city?: string;
 

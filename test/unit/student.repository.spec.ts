@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 
 import { Contact } from '../../src/core/domain/contact.entity';
 import { Gender, Race } from '../../src/core/domain/enums/student-profile.enum';
@@ -138,8 +138,8 @@ describe('StudentRepository', () => {
     const result = await repository.findAllWithFilter({
       search: 'student',
       modality: 'PRESENCIAL',
-      city: 'Sao Paulo',
-      disabilityType: 'visual',
+      city: ['Sao Paulo/SP'],
+      disabilityType: ['visual'],
       page: 2,
       pageSize: 20,
     });
@@ -171,13 +171,10 @@ describe('StudentRepository', () => {
       'course.modality = :modality',
       { modality: 'PRESENCIAL' },
     );
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(expect.any(Brackets));
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      'contact.city ILIKE :city',
-      { city: '%Sao Paulo%' },
-    );
-    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      'disability.type ILIKE :disabilityType',
-      { disabilityType: '%visual%' },
+      'disability.type IN (:...disabilityTypes)',
+      { disabilityTypes: ['visual'] },
     );
     expect(queryBuilder.skip).toHaveBeenCalledWith(20);
     expect(queryBuilder.take).toHaveBeenCalledWith(20);

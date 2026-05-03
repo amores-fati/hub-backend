@@ -144,8 +144,12 @@ export class StudentService {
   ): Promise<PaginatedStudentsResponse> {
     const query: StudentFilterQuery = {
       search: this.normalizeFilterValue(command.search),
-      city: this.normalizeFilterValue(command.city),
-      disabilityType: this.normalizeFilterValue(command.disabilityType),
+      city: command.city
+        ?.map((c) => this.normalizeFilterValue(c))
+        .filter((c): c is string => !!c),
+      disabilityType: command.disabilityType
+        ?.map((d) => this.normalizeFilterValue(d))
+        .filter((d): d is string => !!d),
       modality: this.normalizeFilterValue(command.modality),
       page: command.page ?? 1,
       pageSize: command.pageSize ?? 20,

@@ -257,15 +257,15 @@ describe('StudentService', () => {
 
       await service.findAllStudentsWithFilter({
         search: ' aluno ',
-        city: ' Sao Paulo ',
-        disabilityType: ' visual ',
+        city: [' Sao Paulo '],
+        disabilityType: [' visual '],
         modality: 'ONLINE',
       });
 
       expect(mockRepository.findAllWithFilter).toHaveBeenCalledWith({
         search: 'aluno',
-        city: 'Sao Paulo',
-        disabilityType: 'visual',
+        city: ['Sao Paulo'],
+        disabilityType: ['visual'],
         modality: 'ONLINE',
         page: 1,
         pageSize: 20,

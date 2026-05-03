@@ -122,15 +122,37 @@ export class StudentRepository implements IStudentRepository {
       });
     }
 
-    if (query.city) {
-      queryBuilder.andWhere('contact.city ILIKE :city', {
-        city: this.buildLikeFilter(query.city),
-      });
+    if (query.city && query.city.length > 0) {
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          query.city!.forEach((cityState, index) => {
+            const [city, state] = cityState.split('/');
+            const cityParam = `city_${index}`;
+            const stateParam = `state_${index}`;
+
+            const condition = state
+              ? `(contact.city ILIKE :${cityParam} AND contact.state ILIKE :${stateParam})`
+              : `contact.city ILIKE :${cityParam}`;
+
+            if (index === 0) {
+              qb.where(condition, {
+                [cityParam]: this.buildLikeFilter(city.trim()),
+                ...(state ? { [stateParam]: state.trim() } : {}),
+              });
+            } else {
+              qb.orWhere(condition, {
+                [cityParam]: this.buildLikeFilter(city.trim()),
+                ...(state ? { [stateParam]: state.trim() } : {}),
+              });
+            }
+          });
+        }),
+      );
     }
 
-    if (query.disabilityType) {
-      queryBuilder.andWhere('disability.type ILIKE :disabilityType', {
-        disabilityType: this.buildLikeFilter(query.disabilityType),
+    if (query.disabilityType && query.disabilityType.length > 0) {
+      queryBuilder.andWhere('disability.type IN (:...disabilityTypes)', {
+        disabilityTypes: query.disabilityType,
       });
     }
 

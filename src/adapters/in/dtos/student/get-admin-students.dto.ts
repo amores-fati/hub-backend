@@ -1,5 +1,12 @@
-import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsArray,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class GetAdminStudentsDto {
@@ -25,15 +32,25 @@ export class GetAdminStudentsDto {
   @IsOptional()
   search?: string;
 
-  @ApiPropertyOptional({ example: 'Sao Paulo' })
-  @IsString()
+  @ApiPropertyOptional({ example: ['Porto Alegre/RS'], type: [String] })
+  @Transform(
+    ({ value }) =>
+      (Array.isArray(value) ? value : value ? [value] : []) as string[],
+  )
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  city?: string;
+  city?: string[];
 
-  @ApiPropertyOptional({ example: 'visual' })
-  @IsString()
+  @ApiPropertyOptional({ example: ['visual'], type: [String] })
+  @Transform(
+    ({ value }) =>
+      (Array.isArray(value) ? value : value ? [value] : []) as string[],
+  )
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  disabilityType?: string;
+  disabilityType?: string[];
 
   @ApiPropertyOptional({ example: 'ONLINE', enum: ['ONLINE', 'PRESENCIAL'] })
   @IsString()
