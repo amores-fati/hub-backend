@@ -4,7 +4,6 @@ import {
   ConflictException,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -109,7 +108,7 @@ export class StudentController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.ADMIN)
   @Get()
   @ApiOperation({ summary: 'Lista todos os alunos' })
   @ApiOkResponse({
@@ -122,16 +121,12 @@ export class StudentController {
     return students;
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.STUDENT)
   @Get('me')
   @ApiOperation({ summary: 'Retorna o perfil do aluno autenticado' })
   @ApiOkResponse({ description: 'Perfil retornado com sucesso.' })
   async getMyProfile(@CurrentUser() user: AuthenticatedUser) {
     this.logger.info('Fetching own student profile', { userId: user.id });
-
-    if (user.role !== UserRoleEnum.STUDENT) {
-      throw new ForbiddenException('Acesso restrito a alunos.');
-    }
 
     try {
       const student = await this.studentService.getStudentById(user.id);
@@ -146,7 +141,7 @@ export class StudentController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.STUDENT)
   @Put('me')
   @ApiOperation({ summary: 'Atualiza o perfil do aluno autenticado' })
   @ApiBody({ type: UpdateStudentMeDto })
@@ -169,12 +164,6 @@ export class StudentController {
     @Req() req: Request & { user: { id: string; role: UserRoleEnum } },
     @Body() updateStudentMeDto: UpdateStudentMeDto,
   ) {
-    if (req.user.role !== UserRoleEnum.STUDENT) {
-      throw new ForbiddenException(
-        'Apenas estudantes podem atualizar este perfil.',
-      );
-    }
-
     this.logger.info('Updating authenticated student profile', {
       userId: req.user.id,
     });
@@ -187,7 +176,7 @@ export class StudentController {
     );
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.ADMIN)
   @Get('filter')
   @ApiOperation({ summary: 'Lista alunos com filtros e paginacao para admins' })
   @ApiOkResponse({
@@ -198,11 +187,6 @@ export class StudentController {
     @CurrentUser() user: AuthenticatedUser,
     @Query() filters: GetAdminStudentsDto,
   ) {
-    if (user.role !== UserRoleEnum.ADMIN) {
-      throw new ForbiddenException(
-        'Acesso restrito a administradores para listagem filtrada.',
-      );
-    }
     this.logger.info('Listing students with admin filters', {
       page: filters.page,
       pageSize: filters.pageSize,
@@ -217,7 +201,7 @@ export class StudentController {
     return students;
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.STUDENT)
   @Get(':id')
   @ApiOperation({ summary: 'Busca um aluno por ID' })
   @ApiOkResponse({ description: 'Aluno encontrado com sucesso.' })
@@ -237,7 +221,7 @@ export class StudentController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.STUDENT)
   @Get('cpf/:cpf')
   @ApiOperation({ summary: 'Busca um aluno por CPF' })
   @ApiOkResponse({ description: 'Aluno encontrado com sucesso.' })
@@ -257,7 +241,7 @@ export class StudentController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.STUDENT)
   @Put(':id')
   @ApiOperation({ summary: 'Atualiza completamente os dados de um aluno' })
   @ApiBody({ type: UpdateStudentDto })
@@ -300,7 +284,7 @@ export class StudentController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.STUDENT)
   @Patch(':id')
   @ApiOperation({ summary: 'Atualiza parcialmente os dados de um aluno' })
   @ApiBody({ type: PatchStudentDto })
@@ -343,7 +327,7 @@ export class StudentController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.ADMIN)
   @Delete()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -356,11 +340,6 @@ export class StudentController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: DeleteStudentsDto,
   ) {
-    if (user.role !== UserRoleEnum.ADMIN) {
-      throw new ForbiddenException(
-        'Apenas administradores podem deletar alunos.',
-      );
-    }
     this.logger.info('Deleting students', { ids: dto.ids, adminId: user.id });
     return this.studentService.deleteStudents(dto.ids);
   }

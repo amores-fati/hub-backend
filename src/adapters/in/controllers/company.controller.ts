@@ -36,6 +36,7 @@ import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCompanyDto } from '../dtos/company/create-company.dto';
 import { PatchCompanyDto } from '../dtos/company/patch-company.dto';
 import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
+import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @ApiTags('Companies')
 @Controller('companies')
@@ -94,7 +95,7 @@ export class CompanyController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
   @Get()
   @ApiOperation({ summary: 'Lista todas as empresas' })
   @ApiOkResponse({
@@ -107,7 +108,7 @@ export class CompanyController {
     return companies;
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
   @Get(':id')
   @ApiOperation({ summary: 'Busca uma empresa por ID' })
   @ApiOkResponse({ description: 'Empresa encontrada com sucesso.' })
@@ -127,7 +128,7 @@ export class CompanyController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
   @Get('cnpj/:cnpj')
   @ApiOperation({ summary: 'Busca uma empresa por CNPJ' })
   @ApiOkResponse({ description: 'Empresa encontrada com sucesso.' })
@@ -147,7 +148,7 @@ export class CompanyController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
   @Put(':id')
   @ApiOperation({ summary: 'Atualiza completamente os dados de uma empresa' })
   @ApiBody({ type: UpdateCompanyDto })
@@ -190,7 +191,7 @@ export class CompanyController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
   @Patch(':id')
   @ApiOperation({ summary: 'Atualiza parcialmente os dados de uma empresa' })
   @ApiBody({ type: PatchCompanyDto })
@@ -235,7 +236,7 @@ export class CompanyController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Deleta uma empresa pelo ID' })

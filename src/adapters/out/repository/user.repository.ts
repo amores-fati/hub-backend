@@ -25,9 +25,13 @@ export class UserRepository implements IUserRepository {
     return ormEntity ? this.mapToDomain(ormEntity) : null;
   }
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(
+    email: string,
+    includeDeleted?: boolean,
+  ): Promise<User | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { email },
+      withDeleted: includeDeleted,
     });
     return ormEntity ? this.mapToDomain(ormEntity) : null;
   }

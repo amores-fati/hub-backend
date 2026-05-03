@@ -160,13 +160,17 @@ export class StudentRepository implements IStudentRepository {
     return this.ormRepository.exists({ where: { id } });
   }
 
-  async findByCpf(cpf: string): Promise<Student | null> {
+  async findByCpf(
+    cpf: string,
+    includeDeleted?: boolean,
+  ): Promise<Student | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { cpf },
       relations: ['user', 'contact', 'disability', 'socialBenefits'],
+      withDeleted: includeDeleted,
     });
 
-    return ormEntity && ormEntity.user ? this.mapToDomain(ormEntity) : null;
+    return ormEntity ? this.mapToDomain(ormEntity) : null;
   }
 
   async update(student: Student): Promise<Student> {

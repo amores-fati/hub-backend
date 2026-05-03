@@ -43,6 +43,7 @@ import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateStudentResumeSkillDto } from '../dtos/student-resume/create-student-resume-skill.dto';
 import { UpdateStudentResumeDto } from '../dtos/student-resume/update-student-resume.dto';
+import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 interface UploadedResumePhotoFile {
   originalname?: string;
@@ -61,7 +62,7 @@ export class StudentResumeController {
     this.logger.setContext(StudentResumeController.name);
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.STUDENT)
   @Get('students/me/resume')
   @ApiOperation({ summary: 'Consulta o curriculo do aluno autenticado' })
   @ApiOkResponse({
@@ -97,7 +98,7 @@ export class StudentResumeController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.STUDENT)
   @Put('students/me/resume')
   @ApiOperation({
     summary: 'Cria ou atualiza o curriculo do aluno autenticado',
@@ -135,7 +136,7 @@ export class StudentResumeController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.STUDENT)
   @Post('students/me/resume/photo')
   @UseInterceptors(FileInterceptor('photo'))
   @ApiOperation({
@@ -200,7 +201,7 @@ export class StudentResumeController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.STUDENT)
   @Post('students/me/resume/skills')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -251,7 +252,7 @@ export class StudentResumeController {
     }
   }
 
-  @RequireAuth()
+  @RequireAuth(UserRoleEnum.STUDENT)
   @Delete('students/me/resume/skills/:skillId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({

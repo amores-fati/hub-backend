@@ -26,9 +26,10 @@ import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateAdminDto } from '../dtos/admin/create-admin.dto';
 import { StudentResumeResponseDto } from '../dtos/admin/student-resume-response.dto';
+import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @ApiTags('Admins')
-@RequireAuth()
+@RequireAuth(UserRoleEnum.ADMIN)
 @Controller('admins')
 export class AdminController {
   constructor(
