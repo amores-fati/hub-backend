@@ -194,10 +194,19 @@ export class StudentController {
     description: 'Retorna alunos paginados, sem usuarios excluidos.',
     type: PaginatedStudentsResponseDto,
   })
-  async findAllWithFilter(@Query() filters: GetAdminStudentsDto) {
+  async findAllWithFilter(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() filters: GetAdminStudentsDto,
+  ) {
+    if (user.role !== UserRoleEnum.ADMIN) {
+      throw new ForbiddenException(
+        'Acesso restrito a administradores para listagem filtrada.',
+      );
+    }
     this.logger.info('Listing students with admin filters', {
       page: filters.page,
       pageSize: filters.pageSize,
+      adminId: user.id,
     });
     const students =
       await this.studentService.findAllStudentsWithFilter(filters);
@@ -337,12 +346,22 @@ export class StudentController {
   @RequireAuth()
   @Delete()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Deleta (soft delete) uma lista de alunos' })
+  @ApiOperation({
+    summary: 'Deleta (soft delete) uma lista de alunos (Admin apenas)',
+  })
   @ApiOkResponse({
     description: 'Retorna um objeto com os IDs que não foram encontrados.',
   })
-  async removeStudents(@Body() dto: DeleteStudentsDto) {
-    this.logger.info('Deleting students', { ids: dto.ids });
+  async removeStudents(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: DeleteStudentsDto,
+  ) {
+    if (user.role !== UserRoleEnum.ADMIN) {
+      throw new ForbiddenException(
+        'Apenas administradores podem deletar alunos.',
+      );
+    }
+    this.logger.info('Deleting students', { ids: dto.ids, adminId: user.id });
     return this.studentService.deleteStudents(dto.ids);
   }
 }

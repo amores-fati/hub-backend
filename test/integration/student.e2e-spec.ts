@@ -3,6 +3,9 @@ import request from 'supertest';
 import { Server } from 'http';
 import { cpf } from 'cpf-cnpj-validator';
 import { createIntegrationApp } from './bootstrap';
+import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
+import { DataSource } from 'typeorm';
 
 interface StudentResponse {
   id: string;
@@ -40,9 +43,24 @@ describe('StudentController (e2e)', () => {
   const studentEmail = `student-${Date.now()}@test.com`;
   let currentStudentEmail = studentEmail;
   const studentPassword = 'securepassword123';
+  let adminAccessToken: string;
+  const adminEmail = 'admin@test.com';
+  const adminPassword = 'adminpassword123';
 
   beforeAll(async () => {
-    app = await createIntegrationApp();
+    const adminSeed = async (dataSource: DataSource) => {
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+      const adminId = randomUUID();
+      await dataSource.query(
+        `INSERT INTO "users" (id, email, password_hash, role) VALUES ($1, $2, $3, $4)`,
+        [adminId, adminEmail, hashedPassword, 'ADMIN'],
+      );
+      await dataSource.query(`INSERT INTO "admins" (id) VALUES ($1)`, [
+        adminId,
+      ]);
+    };
+
+    app = await createIntegrationApp({ seed: adminSeed });
     dynamicCpf = cpf.generate();
   }, 30000);
 
@@ -100,6 +118,20 @@ describe('StudentController (e2e)', () => {
       expect(accessToken).toBeDefined();
     });
 
+    it('should login as admin and obtain an access token', async () => {
+      const response = await request(app.getHttpServer() as Server)
+        .post('/auth/login')
+        .send({
+          email: adminEmail,
+          password: adminPassword,
+        })
+        .expect(200);
+
+      const body = response.body as { accessToken: string };
+      adminAccessToken = body.accessToken;
+      expect(adminAccessToken).toBeDefined();
+    });
+
     it('should return 400 Bad Request for invalid payload', () => {
       return request(app.getHttpServer() as Server)
         .post('/students')
@@ -150,7 +182,7 @@ describe('StudentController (e2e)', () => {
       return request(app.getHttpServer() as Server)
         .get('/students/filter')
         .query({ search: dynamicCpf, page: 1, pageSize: 20 })
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
         .expect(200)
         .expect((res) => {
           const body = res.body as unknown as AdminStudentsResponse;
@@ -167,7 +199,7 @@ describe('StudentController (e2e)', () => {
       return request(app.getHttpServer() as Server)
         .get('/students/filter')
         .query({ modality: 'ONLINE', page: 1, pageSize: 20 })
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
         .expect(200)
         .expect((res) => {
           const body = res.body as unknown as AdminStudentsResponse;
@@ -179,7 +211,7 @@ describe('StudentController (e2e)', () => {
       return request(app.getHttpServer() as Server)
         .get('/students/filter')
         .query({ pageSize: 30 })
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
         .expect(400);
     });
 
@@ -212,14 +244,14 @@ describe('StudentController (e2e)', () => {
 
       await request(app.getHttpServer() as Server)
         .delete('/students')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
         .send({ ids: [softDeletedStudentId] })
         .expect(200);
 
       await request(app.getHttpServer() as Server)
         .get('/students/filter')
         .query({ search: cpfToDelete, page: 1, pageSize: 20 })
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
         .expect(200)
         .expect((res) => {
           const body = res.body as unknown as AdminStudentsResponse;
@@ -377,7 +409,7 @@ describe('StudentController (e2e)', () => {
     it('should soft-delete students (200)', () => {
       return request(app.getHttpServer() as Server)
         .delete(`/students`)
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
         .send({ ids: [createdStudentId] })
         .expect(200)
         .expect((res) => {

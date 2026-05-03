@@ -179,7 +179,6 @@ export class Student extends User {
     birthDate?: Date;
     gender?: Gender;
     race?: Race;
-    socialName?: string;
     education?: EducationLevel;
     courseName?: string;
     institution?: string;
@@ -191,7 +190,6 @@ export class Student extends User {
     if (data.birthDate !== undefined) this.#birthDate = data.birthDate;
     if (data.gender !== undefined) this.#gender = data.gender;
     if (data.race !== undefined) this.#race = data.race;
-    if (data.socialName !== undefined) this.#socialName = data.socialName;
     if (data.education !== undefined) this.#education = data.education;
     if (data.courseName !== undefined) this.#courseName = data.courseName;
     if (data.institution !== undefined) this.#institution = data.institution;
