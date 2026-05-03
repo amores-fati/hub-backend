@@ -213,7 +213,7 @@ describe('StudentService', () => {
         search: '12345678909',
         city: undefined,
         disabilityType: undefined,
-        courseId: undefined,
+        modality: undefined,
         page: 1,
         pageSize: 20,
       });
@@ -229,14 +229,14 @@ describe('StudentService', () => {
         search: ' aluno ',
         city: ' Sao Paulo ',
         disabilityType: ' visual ',
-        courseId: '123e4567-e89b-12d3-a456-426614174000',
+        modality: 'ONLINE',
       });
 
       expect(mockRepository.findAllWithFilter).toHaveBeenCalledWith({
         search: 'aluno',
         city: 'Sao Paulo',
         disabilityType: 'visual',
-        courseId: '123e4567-e89b-12d3-a456-426614174000',
+        modality: 'ONLINE',
         page: 1,
         pageSize: 20,
       });

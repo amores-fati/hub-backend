@@ -161,6 +161,18 @@ describe('StudentController (e2e)', () => {
         });
     });
 
+    it('should filter by modality (200)', () => {
+      return request(app.getHttpServer() as Server)
+        .get('/students/filter')
+        .query({ modality: 'ONLINE', page: 1, pageSize: 20 })
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res) => {
+          const body = res.body as unknown as AdminStudentsResponse;
+          expect(Array.isArray(body.items)).toBe(true);
+        });
+    });
+
     it('should return 400 Bad Request when pageSize is invalid', () => {
       return request(app.getHttpServer() as Server)
         .get('/students/filter')

@@ -132,7 +132,7 @@ export class StudentService {
       search: this.normalizeFilterValue(command.search),
       city: this.normalizeFilterValue(command.city),
       disabilityType: this.normalizeFilterValue(command.disabilityType),
-      courseId: this.normalizeFilterValue(command.courseId),
+      modality: this.normalizeFilterValue(command.modality),
       page: command.page ?? 1,
       pageSize: command.pageSize ?? 20,
     };
@@ -141,7 +141,7 @@ export class StudentService {
 
     return {
       items: result.items.map((student) =>
-        this.mapStudentListItem(student, query.courseId),
+        this.mapStudentListItem(student, query.modality),
       ),
       meta: {
         page: query.page,
@@ -337,7 +337,7 @@ export class StudentService {
 
   private mapStudentListItem(
     student: StudentListProjection,
-    courseId?: string,
+    modality?: string,
   ): StudentListItem {
     return {
       id: student.id,
@@ -349,25 +349,23 @@ export class StudentService {
       state: student.state,
       hasDisability: student.hasDisability,
       disabilityType: student.disabilityType,
-      enrollmentStatus: this.deriveEnrollmentStatus(student, courseId),
+      enrollmentStatus: this.deriveEnrollmentStatus(student, modality),
     };
   }
 
   private deriveEnrollmentStatus(
     student: StudentListProjection,
-    courseId?: string,
+    modality?: string,
   ): StudentListItem['enrollmentStatus'] {
-    const enrollment = courseId
-      ? student.enrollments.find((item) => item.courseId === courseId)
+    const enrollment = modality
+      ? student.enrollments.find((item) => item.courseModality === modality)
       : student.enrollments[0];
 
     if (!enrollment) {
       return 'NAO_INSCRITO';
     }
 
-    return enrollment.courseModality === 'PRESENCIAL'
-      ? 'PRESENCIAL'
-      : 'ONLINE';
+    return enrollment.courseModality === 'PRESENCIAL' ? 'PRESENCIAL' : 'ONLINE';
   }
 
   private maskCpf(cpf: string): string {

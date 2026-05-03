@@ -116,9 +116,9 @@ export class StudentRepository implements IStudentRepository {
       );
     }
 
-    if (query.courseId) {
-      queryBuilder.andWhere('enrollment.courseId = :courseId', {
-        courseId: query.courseId,
+    if (query.modality) {
+      queryBuilder.andWhere('course.modality = :modality', {
+        modality: query.modality,
       });
     }
 

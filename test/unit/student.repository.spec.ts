@@ -137,7 +137,7 @@ describe('StudentRepository', () => {
 
     const result = await repository.findAllWithFilter({
       search: 'student',
-      courseId: '123e4567-e89b-12d3-a456-426614174000',
+      modality: 'PRESENCIAL',
       city: 'Sao Paulo',
       disabilityType: 'visual',
       page: 2,
@@ -165,8 +165,8 @@ describe('StudentRepository', () => {
     expect(queryBuilder.leftJoinAndMapMany).toHaveBeenCalled();
     expect(queryBuilder.leftJoinAndMapOne).toHaveBeenCalled();
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      'enrollment.courseId = :courseId',
-      { courseId: '123e4567-e89b-12d3-a456-426614174000' },
+      'course.modality = :modality',
+      { modality: 'PRESENCIAL' },
     );
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
       'contact.city ILIKE :city',

@@ -1,12 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Min,
-} from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class GetAdminStudentsDto {
@@ -42,8 +35,8 @@ export class GetAdminStudentsDto {
   @IsOptional()
   disabilityType?: string;
 
-  @ApiPropertyOptional({ example: '123e4567-e89b-12d3-a456-426614174000' })
-  @IsUUID()
+  @ApiPropertyOptional({ example: 'ONLINE', enum: ['ONLINE', 'PRESENCIAL'] })
+  @IsString()
   @IsOptional()
-  courseId?: string;
+  modality?: string;
 }
