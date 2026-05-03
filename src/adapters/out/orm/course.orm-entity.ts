@@ -29,6 +29,9 @@ export class CourseOrmEntity {
   @Column({ name: 'end_registrations', type: 'date' })
   endRegistrations: Date;
 
+  @Column({ name: 'modality', type: 'varchar', default: 'ONLINE' })
+  modality: string;
+
   @Column({ name: 'link_access' })
   linkAccess: string;
 

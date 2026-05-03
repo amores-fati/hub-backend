@@ -64,6 +64,12 @@ import { ICurriculumRepository } from './core/ports/curriculum.repository.interf
 import { LocalResumePhotoStorage } from './adapters/out/storage/local-resume-photo.storage';
 import { IResumePhotoStorage } from './core/ports/resume-photo-storage.interface';
 
+// Enrollment Adapters & Core
+import { EnrollmentService } from './core/services/enrollment.service';
+import { EnrollmentRepository } from './adapters/out/repository/enrollment.repository';
+import { EnrollmentOrmEntity } from './adapters/out/orm/enrollment.orm-entity';
+import { IEnrollmentRepository } from './core/ports/enrollment.repository.interface';
+
 // Setting Adapters & Core
 import { SettingController } from './adapters/in/controllers/setting.controller';
 import { SettingService } from './core/services/setting.service';
@@ -106,6 +112,7 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       CurriculumSkillOrmEntity,
       SkillOrmEntity,
       SettingOrmEntity,
+      EnrollmentOrmEntity,
     ]),
   ],
   controllers: [
@@ -193,6 +200,20 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
     {
       provide: ICourseRepository,
       useClass: CourseRepository,
+    },
+    {
+      provide: EnrollmentService,
+      useFactory: (
+        enrollmentRepository: IEnrollmentRepository,
+        courseRepository: ICourseRepository,
+      ) => {
+        return new EnrollmentService(enrollmentRepository, courseRepository);
+      },
+      inject: [IEnrollmentRepository, ICourseRepository],
+    },
+    {
+      provide: IEnrollmentRepository,
+      useClass: EnrollmentRepository,
     },
     {
       provide: CompanyService,

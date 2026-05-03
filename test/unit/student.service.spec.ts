@@ -10,6 +10,7 @@ import {
   CreateStudentCommand,
   PatchStudentCommand,
   UpdateStudentCommand,
+  UpdateStudentMeCommand,
 } from '../../src/core/command/student.command';
 import { StudentAlreadyExistsException } from '../../src/core/exceptions/student-already-exists.exception';
 import { StudentNotFoundException } from '../../src/core/exceptions/student-not-found.exception';
@@ -29,6 +30,7 @@ describe('StudentService', () => {
     findByCpf: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    softDeleteMany: jest.fn(),
     existsById: jest.fn(),
   };
 
@@ -68,6 +70,7 @@ describe('StudentService', () => {
       new Date('1990-01-01'),
       Gender.MALE,
       Race.WHITE,
+      'João da Silva',
     );
 
     service = new StudentService(
@@ -86,6 +89,7 @@ describe('StudentService', () => {
         birthDate: new Date('1990-01-01'),
         gender: Gender.MALE,
         race: Race.WHITE,
+        fullName: 'João da Silva',
         education: EducationLevel.SECONDARY,
         contact: {
           phone: mockContact.phone,
@@ -124,6 +128,7 @@ describe('StudentService', () => {
         birthDate: new Date('1990-01-01'),
         gender: Gender.MALE,
         race: Race.WHITE,
+        fullName: 'João da Silva',
         contact: { phone: '11999999999' },
       };
 
@@ -142,6 +147,7 @@ describe('StudentService', () => {
         birthDate: new Date('1990-01-01'),
         gender: Gender.MALE,
         race: Race.WHITE,
+        fullName: 'João da Silva',
         contact: { phone: '11999999999' },
       };
 
@@ -209,6 +215,7 @@ describe('StudentService', () => {
   describe('updateStudent', () => {
     const updateCommand: UpdateStudentCommand = {
       email: 'novoaluno@teste.com',
+      fullName: 'João da Silva',
       password: 'newpassword123',
       birthDate: new Date('1995-05-05'),
       gender: Gender.FEMALE,
@@ -257,6 +264,7 @@ describe('StudentService', () => {
           new Date('1991-01-01'),
           Gender.FEMALE,
           Race.BLACK,
+          'Duplicado da Silva',
         ),
       );
 
@@ -281,6 +289,7 @@ describe('StudentService', () => {
           mockStudent.birthDate,
           mockStudent.gender,
           mockStudent.race,
+          mockStudent.fullName,
         ),
       );
       (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
@@ -329,6 +338,7 @@ describe('StudentService', () => {
           new Date('1991-01-01'),
           Gender.FEMALE,
           Race.BLACK,
+          'Duplicado da Silva',
         ),
       );
 
@@ -340,14 +350,87 @@ describe('StudentService', () => {
     });
   });
 
-  describe('deleteStudent', () => {
-    it('should delete a student', async () => {
+  describe('updateAuthenticatedStudentProfile', () => {
+    it('should update student profile successfully', async () => {
       (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
-      (mockRepository.delete as jest.Mock).mockResolvedValue(undefined);
+      (mockRepository.update as jest.Mock).mockImplementation((student) =>
+        Promise.resolve(student),
+      );
 
-      await service.deleteStudent(mockStudent.id);
+      const updateMeCommand: UpdateStudentMeCommand = {
+        phone: '11988887777',
+        city: 'Rio de Janeiro',
+        state: 'RJ',
+        address: 'Av Atlântica',
+        cep: '22070000',
+        gender: 'Masculino',
+        race: 'Pardo',
+        fatilabMotivation: 'Nova motivação',
+      };
 
-      expect(mockRepository.delete).toHaveBeenCalledWith(mockStudent.id);
+      const result = await service.updateAuthenticatedStudentProfile(
+        mockStudent.id,
+        updateMeCommand,
+      );
+
+      expect(result.contact.phone).toBe('11988887777');
+      expect(result.contact.city).toBe('Rio de Janeiro');
+      expect(mockRepository.update).toHaveBeenCalled();
+    });
+
+    it('should ignore cpf and email updates', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
+      (mockRepository.update as jest.Mock).mockImplementation((student) =>
+        Promise.resolve(student),
+      );
+
+      const originalEmail = mockStudent.email;
+      const originalCpf = mockStudent.cpf;
+
+      const invalidCommand = {
+        email: 'hacker@teste.com',
+        cpf: '00000000000',
+        phone: '11988887777',
+      };
+
+      const result = await service.updateAuthenticatedStudentProfile(
+        mockStudent.id,
+        invalidCommand as unknown as UpdateStudentMeCommand,
+      );
+
+      expect(result.email).toBe(originalEmail);
+      expect(result.cpf).toBe(originalCpf);
+    });
+
+    it('should throw error if student not found', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.updateAuthenticatedStudentProfile('invalid-id', {} as UpdateStudentMeCommand),
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('deleteStudents', () => {
+    it('should soft delete existing students and return empty failed list', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockStudent);
+      (mockRepository.softDeleteMany as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await service.deleteStudents([mockStudent.id]);
+
+      expect(mockRepository.softDeleteMany).toHaveBeenCalledWith([
+        mockStudent.id,
+      ]);
+      expect(result.failed).toHaveLength(0);
+    });
+
+    it('should return failed list for non-existing students', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.deleteStudents(['id-inexistente']);
+
+      expect(mockRepository.softDeleteMany).not.toHaveBeenCalled();
+      expect(result.failed).toContain('id-inexistente');
     });
   });
 });

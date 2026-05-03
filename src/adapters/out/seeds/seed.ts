@@ -239,6 +239,7 @@ export async function seed(): Promise<void> {
       startRegistrations: new Date('2025-01-01'),
       endRegistrations: new Date('2025-01-28'),
       linkAccess: 'https://fatilab.com/cursos/web',
+      modality: 'PRESENCIAL',
     },
     {
       name: 'Ciência de Dados com Python',
@@ -250,6 +251,7 @@ export async function seed(): Promise<void> {
       startRegistrations: new Date('2025-02-01'),
       endRegistrations: new Date('2025-02-25'),
       linkAccess: 'https://fatilab.com/cursos/data',
+      modality: 'PRESENCIAL',
     },
     {
       name: 'UX/UI Design',
@@ -261,6 +263,7 @@ export async function seed(): Promise<void> {
       startRegistrations: new Date('2025-03-01'),
       endRegistrations: new Date('2025-03-28'),
       linkAccess: 'https://fatilab.com/cursos/ux',
+      modality: 'ONLINE',
     },
     {
       name: 'Infraestrutura e DevOps',
@@ -272,6 +275,7 @@ export async function seed(): Promise<void> {
       startRegistrations: new Date('2025-04-01'),
       endRegistrations: new Date('2025-04-28'),
       linkAccess: 'https://fatilab.com/cursos/devops',
+      modality: 'ONLINE',
     },
     {
       name: 'Introdução à Programação',
@@ -283,6 +287,7 @@ export async function seed(): Promise<void> {
       startRegistrations: new Date('2025-01-01'),
       endRegistrations: new Date('2025-01-12'),
       linkAccess: 'https://fatilab.com/cursos/intro',
+      modality: 'ONLINE',
     },
   ];
 
@@ -508,6 +513,7 @@ export async function seed(): Promise<void> {
       education: a.education,
       gender: a.gender,
       race: a.race,
+      fullName: a.name,
       activityArea: a.area,
       hasProgrammingExperience: i % 2 === 0,
       familyIncome: FamilyIncome.BETWEEN_1_3,

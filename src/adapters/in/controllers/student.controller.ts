@@ -4,6 +4,7 @@ import {
   ConflictException,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -13,13 +14,14 @@ import {
   Patch,
   Post,
   Put,
+  
+  Req,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
   ApiConflictResponse,
   ApiCreatedResponse,
-  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -30,13 +32,20 @@ import {
   CreateStudentCommand,
   PatchStudentCommand,
   UpdateStudentCommand,
+  UpdateStudentMeCommand,
 } from '../../../core/command/student.command';
 import { StudentService } from '../../../core/services/student.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
+import { CurrentUser, type AuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
+import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateStudentDto } from '../dtos/student/create-student.dto';
+import { DeleteStudentsDto } from '../dtos/student/delete-student.dto';
 import { PatchStudentDto } from '../dtos/student/patch-student.dto';
 import { UpdateStudentDto } from '../dtos/student/update-student.dto';
+import { UpdateStudentMeDto } from '../dtos/student/update-student-me.dto';
+
+import { Request } from 'express';
 
 @ApiTags('Students')
 @Controller('students')
@@ -106,6 +115,77 @@ export class StudentController {
     const students = await this.studentService.findAllStudents();
     this.logger.info('Students listed', { count: students.length });
     return students;
+  }
+
+
+
+  @RequireAuth()
+  @Get('me')
+  @ApiOperation({ summary: 'Retorna o perfil do aluno autenticado' })
+  @ApiOkResponse({ description: 'Perfil retornado com sucesso.' })
+  async getMyProfile(@CurrentUser() user: AuthenticatedUser) {
+    this.logger.info('Fetching own student profile', { userId: user.id });
+
+    if (user.role !== UserRoleEnum.STUDENT) {
+      throw new ForbiddenException('Acesso restrito a alunos.');
+    }
+
+    try {
+      const student = await this.studentService.getStudentById(user.id);
+      this.logger.info('Own student profile fetched', { userId: user.id });
+      return student;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'StudentNotFoundException') {
+        this.logger.warn('Student profile not found', { userId: user.id });
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
+  }
+
+
+
+
+
+
+
+  @RequireAuth()
+  @Put('me')
+  @ApiOperation({ summary: 'Atualiza o perfil do aluno autenticado' })
+  @ApiBody({ type: UpdateStudentMeDto })
+  @ApiOkResponse({ description: 'Perfil atualizado com sucesso.' })
+  @ApiBadRequestResponse({
+    description: 'Dados inválidos.',
+    schema: {
+      example: {
+        statusCode: 400,
+        message: [
+          'phone deve conter apenas dígitos',
+          'householdSize deve ser um número inteiro positivo',
+        ],
+        error: 'Bad Request',
+        errorKind: 'VALIDATION_ERROR',
+      },
+    },
+  })
+  async updateMe(
+    @Req() req: Request & { user: { id: string; role: UserRoleEnum } },
+    @Body() updateStudentMeDto: UpdateStudentMeDto,
+  ) {
+    if (req.user.role !== UserRoleEnum.STUDENT) {
+      throw new ForbiddenException('Apenas estudantes podem atualizar este perfil.');
+    }
+
+    this.logger.info('Updating authenticated student profile', {
+      userId: req.user.id,
+    });
+
+    const command: UpdateStudentMeCommand = { ...updateStudentMeDto };
+
+    return this.studentService.updateAuthenticatedStudentProfile(
+      req.user.id,
+      command,
+    );
   }
 
   @RequireAuth()
@@ -235,28 +315,14 @@ export class StudentController {
   }
 
   @RequireAuth()
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Deleta um aluno pelo ID' })
-  @ApiNoContentResponse({ description: 'Aluno deletado com sucesso.' })
-  @ApiNotFoundResponse({ description: 'Aluno nao encontrado.' })
-  async remove(@Param('id', ParseUUIDPipe) id: string) {
-    try {
-      this.logger.info('Deleting student', { id });
-      await this.studentService.deleteStudent(id);
-      this.logger.info('Student deleted', { id });
-    } catch (error) {
-      if (error instanceof Error && error.name === 'StudentNotFoundException') {
-        this.logger.warn('Student not found', { id });
-        throw new NotFoundException(error.message);
-      }
-
-      if (error instanceof Error && error.name === 'DomainException') {
-        this.logger.error('Student deletion domain error');
-        throw new BadRequestException(error.message);
-      }
-
-      throw error;
-    }
+  @Delete()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Deleta (soft delete) uma lista de alunos' })
+  @ApiOkResponse({
+    description: 'Retorna um objeto com os IDs que não foram encontrados.',
+  })
+  async removeStudents(@Body() dto: DeleteStudentsDto) {
+    this.logger.info('Deleting students', { ids: dto.ids });
+    return this.studentService.deleteStudents(dto.ids);
   }
 }

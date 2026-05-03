@@ -41,8 +41,36 @@ export interface CreateStudentCommand {
   contact: CreateContactCommand;
   disability?: CreateDisabilityCommand;
   socialBenefits?: CreateSocialBenefitCommand[];
+  fullName: string;
   socialName?: string;
   familyIncome?: FamilyIncome;
+}
+
+export interface UpdateStudentMeCommand {
+  fullName?: string;
+  socialName?: string;
+  birthDate?: string;
+  gender?: string;
+  race?: string;
+  phone?: string;
+  city?: string;
+  state?: string;
+  address?: string;
+  cep?: string;
+  isPcd?: boolean;
+  disabilityType?: string;
+  educationLevel?: string;
+  courseName?: string;
+  institution?: string;
+  workArea?: string | null;
+  hasProgrammingExperience?: boolean;
+  fatilabMotivation?: string;
+  howHeard?: string;
+  hasComputer?: boolean;
+  hasInternet?: boolean;
+  familyIncome?: string;
+  householdSize?: number;
+  socialBenefits?: string;
 }
 
 export type UpdateStudentCommand = Omit<

@@ -68,6 +68,14 @@ export class CreateCourseDto {
   endRegistrations: string;
 
   @ApiProperty({
+    example: 'ONLINE',
+    description: 'Modalidade do curso (Ex: ONLINE, PRESENCIAL).',
+  })
+  @IsString()
+  @IsNotEmpty()
+  modality: string;
+
+  @ApiProperty({
     example: 'https://fatilab.com/cursos/web',
     description: 'Link de acesso ou landing page do curso.',
   })
