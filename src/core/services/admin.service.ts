@@ -4,6 +4,7 @@ import { Admin } from '../domain/admin.entity';
 import { IAdminRepository } from '../ports/admin.repository.interface';
 import { ICurriculumRepository } from '../ports/curriculum.repository.interface';
 import { IHashService } from '../ports/hash.service.interface';
+import { IStudentRepository } from '../ports/student.repository.interface';
 import { IUserRepository } from '../ports/user.repository.interface';
 import { CreateAdminCommand } from '../command/admin.command';
 import { UserAlreadyExistsException } from '../exceptions/user-already-exists.exception';
@@ -15,6 +16,7 @@ export class AdminService {
     private readonly adminRepository: IAdminRepository,
     private readonly hashService: IHashService,
     private readonly curriculumRepository: ICurriculumRepository,
+    private readonly studentRepository: IStudentRepository,
   ) {}
 
   async createAdmin(command: CreateAdminCommand): Promise<Admin> {
@@ -28,10 +30,12 @@ export class AdminService {
   }
 
   async getStudentResume(studentId: string): Promise<StudentResumeResponseDto> {
-    const curriculum =
-      await this.curriculumRepository.findActiveResumeByStudentId(studentId);
+    const [curriculum, student] = await Promise.all([
+      this.curriculumRepository.findByStudentId(studentId),
+      this.studentRepository.findById(studentId),
+    ]);
 
-    if (!curriculum) {
+    if (!curriculum || !student) {
       throw new NotFoundException(
         'Aluno não encontrado ou sem currículo cadastrado',
       );
@@ -40,16 +44,16 @@ export class AdminService {
     return {
       id: curriculum.id,
       about: curriculum.about,
-      linkedinUrl: curriculum.linkedin,
-      githubUrl: curriculum.github,
-      photoUrl: curriculum.profilePhoto,
+      linkedinUrl: curriculum.linkedinUrl || '',
+      githubUrl: curriculum.githubUrl || '',
+      photoUrl: curriculum.photoUrl,
       skills: curriculum.skills.map((s) => ({
         id: s.id,
-        skillName: s.name,
+        skillName: s.skillName,
       })),
       student: {
-        fullName: curriculum.student.fullName,
-        email: curriculum.student.email,
+        fullName: student.fullName,
+        email: student.email,
       },
     };
   }
