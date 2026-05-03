@@ -4,10 +4,12 @@ import {
   IsDateString,
   IsEmail,
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
+  Min,
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -167,4 +169,10 @@ export class CreateStudentDto {
   @Type(() => CreateSocialBenefitDto)
   @IsOptional()
   socialBenefits?: CreateSocialBenefitDto[];
+
+  @ApiPropertyOptional({ example: 4 })
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  householdSize?: number;
 }

@@ -44,6 +44,7 @@ export interface CreateStudentCommand {
   fullName: string;
   socialName?: string;
   familyIncome?: FamilyIncome;
+  householdSize?: number;
 }
 
 export interface UpdateStudentMeCommand {

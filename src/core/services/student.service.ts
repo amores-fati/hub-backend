@@ -128,6 +128,7 @@ export class StudentService {
       command.socialName,
       command.courseName,
       command.familyIncome,
+      command.householdSize,
     );
 
     return this.studentRepository.create(student);
@@ -281,6 +282,7 @@ export class StudentService {
       hasComputer: command.hasComputer,
       hasInternet: command.hasInternet,
       familyIncome: this.mapFamilyIncome(command.familyIncome),
+      householdSize: command.householdSize,
     });
 
     if (command.isPcd !== undefined || command.disabilityType !== undefined) {
