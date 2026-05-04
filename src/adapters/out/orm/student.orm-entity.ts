@@ -23,6 +23,19 @@ function toSqlList(values: string[]): string {
   return values.map((value) => `'${value.replace(/'/g, "''")}'`).join(', ');
 }
 
+const dateOnlyTransformer = {
+  to(value: Date | string | null | undefined): string | null | undefined {
+    if (value === null || value === undefined) return value;
+    const date = value instanceof Date ? value : new Date(value);
+    return date.toISOString().slice(0, 10);
+  },
+  from(value: string | Date | null | undefined): Date | null | undefined {
+    if (value === null || value === undefined) return value;
+    if (value instanceof Date) return value;
+    return new Date(`${value}T00:00:00.000Z`);
+  },
+};
+
 const GENDER_SQL = toSqlList(Object.values(Gender));
 const RACE_SQL = toSqlList(Object.values(Race));
 const EDUCATION_SQL = toSqlList(Object.values(EducationLevel));
@@ -74,7 +87,11 @@ export class StudentOrmEntity {
   @Column({ name: 'social_name', type: 'varchar', nullable: true })
   socialName: string | null;
 
-  @Column({ name: 'date_of_birth', type: 'date' })
+  @Column({
+    name: 'date_of_birth',
+    type: 'date',
+    transformer: dateOnlyTransformer,
+  })
   birthDate: Date;
 
   @Column({ type: 'varchar' })

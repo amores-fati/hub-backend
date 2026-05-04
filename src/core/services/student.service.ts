@@ -339,6 +339,11 @@ export class StudentService {
           : undefined,
       gender: command.gender,
       race: command.race,
+      education: command.education,
+      courseName: command.courseName,
+      institution: command.institution,
+      activityArea: command.activityArea,
+      hasProgrammingExperience: command.hasProgrammingExperience,
     });
 
     student.changeParticipationData({
@@ -348,6 +353,7 @@ export class StudentService {
       hasInternet: command.hasInternet,
       committedToParticipate: command.committedToParticipate,
       familyIncome: command.familyIncome,
+      householdSize: command.householdSize,
     });
 
     if (command.contact) {

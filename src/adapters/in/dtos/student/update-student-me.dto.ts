@@ -75,7 +75,7 @@ export class UpdateStudentMeDto {
   @ApiPropertyOptional({ example: 'Física' })
   @IsString()
   @IsOptional()
-  @MaxLength(50)
+  @MaxLength(200)
   disabilityType?: string;
 
   @ApiPropertyOptional({ example: 'Ensino Médio Completo' })

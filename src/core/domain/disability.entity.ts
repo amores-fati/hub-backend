@@ -40,9 +40,9 @@ export class Disability {
       );
     }
 
-    if (this.#type && this.#type.length > 50) {
+    if (this.#type && this.#type.length > 200) {
       throw new DomainException(
-        'O tipo de deficiÃªncia nÃ£o pode ter mais que 50 caracteres.',
+        'O tipo de deficiÃªncia nÃ£o pode ter mais que 200 caracteres.',
       );
     }
   }

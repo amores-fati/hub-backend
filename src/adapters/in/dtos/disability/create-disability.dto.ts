@@ -9,6 +9,6 @@ export class CreateDisabilityDto {
   @ApiPropertyOptional({ example: 'Física' })
   @IsString()
   @IsOptional()
-  @MaxLength(50)
+  @MaxLength(200)
   type?: string;
 }
