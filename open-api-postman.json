@@ -1,0 +1,2896 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "AmoresFati API",
+    "description": "Contrato OpenAPI para importacao no Postman da API do projeto AmoresFati.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001/api",
+      "description": "Ambiente local"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Autenticacao e emissao de JWT"
+    },
+    {
+      "name": "Admins",
+      "description": "Operacoes administrativas"
+    },
+    {
+      "name": "Students",
+      "description": "Cadastro e gestao de alunos"
+    },
+    {
+      "name": "Student Resume",
+      "description": "Curriculo do aluno autenticado"
+    },
+    {
+      "name": "Companies",
+      "description": "Cadastro e gestao de empresas"
+    },
+    {
+      "name": "Courses",
+      "description": "Cursos e vinculos de alunos"
+    },
+    {
+      "name": "Settings",
+      "description": "Configuracoes publicas"
+    },
+    {
+      "name": "Health",
+      "description": "Status da API"
+    }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Autentica um usuario e retorna um JWT",
+        "operationId": "login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              },
+              "example": {
+                "email": "admin@fatilab.com",
+                "password": "Admin@123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                },
+                "example": {
+                  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/admins": {
+      "post": {
+        "tags": [
+          "Admins"
+        ],
+        "summary": "Registra um novo administrador do sistema",
+        "operationId": "createAdmin",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAdminDto"
+              },
+              "example": {
+                "email": "admin@fatilab.com",
+                "password": "SenhaForte123!"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Administrador criado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCreatedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/admins/students/{id}/resume": {
+      "get": {
+        "tags": [
+          "Admins"
+        ],
+        "summary": "Retorna o curriculo de um aluno em modo leitura",
+        "operationId": "getStudentResumeByAdmin",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StudentIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Curriculo retornado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStudentResumeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/students": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Registra um novo aluno",
+        "operationId": "createStudent",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStudentDto"
+              },
+              "example": {
+                "email": "joao@email.com",
+                "password": "SenhaForte123!",
+                "fullName": "Joao da Silva",
+                "socialName": "Joaozinho",
+                "cpf": "52998224725",
+                "birthDate": "1995-05-20",
+                "gender": "MALE",
+                "race": "BROWN",
+                "education": "SECONDARY",
+                "institution": "ETEC",
+                "activityArea": "Tecnologia",
+                "courseName": "Programacao Web",
+                "hasProgrammingExperience": false,
+                "familyIncome": "TO1_SALARY",
+                "motivation": "Quero aprender programacao.",
+                "howHeard": "INSTAGRAM",
+                "hasComputer": true,
+                "hasInternet": true,
+                "committedToParticipate": true,
+                "householdSize": 4,
+                "contact": {
+                  "phone": "5511999999999",
+                  "neighbourhood": "Centro",
+                  "state": "SP",
+                  "city": "Sao Paulo",
+                  "address": "Av. Paulista, 1000",
+                  "cep": "89900000",
+                  "complement": "Sala 42"
+                },
+                "disability": {
+                  "hasDisability": true,
+                  "type": "Fisica"
+                },
+                "socialBenefits": [
+                  {
+                    "benefit": "BOLSA_FAMILIA"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Aluno registrado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Lista todos os alunos",
+        "operationId": "listStudents",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Retorna um array com todos os alunos cadastrados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StudentResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Deleta uma lista de alunos",
+        "operationId": "deleteStudents",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteStudentsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Retorna os IDs que nao foram encontrados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "notFoundIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "notFoundIds": [
+                    "987fcdeb-51a2-43d7-90e2-123456789012"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/students/filter": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Lista alunos com filtros e paginacao para admins",
+        "operationId": "filterStudents",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                20,
+                50
+              ],
+              "default": 20
+            },
+            "example": 20
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "joao"
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "example": [
+              "Porto Alegre/RS"
+            ]
+          },
+          {
+            "name": "disabilityType",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "example": [
+              "visual"
+            ]
+          },
+          {
+            "name": "modality",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ONLINE",
+                "PRESENCIAL"
+              ]
+            },
+            "example": "ONLINE"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Retorna alunos paginados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedStudentsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/students/me": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Retorna o perfil do aluno autenticado",
+        "operationId": "getMyStudentProfile",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Perfil retornado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Atualiza o perfil do aluno autenticado",
+        "operationId": "updateMyStudentProfile",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStudentMeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Perfil atualizado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/students/{id}": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Busca um aluno por ID",
+        "operationId": "getStudentById",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StudentIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aluno encontrado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Atualiza completamente os dados de um aluno",
+        "operationId": "updateStudent",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StudentIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStudentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Aluno atualizado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Atualiza parcialmente os dados de um aluno",
+        "operationId": "patchStudent",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StudentIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchStudentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Aluno atualizado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/students/cpf/{cpf}": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Busca um aluno por CPF",
+        "operationId": "getStudentByCpf",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cpf",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "52998224725"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aluno encontrado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/students/me/resume": {
+      "get": {
+        "tags": [
+          "Student Resume"
+        ],
+        "summary": "Consulta o curriculo do aluno autenticado",
+        "operationId": "getMyResume",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Curriculo encontrado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentResumeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Student Resume"
+        ],
+        "summary": "Cria ou atualiza o curriculo do aluno autenticado",
+        "operationId": "upsertMyResume",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStudentResumeDto"
+              },
+              "example": {
+                "about": "Desenvolvedor em formacao com interesse em tecnologia.",
+                "linkedinUrl": "https://www.linkedin.com/in/aluno",
+                "githubUrl": "https://github.com/aluno"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Curriculo atualizado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentResumeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/students/me/resume/photo": {
+      "post": {
+        "tags": [
+          "Student Resume"
+        ],
+        "summary": "Atualiza a foto do curriculo do aluno autenticado",
+        "operationId": "uploadMyResumePhoto",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "photo"
+                ],
+                "properties": {
+                  "photo": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Foto atualizada com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "photoUrl"
+                  ],
+                  "properties": {
+                    "photoUrl": {
+                      "type": "string",
+                      "example": "/uploads/resume-photos/id/photo.webp"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/students/me/resume/skills": {
+      "post": {
+        "tags": [
+          "Student Resume"
+        ],
+        "summary": "Adiciona uma habilidade ao curriculo do aluno autenticado",
+        "operationId": "addMyResumeSkill",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStudentResumeSkillDto"
+              },
+              "example": {
+                "skillName": "TypeScript"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Habilidade adicionada com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/students/me/resume/skills/{skillId}": {
+      "delete": {
+        "tags": [
+          "Student Resume"
+        ],
+        "summary": "Remove uma habilidade do curriculo do aluno autenticado",
+        "operationId": "removeMyResumeSkill",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skillId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Habilidade removida com sucesso."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/companies": {
+      "post": {
+        "tags": [
+          "Companies"
+        ],
+        "summary": "Registra uma nova empresa",
+        "operationId": "createCompany",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCompanyDto"
+              },
+              "example": {
+                "email": "contato@techcorp.com",
+                "password": "SenhaForte123!",
+                "name": "Tech Corp Ltda",
+                "cnpj": "60680743000181",
+                "responsibleName": "Joao da Silva",
+                "contact": {
+                  "phone": "5511999999999",
+                  "state": "SP",
+                  "city": "Sao Paulo",
+                  "address": "Av. Paulista, 1000",
+                  "cep": "89900000"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Empresa registrada com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Companies"
+        ],
+        "summary": "Lista todas as empresas",
+        "operationId": "listCompanies",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Retorna um array com todas as empresas cadastradas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/companies/{id}": {
+      "get": {
+        "tags": [
+          "Companies"
+        ],
+        "summary": "Busca uma empresa por ID",
+        "operationId": "getCompanyById",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CompanyIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Empresa encontrada com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Companies"
+        ],
+        "summary": "Atualiza completamente os dados de uma empresa",
+        "operationId": "updateCompany",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CompanyIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Empresa atualizada com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Companies"
+        ],
+        "summary": "Atualiza parcialmente os dados de uma empresa",
+        "operationId": "patchCompany",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CompanyIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Empresa atualizada com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Companies"
+        ],
+        "summary": "Deleta uma empresa pelo ID",
+        "operationId": "deleteCompany",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CompanyIdPath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Empresa deletada com sucesso."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/companies/cnpj/{cnpj}": {
+      "get": {
+        "tags": [
+          "Companies"
+        ],
+        "summary": "Busca uma empresa por CNPJ",
+        "operationId": "getCompanyByCnpj",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cnpj",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "60680743000181"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Empresa encontrada com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/courses": {
+      "get": {
+        "tags": [
+          "Courses"
+        ],
+        "summary": "Lista todos os cursos",
+        "operationId": "listCourses",
+        "responses": {
+          "200": {
+            "description": "Cursos retornados com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CourseResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Courses"
+        ],
+        "summary": "Cria um novo curso",
+        "operationId": "createCourse",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCourseDto"
+              },
+              "example": {
+                "name": "Desenvolvimento Web Full Stack",
+                "banner": "https://fatilab.com/banners/web.jpg",
+                "description": "Curso completo de desenvolvimento web com React e Node.js.",
+                "courseLoad": "120h",
+                "startDate": "2025-02-01T00:00:00.000Z",
+                "endDate": "2025-06-30T00:00:00.000Z",
+                "startRegistrations": "2025-01-01T00:00:00.000Z",
+                "endRegistrations": "2025-01-28T00:00:00.000Z",
+                "modality": "ONLINE",
+                "linkAccess": "https://fatilab.com/cursos/web",
+                "vacancyCount": 30
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Curso criado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseCreatedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/courses/me/enrollments": {
+      "get": {
+        "tags": [
+          "Courses"
+        ],
+        "summary": "Lista os vinculos do aluno autenticado",
+        "operationId": "listMyCourseEnrollments",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vinculos retornados com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CourseEnrollmentResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/courses/{id}/interest": {
+      "post": {
+        "tags": [
+          "Courses"
+        ],
+        "summary": "Registra interesse do aluno em um curso",
+        "operationId": "registerCourseInterest",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CourseIdPath"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Interesse registrado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseEnrollmentResponse"
+                },
+                "example": {
+                  "courseId": "123e4567-e89b-12d3-a456-426614174000",
+                  "status": "interested",
+                  "enrolledAt": "2024-01-16T09:00:00.000Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/courses/{id}/enroll": {
+      "post": {
+        "tags": [
+          "Courses"
+        ],
+        "summary": "Matricula o aluno em um curso",
+        "operationId": "enrollInCourse",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CourseIdPath"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Matricula realizada com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseEnrollmentResponse"
+                },
+                "example": {
+                  "courseId": "123e4567-e89b-12d3-a456-426614174000",
+                  "status": "enrolled",
+                  "enrolledAt": "2024-01-15T10:30:00.000Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/settings/public/{key}": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Busca uma configuracao publica pela chave",
+        "operationId": "getPublicSetting",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "whatsapp_phone"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuracao encontrada com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSettingResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Check API health status",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "API saudavel.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "status": "ok",
+                  "timestamp": "2026-05-11T12:00:00.000Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "access-token": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Insira o token JWT retornado no login."
+      }
+    },
+    "parameters": {
+      "StudentIdPath": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "UUID do aluno",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "example": "123e4567-e89b-12d3-a456-426614174000"
+      },
+      "CompanyIdPath": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "UUID da empresa",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "example": "123e4567-e89b-12d3-a456-426614174000"
+      },
+      "CourseIdPath": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "UUID do curso",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "example": "123e4567-e89b-12d3-a456-426614174000"
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Erro de validacao ou dados invalidos.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "statusCode": 400,
+              "message": [
+                "email deve ser um e-mail valido"
+              ],
+              "error": "Bad Request",
+              "errorKind": "VALIDATION_ERROR"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Nao autorizado. JWT ausente ou invalido.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "statusCode": 401,
+              "message": "Unauthorized",
+              "error": "Unauthorized"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Acesso negado. O usuario nao possui o cargo necessario.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "statusCode": 403,
+              "message": "Forbidden resource",
+              "error": "Forbidden"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Recurso nao encontrado.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "statusCode": 404,
+              "message": "Recurso nao encontrado",
+              "error": "Not Found",
+              "errorKind": "NOT_FOUND"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflito com dados ja cadastrados.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "statusCode": 409,
+              "message": "Registro ja cadastrado",
+              "error": "Conflict",
+              "errorKind": "CONFLICT"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "LoginDto": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@fatilab.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "Admin@123"
+          }
+        }
+      },
+      "AuthTokenResponse": {
+        "type": "object",
+        "required": [
+          "accessToken"
+        ],
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "JWT para enviar no header Authorization: Bearer <token>."
+          }
+        }
+      },
+      "CreateAdminDto": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@fatilab.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "format": "password",
+            "example": "SenhaForte123!"
+          }
+        }
+      },
+      "AdminCreatedResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "email"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      },
+      "CreateContactDto": {
+        "type": "object",
+        "required": [
+          "phone"
+        ],
+        "properties": {
+          "phone": {
+            "type": "string",
+            "maxLength": 20,
+            "example": "5511999999999"
+          },
+          "neighbourhood": {
+            "type": "string",
+            "example": "Centro"
+          },
+          "state": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "example": "SP"
+          },
+          "city": {
+            "type": "string",
+            "example": "Sao Paulo"
+          },
+          "address": {
+            "type": "string",
+            "example": "Av. Paulista, 1000"
+          },
+          "cep": {
+            "type": "string",
+            "maxLength": 9,
+            "example": "89900000"
+          },
+          "complement": {
+            "type": "string",
+            "example": "Sala 42"
+          }
+        }
+      },
+      "CreateDisabilityDto": {
+        "type": "object",
+        "required": [
+          "hasDisability"
+        ],
+        "properties": {
+          "hasDisability": {
+            "type": "boolean",
+            "example": true
+          },
+          "type": {
+            "type": "string",
+            "maxLength": 50,
+            "example": "Fisica"
+          }
+        }
+      },
+      "CreateSocialBenefitDto": {
+        "type": "object",
+        "required": [
+          "benefit"
+        ],
+        "properties": {
+          "benefit": {
+            "type": "string",
+            "enum": [
+              "BOLSA_FAMILIA",
+              "BPC",
+              "NONE",
+              "OTHERS"
+            ],
+            "example": "BOLSA_FAMILIA"
+          }
+        }
+      },
+      "CreateStudentDto": {
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "fullName",
+          "cpf",
+          "birthDate",
+          "gender",
+          "race",
+          "contact"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 100,
+            "example": "joao@email.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "maxLength": 100,
+            "example": "SenhaForte123!"
+          },
+          "fullName": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "Joao da Silva"
+          },
+          "socialName": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "Joaozinho"
+          },
+          "cpf": {
+            "type": "string",
+            "maxLength": 14,
+            "example": "52998224725"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date",
+            "example": "1995-05-20"
+          },
+          "gender": {
+            "$ref": "#/components/schemas/Gender"
+          },
+          "race": {
+            "$ref": "#/components/schemas/Race"
+          },
+          "education": {
+            "$ref": "#/components/schemas/EducationLevel"
+          },
+          "institution": {
+            "type": "string",
+            "example": "ETEC"
+          },
+          "activityArea": {
+            "type": "string",
+            "example": "Tecnologia"
+          },
+          "courseName": {
+            "type": "string",
+            "example": "Programacao Web"
+          },
+          "hasProgrammingExperience": {
+            "type": "boolean",
+            "example": false
+          },
+          "familyIncome": {
+            "$ref": "#/components/schemas/FamilyIncome"
+          },
+          "motivation": {
+            "type": "string",
+            "example": "Quero aprender programacao."
+          },
+          "howHeard": {
+            "$ref": "#/components/schemas/HowHeardChannel"
+          },
+          "hasComputer": {
+            "type": "boolean",
+            "example": true
+          },
+          "hasInternet": {
+            "type": "boolean",
+            "example": true
+          },
+          "committedToParticipate": {
+            "type": "boolean",
+            "example": true
+          },
+          "contact": {
+            "$ref": "#/components/schemas/CreateContactDto"
+          },
+          "disability": {
+            "$ref": "#/components/schemas/CreateDisabilityDto"
+          },
+          "socialBenefits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateSocialBenefitDto"
+            }
+          },
+          "householdSize": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 4
+          }
+        }
+      },
+      "UpdateStudentDto": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CreateStudentDto"
+          }
+        ],
+        "required": [
+          "email",
+          "password",
+          "fullName",
+          "birthDate",
+          "gender",
+          "race",
+          "contact"
+        ],
+        "properties": {
+          "cpf": false
+        }
+      },
+      "PatchStudentDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 100
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "maxLength": 100
+          },
+          "fullName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "socialName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "$ref": "#/components/schemas/Gender"
+          },
+          "race": {
+            "$ref": "#/components/schemas/Race"
+          },
+          "education": {
+            "$ref": "#/components/schemas/EducationLevel"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "activityArea": {
+            "type": "string"
+          },
+          "courseName": {
+            "type": "string"
+          },
+          "hasProgrammingExperience": {
+            "type": "boolean"
+          },
+          "familyIncome": {
+            "$ref": "#/components/schemas/FamilyIncome"
+          },
+          "motivation": {
+            "type": "string"
+          },
+          "howHeard": {
+            "$ref": "#/components/schemas/HowHeardChannel"
+          },
+          "hasComputer": {
+            "type": "boolean"
+          },
+          "hasInternet": {
+            "type": "boolean"
+          },
+          "committedToParticipate": {
+            "type": "boolean"
+          },
+          "contact": {
+            "$ref": "#/components/schemas/CreateContactDto"
+          },
+          "disability": {
+            "$ref": "#/components/schemas/CreateDisabilityDto"
+          },
+          "socialBenefits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateSocialBenefitDto"
+            }
+          },
+          "householdSize": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "UpdateStudentMeDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "Joao da Silva"
+          },
+          "socialName": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "Joao"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date",
+            "example": "1995-05-20"
+          },
+          "gender": {
+            "type": "string",
+            "example": "Masculino"
+          },
+          "race": {
+            "type": "string",
+            "example": "Pardo"
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 20,
+            "example": "11999998888"
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "Sao Paulo"
+          },
+          "state": {
+            "type": "string",
+            "maxLength": 2,
+            "example": "SP"
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Rua das Flores, 123"
+          },
+          "cep": {
+            "type": "string",
+            "maxLength": 9,
+            "example": "01234567"
+          },
+          "isPcd": {
+            "type": "boolean",
+            "example": true
+          },
+          "disabilityType": {
+            "type": "string",
+            "maxLength": 50,
+            "example": "Fisica"
+          },
+          "educationLevel": {
+            "type": "string",
+            "example": "Ensino Medio Completo"
+          },
+          "courseName": {
+            "type": "string",
+            "example": "Tecnico em Informatica"
+          },
+          "institution": {
+            "type": "string",
+            "example": "ETEC"
+          },
+          "workArea": {
+            "type": "string",
+            "nullable": true,
+            "example": "Tecnologia"
+          },
+          "hasProgrammingExperience": {
+            "type": "boolean",
+            "example": false
+          },
+          "fatilabMotivation": {
+            "type": "string",
+            "example": "Quero aprender programacao..."
+          },
+          "howHeard": {
+            "type": "string",
+            "example": "Redes sociais"
+          },
+          "hasComputer": {
+            "type": "boolean",
+            "example": true
+          },
+          "hasInternet": {
+            "type": "boolean",
+            "example": true
+          },
+          "familyIncome": {
+            "type": "string",
+            "example": "Ate 1 salario minimo"
+          },
+          "householdSize": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 4
+          },
+          "socialBenefits": {
+            "type": "string",
+            "example": "Bolsa Familia"
+          }
+        }
+      },
+      "DeleteStudentsDto": {
+        "type": "object",
+        "required": [
+          "ids"
+        ],
+        "properties": {
+          "ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": [
+              "123e4567-e89b-12d3-a456-426614174000",
+              "987fcdeb-51a2-43d7-90e2-123456789012"
+            ]
+          }
+        }
+      },
+      "StudentResponse": {
+        "type": "object",
+        "description": "Representacao retornada pelo dominio de aluno.",
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "socialName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cpf": {
+            "type": "string"
+          },
+          "contact": {
+            "$ref": "#/components/schemas/CreateContactDto"
+          }
+        }
+      },
+      "StudentListItemDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "cpf",
+          "fullName",
+          "phoneNumber",
+          "enrollmentStatus"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "aluno@email.com"
+          },
+          "cpf": {
+            "type": "string",
+            "example": "123.***.***-09"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Joao da Silva Full Name"
+          },
+          "socialName": {
+            "type": "string",
+            "example": "Joaozinho"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "example": "51999999999"
+          },
+          "city": {
+            "type": "string",
+            "example": "Porto Alegre"
+          },
+          "state": {
+            "type": "string",
+            "example": "RS"
+          },
+          "hasDisability": {
+            "type": "boolean",
+            "example": true
+          },
+          "disabilityType": {
+            "type": "string",
+            "example": "visual"
+          },
+          "enrollmentStatus": {
+            "type": "string",
+            "enum": [
+              "ONLINE",
+              "PRESENCIAL",
+              "NAO_INSCRITO"
+            ],
+            "example": "ONLINE"
+          }
+        }
+      },
+      "PaginatedStudentsMetaDto": {
+        "type": "object",
+        "required": [
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ],
+        "properties": {
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "enum": [
+              20,
+              50
+            ],
+            "example": 20
+          },
+          "total": {
+            "type": "integer",
+            "example": 100
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 5
+          }
+        }
+      },
+      "PaginatedStudentsResponseDto": {
+        "type": "object",
+        "required": [
+          "items",
+          "meta"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentListItemDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginatedStudentsMetaDto"
+          }
+        }
+      },
+      "CreateCompanyDto": {
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "name",
+          "cnpj",
+          "responsibleName",
+          "contact"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 100,
+            "example": "contato@techcorp.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "maxLength": 100,
+            "example": "SenhaForte123!"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "Tech Corp Ltda"
+          },
+          "cnpj": {
+            "type": "string",
+            "maxLength": 18,
+            "example": "60680743000181"
+          },
+          "responsibleName": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "Joao da Silva"
+          },
+          "contact": {
+            "$ref": "#/components/schemas/CreateContactDto"
+          }
+        }
+      },
+      "UpdateCompanyDto": {
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "name",
+          "responsibleName",
+          "contact"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 100,
+            "example": "contato@techcorp.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "maxLength": 100,
+            "example": "SenhaForte123!"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "Tech Corp Ltda"
+          },
+          "responsibleName": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "Joao da Silva"
+          },
+          "contact": {
+            "$ref": "#/components/schemas/CreateContactDto"
+          }
+        }
+      },
+      "PatchCompanyDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 100
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "responsibleName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "contact": {
+            "$ref": "#/components/schemas/CreateContactDto"
+          }
+        }
+      },
+      "CompanyResponse": {
+        "type": "object",
+        "description": "Representacao retornada pelo dominio de empresa.",
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string"
+          },
+          "cnpj": {
+            "type": "string"
+          },
+          "responsibleName": {
+            "type": "string"
+          },
+          "contact": {
+            "$ref": "#/components/schemas/CreateContactDto"
+          }
+        }
+      },
+      "CreateCourseDto": {
+        "type": "object",
+        "required": [
+          "name",
+          "banner",
+          "courseLoad",
+          "startDate",
+          "endDate",
+          "startRegistrations",
+          "endRegistrations",
+          "modality",
+          "linkAccess",
+          "vacancyCount"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Desenvolvimento Web Full Stack"
+          },
+          "banner": {
+            "type": "string",
+            "example": "https://fatilab.com/banners/web.jpg"
+          },
+          "description": {
+            "type": "string",
+            "example": "Curso completo de desenvolvimento web com React e Node.js."
+          },
+          "courseLoad": {
+            "type": "string",
+            "example": "120h"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-02-01T00:00:00.000Z"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-06-30T00:00:00.000Z"
+          },
+          "startRegistrations": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-01-01T00:00:00.000Z"
+          },
+          "endRegistrations": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-01-28T00:00:00.000Z"
+          },
+          "modality": {
+            "type": "string",
+            "example": "ONLINE"
+          },
+          "linkAccess": {
+            "type": "string",
+            "example": "https://fatilab.com/cursos/web"
+          },
+          "vacancyCount": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 30
+          }
+        }
+      },
+      "CourseCreatedResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CreateCourseDto"
+          },
+          {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "example": "123e4567-e89b-12d3-a456-426614174000"
+              }
+            }
+          }
+        ]
+      },
+      "CourseResponseDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "description",
+          "modality",
+          "workloadHours",
+          "vacancyCount",
+          "startDate",
+          "endDate",
+          "enrollmentStart",
+          "enrollmentEnd",
+          "location",
+          "imageUrl",
+          "externalLink"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "title": {
+            "type": "string",
+            "example": "Desenvolvimento Web Full Stack"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Curso completo de desenvolvimento web."
+          },
+          "modality": {
+            "type": "string",
+            "enum": [
+              "presencial",
+              "online",
+              "hibrido"
+            ],
+            "example": "online"
+          },
+          "workloadHours": {
+            "type": "integer",
+            "example": 120
+          },
+          "vacancyCount": {
+            "type": "integer",
+            "example": 30
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-02-01T00:00:00.000Z"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-06-30T00:00:00.000Z"
+          },
+          "enrollmentStart": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-01-01T00:00:00.000Z"
+          },
+          "enrollmentEnd": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-01-28T00:00:00.000Z"
+          },
+          "location": {
+            "type": "string",
+            "nullable": true,
+            "example": "Porto Alegre - RS"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://fatilab.com/banners/web.jpg"
+          },
+          "externalLink": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://fatilab.com/cursos/web"
+          }
+        }
+      },
+      "CourseEnrollmentResponse": {
+        "type": "object",
+        "required": [
+          "courseId",
+          "status",
+          "enrolledAt"
+        ],
+        "properties": {
+          "courseId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "enrolled",
+              "interested"
+            ],
+            "example": "enrolled"
+          },
+          "enrolledAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-01-15T10:00:00.000Z"
+          }
+        }
+      },
+      "UpdateStudentResumeDto": {
+        "type": "object",
+        "properties": {
+          "about": {
+            "type": "string",
+            "nullable": true,
+            "example": "Desenvolvedor em formacao com interesse em tecnologia."
+          },
+          "linkedinUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://www.linkedin.com/in/aluno"
+          },
+          "githubUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://github.com/aluno"
+          }
+        }
+      },
+      "CreateStudentResumeSkillDto": {
+        "type": "object",
+        "required": [
+          "skillName"
+        ],
+        "properties": {
+          "skillName": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "TypeScript"
+          }
+        }
+      },
+      "SkillResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "skillName"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "skillName": {
+            "type": "string",
+            "example": "TypeScript"
+          }
+        }
+      },
+      "StudentResumeResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "about",
+          "linkedinUrl",
+          "githubUrl",
+          "photoUrl",
+          "skills"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "1d8f37f5-91a9-4c44-b75c-7a4f7576ad21"
+          },
+          "about": {
+            "type": "string",
+            "nullable": true,
+            "example": "Desenvolvedor em formacao."
+          },
+          "linkedinUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://www.linkedin.com/in/aluno"
+          },
+          "githubUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://github.com/aluno"
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "/uploads/resume-photos/student-id/photo.webp"
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillResponse"
+            }
+          }
+        }
+      },
+      "AdminStudentBasicResponse": {
+        "type": "object",
+        "required": [
+          "fullName",
+          "email"
+        ],
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "example": "Joao da Silva"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "joao@email.com"
+          }
+        }
+      },
+      "AdminStudentResumeResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/StudentResumeResponse"
+          },
+          {
+            "type": "object",
+            "required": [
+              "student"
+            ],
+            "properties": {
+              "student": {
+                "$ref": "#/components/schemas/AdminStudentBasicResponse"
+              }
+            }
+          }
+        ]
+      },
+      "PublicSettingResponse": {
+        "type": "object",
+        "required": [
+          "key",
+          "value"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "whatsapp_phone"
+          },
+          "value": {
+            "type": "string",
+            "example": "+5551999999999"
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "timestamp"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Gender": {
+        "type": "string",
+        "enum": [
+          "MALE",
+          "FEMALE",
+          "NON_BINARY",
+          "PREFER_NOT_TO_SAY",
+          "OTHER"
+        ],
+        "example": "MALE"
+      },
+      "Race": {
+        "type": "string",
+        "enum": [
+          "WHITE",
+          "BLACK",
+          "BROWN",
+          "INDIGENOUS",
+          "PREFER_NOT_TO_SAY"
+        ],
+        "example": "BROWN"
+      },
+      "EducationLevel": {
+        "type": "string",
+        "enum": [
+          "NO_EDUCATION",
+          "PRIMARY",
+          "SECONDARY",
+          "HIGHER",
+          "POSTGRADUATE"
+        ],
+        "example": "SECONDARY"
+      },
+      "HowHeardChannel": {
+        "type": "string",
+        "enum": [
+          "INSTAGRAM",
+          "REFEREE",
+          "LINKEDIN",
+          "OTHERS"
+        ],
+        "example": "INSTAGRAM"
+      },
+      "FamilyIncome": {
+        "type": "string",
+        "enum": [
+          "TO1_SALARY",
+          "BETWEEN_1_3",
+          "MORE_THAN_3"
+        ],
+        "example": "TO1_SALARY"
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "example": 400
+          },
+          "message": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "example": "Erro de validacao"
+          },
+          "error": {
+            "type": "string",
+            "example": "Bad Request"
+          },
+          "errorKind": {
+            "type": "string",
+            "example": "VALIDATION_ERROR"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}
