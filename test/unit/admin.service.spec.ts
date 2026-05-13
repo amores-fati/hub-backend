@@ -5,7 +5,9 @@ import { IAdminRepository } from '../../src/core/ports/admin.repository.interfac
 import { IHashService } from '../../src/core/ports/hash.service.interface';
 import { ICurriculumRepository } from '../../src/core/ports/curriculum.repository.interface';
 import { IStudentRepository } from '../../src/core/ports/student.repository.interface';
+import { ICompanyRepository } from '../../src/core/ports/company.repository.interface';
 import { CreateAdminCommand } from '../../src/core/command/admin.command';
+import { LocationScope } from '../../src/adapters/in/dtos/admin/get-locations.dto';
 import { Admin } from '../../src/core/domain/admin.entity';
 import { UserAlreadyExistsException } from '../../src/core/exceptions/user-already-exists.exception';
 import { NotFoundException } from '@nestjs/common'; // Novo import para o teste de erro
@@ -34,6 +36,10 @@ describe('AdminService', () => {
 
   const mockStudentRepository = {
     findById: jest.fn(),
+    findLocations: jest.fn(),
+  };
+  const mockCompanyRepository = {
+    findLocations: jest.fn(),
   };
 
   beforeEach(() => {
@@ -44,6 +50,7 @@ describe('AdminService', () => {
       mockHashService,
       mockCurriculumRepository as unknown as ICurriculumRepository,
       mockStudentRepository as unknown as IStudentRepository,
+      mockCompanyRepository as unknown as ICompanyRepository,
     );
   });
 
@@ -134,6 +141,28 @@ describe('AdminService', () => {
       await expect(service.getStudentResume(studentId)).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe('getLocations', () => {
+    const locations = [{ city: 'Porto Alegre', uf: 'RS' }];
+
+    it('should return student locations when scope is STUDENT', async () => {
+      mockStudentRepository.findLocations.mockResolvedValue(locations);
+
+      const result = await service.getLocations(LocationScope.STUDENT);
+
+      expect(result).toEqual(locations);
+      expect(mockStudentRepository.findLocations).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return company locations when scope is COMPANY', async () => {
+      mockCompanyRepository.findLocations.mockResolvedValue(locations);
+
+      const result = await service.getLocations(LocationScope.COMPANY);
+
+      expect(result).toEqual(locations);
+      expect(mockCompanyRepository.findLocations).toHaveBeenCalledTimes(1);
     });
   });
 });
