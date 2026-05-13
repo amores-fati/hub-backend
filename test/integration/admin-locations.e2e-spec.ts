@@ -22,7 +22,9 @@ describe('AdminController (e2e) - Locations', () => {
         `INSERT INTO "users" (id, email, password_hash, role) VALUES ($1, $2, $3, $4)`,
         [adminId, adminEmail, hashedPassword, 'ADMIN'],
       );
-      await dataSource.query(`INSERT INTO "admins" (id) VALUES ($1)`, [adminId]);
+      await dataSource.query(`INSERT INTO "admins" (id) VALUES ($1)`, [
+        adminId,
+      ]);
 
       // Create Contacts
       const contact1Id = randomUUID();
@@ -77,7 +79,7 @@ describe('AdminController (e2e) - Locations', () => {
     const loginRes = await request(app.getHttpServer() as Server)
       .post('/auth/login')
       .send({ email: adminEmail, password: adminPassword });
-    adminAccessToken = loginRes.body.accessToken;
+    adminAccessToken = (loginRes.body as { accessToken: string }).accessToken;
   }, 30000);
 
   afterAll(async () => {
@@ -116,7 +118,10 @@ describe('AdminController (e2e) - Locations', () => {
         .expect((res) => {
           expect(Array.isArray(res.body)).toBe(true);
           expect(res.body).toContainEqual({ city: 'São Paulo', uf: 'SP' });
-          expect(res.body).not.toContainEqual({ city: 'Porto Alegre', uf: 'RS' });
+          expect(res.body).not.toContainEqual({
+            city: 'Porto Alegre',
+            uf: 'RS',
+          });
         });
     });
 
