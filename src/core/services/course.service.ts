@@ -5,6 +5,7 @@ import {
   CourseWithLocation,
   ICourseRepository,
 } from '../ports/course.repository.interface';
+import { CourseNotFoundException } from '../exceptions/course-not-found.exception';
 
 export class CourseService {
   constructor(private readonly courseRepository: ICourseRepository) {}
@@ -34,5 +35,11 @@ export class CourseService {
 
   async getAllCoursesWithLocation(): Promise<CourseWithLocation[]> {
     return this.courseRepository.findAllWithLocation();
+  }
+
+  async deleteCourse(id: string): Promise<void> {
+    const course = await this.courseRepository.findById(id);
+    if (!course) throw new CourseNotFoundException(id);
+    await this.courseRepository.delete(id);
   }
 }
