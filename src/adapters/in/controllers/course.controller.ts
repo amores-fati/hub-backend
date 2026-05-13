@@ -3,6 +3,7 @@ import {
   Body,
   ConflictException,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -16,6 +17,7 @@ import {
   ApiBody,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -33,6 +35,7 @@ import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCourseDto } from '../dtos/course/create-course.dto';
 import { toCourseResponse } from '../dtos/course/course-response.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
+import { User } from 'src/core/domain/user.entity';
 
 @ApiTags('Courses')
 @Controller('courses')
@@ -136,6 +139,34 @@ export class CourseController {
     return courses.map(({ course, location }) =>
       toCourseResponse(course, location),
     );
+  }
+
+  @RequireAuth(UserRoleEnum.ADMIN)
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Exclui um curso' })
+  @ApiParam({ name: 'id', description: 'UUID do curso', type: String })
+  @ApiNoContentResponse({ description: 'Curso excluído com sucesso.' })
+  @ApiNotFoundResponse({
+    description: 'Curso não encontrado.',
+    schema: {
+      example: { statusCode: 404, message: 'Curso não encontrado', errorKind: 'NOT_FOUND' },
+    },
+  })
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    this.logger.info('Deleting course', { id });
+    try {
+      await this.courseService.deleteCourse(id);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CourseNotFoundException') {
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Curso não encontrado',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+      throw error;
+    }
   }
 
   @RequireAuth(UserRoleEnum.STUDENT)
