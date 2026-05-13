@@ -78,6 +78,12 @@ import { SettingRepository } from './adapters/out/repository/setting.repository'
 import { SettingOrmEntity } from './adapters/out/orm/setting.orm-entity';
 import { ISettingRepository } from './core/ports/setting.repository.interface';
 
+import { AdminCourseController } from './adapters/in/controllers/admin-course.controller';
+import { AdminCourseService } from './core/services/admin-course.service';
+import { AdminCourseRepository } from './adapters/out/repository/admin-course.repository';
+import { AdminCourseOrmEntity } from './adapters/out/orm/admin-course.orm-entity';
+import { IAdminCourseRepository } from './core/ports/admin-course.repository.interface';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -115,10 +121,12 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       SettingOrmEntity,
       EnrollmentOrmEntity,
       InPersonCourseDetailOrmEntity,
+      AdminCourseOrmEntity,
     ]),
   ],
   controllers: [
     AdminController,
+    AdminCourseController,
     AuthController,
     CourseController,
     CompanyController,
@@ -303,6 +311,17 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
     {
       provide: ISettingRepository,
       useClass: SettingRepository,
+    },
+    {
+      provide: AdminCourseService,
+      useFactory: (adminCourseRepository: IAdminCourseRepository) => {
+        return new AdminCourseService(adminCourseRepository);
+      },
+      inject: [IAdminCourseRepository],
+    },
+    {
+      provide: IAdminCourseRepository,
+      useClass: AdminCourseRepository,
     },
   ],
 })

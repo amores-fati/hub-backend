@@ -18,6 +18,7 @@ import { CompanyOrmEntity } from '../adapters/out/orm/company.orm-entity';
 import { InPersonCourseDetailOrmEntity } from '../adapters/out/orm/in-person-course-detail.orm-entity';
 import { SettingOrmEntity } from '../adapters/out/orm/setting.orm-entity';
 import { EnrollmentOrmEntity } from '../adapters/out/orm/enrollment.orm-entity';
+import { AdminCourseOrmEntity } from '../adapters/out/orm/admin-course.orm-entity';
 import { SnakeNamingStrategy } from './snake-naming.strategy';
 
 export const ORM_ENTITIES = [
@@ -37,6 +38,7 @@ export const ORM_ENTITIES = [
   InPersonCourseDetailOrmEntity,
   SettingOrmEntity,
   EnrollmentOrmEntity,
+  AdminCourseOrmEntity,
 ] as const;
 
 type SharedDatabaseOptions = PostgresConnectionOptions;
