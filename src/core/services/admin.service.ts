@@ -6,9 +6,14 @@ import { ICurriculumRepository } from '../ports/curriculum.repository.interface'
 import { IHashService } from '../ports/hash.service.interface';
 import { IStudentRepository } from '../ports/student.repository.interface';
 import { IUserRepository } from '../ports/user.repository.interface';
+import { ICompanyRepository } from '../ports/company.repository.interface';
 import { CreateAdminCommand } from '../command/admin.command';
 import { UserAlreadyExistsException } from '../exceptions/user-already-exists.exception';
 import { StudentResumeResponseDto } from '../../adapters/in/dtos/admin/student-resume-response.dto';
+import {
+  LocationResponseDto,
+  LocationScope,
+} from '../../adapters/in/dtos/admin/get-locations.dto';
 
 export class AdminService {
   constructor(
@@ -17,6 +22,7 @@ export class AdminService {
     private readonly hashService: IHashService,
     private readonly curriculumRepository: ICurriculumRepository,
     private readonly studentRepository: IStudentRepository,
+    private readonly companyRepository: ICompanyRepository,
   ) {}
 
   async createAdmin(command: CreateAdminCommand): Promise<Admin> {
@@ -56,5 +62,12 @@ export class AdminService {
         email: student.email,
       },
     };
+  }
+
+  async getLocations(scope: LocationScope): Promise<LocationResponseDto[]> {
+    if (scope === LocationScope.STUDENT) {
+      return this.studentRepository.findLocations();
+    }
+    return this.companyRepository.findLocations();
   }
 }
