@@ -35,7 +35,6 @@ import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCourseDto } from '../dtos/course/create-course.dto';
 import { toCourseResponse } from '../dtos/course/course-response.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
-import { User } from 'src/core/domain/user.entity';
 
 @ApiTags('Courses')
 @Controller('courses')
