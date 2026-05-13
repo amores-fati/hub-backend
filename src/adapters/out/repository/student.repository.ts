@@ -469,6 +469,20 @@ export class StudentRepository implements IStudentRepository {
     return orm;
   }
 
+  async findLocations(): Promise<{ city: string; uf: string }[]> {
+    const rawData = await this.ormRepository
+      .createQueryBuilder('student')
+      .innerJoin('student.contact', 'contact')
+      .select('contact.city', 'city')
+      .addSelect('contact.state', 'uf')
+      .where('contact.city IS NOT NULL')
+      .andWhere('contact.state IS NOT NULL')
+      .distinct(true)
+      .getRawMany();
+
+    return rawData;
+  }
+
   private coerceRequiredDate(value: Date | string): Date {
     return value instanceof Date ? value : new Date(value);
   }
