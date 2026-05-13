@@ -154,6 +154,6 @@ export class CompanyRepository implements ICompanyRepository {
       .distinct(true)
       .getRawMany();
 
-    return rawData;
+    return rawData as { city: string; uf: string }[];
   }
 }

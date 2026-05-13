@@ -480,7 +480,7 @@ export class StudentRepository implements IStudentRepository {
       .distinct(true)
       .getRawMany();
 
-    return rawData;
+    return rawData as { city: string; uf: string }[];
   }
 
   private coerceRequiredDate(value: Date | string): Date {
