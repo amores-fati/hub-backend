@@ -1,7 +1,13 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateAdminCoursesTable1778600000000 implements MigrationInterface {
+export class DropAdminCoursesTable1778700000000 implements MigrationInterface {
+  name = 'DropAdminCoursesTable1778700000000';
+
   public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP TABLE IF EXISTS "admin_courses"`);
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TABLE "admin_courses" (
         "id" uuid NOT NULL,
@@ -21,9 +27,5 @@ export class CreateAdminCoursesTable1778600000000 implements MigrationInterface 
         CONSTRAINT "pk_admin_courses" PRIMARY KEY ("id")
       )
     `);
-  }
-
-  public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE "admin_courses"`);
   }
 }

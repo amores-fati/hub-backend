@@ -12,17 +12,17 @@ export interface CreateCourseCommand {
   vacancyCount: number;
 }
 
-export interface AdminCourseCommand {
+export interface UpdateCourseCommand {
   name: string;
-  description: string;
+  banner: string;
+  description?: string;
+  courseLoad: string;
+  startDate: string;
+  endDate: string;
+  startRegistrations: string;
+  endRegistrations: string;
   modality: string;
-  shift: string;
-  imageUrl?: string;
-  address?: string;
-  vacancyCount?: number;
-  workloadHours?: number;
-  startDate?: string;
-  endDate?: string;
-  enrollmentStart?: string;
-  enrollmentEnd?: string;
+  linkAccess: string;
+  vacancyCount: number;
 }
+

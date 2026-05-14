@@ -56,6 +56,26 @@ export class CourseRepository implements ICourseRepository {
     return this.mapToDomain(ormEntity);
   }
 
+  async update(course: Course): Promise<Course> {
+    await this.ormRepository.update(course.id, {
+      name: course.name,
+      banner: course.banner,
+      description: course.description ?? null,
+      courseLoad: course.courseLoad,
+      startDate: course.startDate,
+      endDate: course.endDate,
+      startRegistrations: course.startRegistrations,
+      endRegistrations: course.endRegistrations,
+      modality: course.modality,
+      linkAccess: course.linkAccess,
+      vacancyCount: course.vacancyCount,
+    });
+    const updated = await this.ormRepository.findOne({
+      where: { id: course.id },
+    });
+    return this.mapToDomain(updated!);
+  }
+
   private mapToDomain(ormEntity: CourseOrmEntity): Course {
     return new Course(
       ormEntity.id,

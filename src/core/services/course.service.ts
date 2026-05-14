@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { CreateCourseCommand } from '../command/course.command';
+import { CreateCourseCommand, UpdateCourseCommand } from '../command/course.command';
 import { Course } from '../domain/course.entity';
 import {
   CourseWithLocation,
@@ -26,6 +26,32 @@ export class CourseService {
     );
 
     return this.courseRepository.create(course);
+  }
+
+  async updateCourse(id: string, command: UpdateCourseCommand): Promise<Course> {
+    const existing = await this.courseRepository.findById(id);
+    if (!existing) {
+      const error = new Error('Curso não encontrado');
+      error.name = 'CourseNotFoundException';
+      throw error;
+    }
+
+    const updated = new Course(
+      id,
+      command.name,
+      command.banner,
+      command.courseLoad,
+      new Date(command.startDate),
+      new Date(command.endDate),
+      new Date(command.startRegistrations),
+      new Date(command.endRegistrations),
+      command.modality,
+      command.linkAccess,
+      command.vacancyCount,
+      command.description,
+    );
+
+    return this.courseRepository.update(updated);
   }
 
   async getAllCourses(): Promise<Course[]> {

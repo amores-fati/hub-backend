@@ -12,4 +12,5 @@ export interface ICourseRepository {
   findAll(): Promise<Course[]>;
   findAllWithLocation(): Promise<CourseWithLocation[]>;
   findById(id: string): Promise<Course | null>;
+  update(course: Course): Promise<Course>;
 }
