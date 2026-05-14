@@ -32,11 +32,14 @@ import { JwtStrategy } from './utils/strategies/jwt.strategy';
 import { CourseController } from './adapters/in/controllers/course.controller';
 import { CourseService } from './core/services/course.service';
 import { CourseReportService } from './core/services/course-report.service';
+import { StudentReportService } from './core/services/student-report.service';
 import { CourseRepository } from './adapters/out/repository/course.repository';
 import { CourseReportPdfGenerator } from './adapters/out/pdf/course-report-pdf.generator';
+import { StudentReportPdfGenerator } from './adapters/out/pdf/student-report-pdf.generator';
 import { CourseOrmEntity } from './adapters/out/orm/course.orm-entity';
 import { ICourseRepository } from './core/ports/course.repository.interface';
 import { ICourseReportPdfGenerator } from './core/ports/course-report-pdf-generator.interface';
+import { IStudentReportPdfGenerator } from './core/ports/student-report-pdf-generator.interface';
 
 // Company Adapters & Core
 import { CompanyOrmEntity } from './adapters/out/orm/company.orm-entity';
@@ -234,6 +237,30 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
     {
       provide: ICourseReportPdfGenerator,
       useClass: CourseReportPdfGenerator,
+    },
+    {
+      provide: StudentReportService,
+      useFactory: (
+        studentRepository: IStudentRepository,
+        pdfGenerator: StudentReportPdfGenerator,
+        logger: AmoresFatiLogger,
+      ) => {
+        logger.setContext(StudentReportService.name);
+        return new StudentReportService(
+          studentRepository,
+          pdfGenerator,
+          logger,
+        );
+      },
+      inject: [
+        IStudentRepository,
+        IStudentReportPdfGenerator,
+        AmoresFatiLogger,
+      ],
+    },
+    {
+      provide: IStudentReportPdfGenerator,
+      useClass: StudentReportPdfGenerator,
     },
     {
       provide: ICourseRepository,
