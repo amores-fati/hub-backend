@@ -1,5 +1,6 @@
 import {
   IsDateString,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -7,6 +8,7 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { CourseStatus } from '../../../../core/domain/course-status.enum';
 
 export class CreateCourseDto {
   @ApiProperty({
@@ -93,4 +95,13 @@ export class CreateCourseDto {
   @IsInt()
   @Min(0)
   vacancyCount: number;
+
+  @ApiPropertyOptional({
+    enum: CourseStatus,
+    example: CourseStatus.ATIVO,
+    description: 'Status administrativo do curso.',
+  })
+  @IsOptional()
+  @IsEnum(CourseStatus)
+  status?: CourseStatus;
 }

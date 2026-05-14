@@ -1,4 +1,5 @@
 import { DomainException } from '../exceptions/domain.exception';
+import { CourseStatus } from './course-status.enum';
 
 export class Course {
   readonly #id: string;
@@ -13,6 +14,7 @@ export class Course {
   #linkAccess: string;
   #vacancyCount: number;
   #description?: string;
+  #status: CourseStatus;
 
   constructor(
     id: string,
@@ -27,6 +29,7 @@ export class Course {
     linkAccess: string,
     vacancyCount: number,
     description?: string,
+    status: CourseStatus = CourseStatus.ATIVO,
   ) {
     this.#id = id;
     this.#name = name;
@@ -40,6 +43,7 @@ export class Course {
     this.#linkAccess = linkAccess;
     this.#vacancyCount = vacancyCount;
     this.#description = description;
+    this.#status = status;
     this.validateCourse();
   }
 
@@ -91,6 +95,10 @@ export class Course {
     return this.#vacancyCount;
   }
 
+  get status(): CourseStatus {
+    return this.#status;
+  }
+
   private validateCourse(): void {
     this.validateRequiredText(this.#name, 'O nome do curso e obrigatorio.');
     this.validateRequiredText(this.#banner, 'O banner do curso e obrigatorio.');
@@ -108,6 +116,7 @@ export class Course {
     );
     this.validateOptionalText(this.#description);
     this.validateVacancyCount(this.#vacancyCount);
+    this.validateStatus(this.#status);
     this.validateDateRange(
       this.#startDate,
       this.#endDate,
@@ -142,6 +151,12 @@ export class Course {
     }
   }
 
+  private validateStatus(value: CourseStatus): void {
+    if (!Object.values(CourseStatus).includes(value)) {
+      throw new DomainException('O status do curso precisa ser valido.');
+    }
+  }
+
   private validateDateRange(
     startDate: Date,
     endDate: Date,
@@ -170,6 +185,7 @@ export class Course {
       modality: this.modality,
       linkAccess: this.linkAccess,
       vacancyCount: this.vacancyCount,
+      status: this.status,
     };
   }
 }

@@ -23,6 +23,7 @@ export class CourseService {
       command.linkAccess,
       command.vacancyCount,
       command.description,
+      command.status,
     );
 
     return this.courseRepository.create(course);

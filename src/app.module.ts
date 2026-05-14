@@ -9,6 +9,7 @@ import { AmoresFatiLogger, HttpLoggerInterceptor } from './utils/logger';
 
 // Admin Adapters & Core
 import { AdminController } from './adapters/in/controllers/admin.controller';
+import { AdminReportsController } from './adapters/in/controllers/admin-reports.controller';
 import { AdminService } from './core/services/admin.service';
 import { AdminRepository } from './adapters/out/repository/admin.repository';
 import { IAdminRepository } from './core/ports/admin.repository.interface';
@@ -30,9 +31,12 @@ import { JwtStrategy } from './utils/strategies/jwt.strategy';
 // Course Adapters & Core
 import { CourseController } from './adapters/in/controllers/course.controller';
 import { CourseService } from './core/services/course.service';
+import { CourseReportService } from './core/services/course-report.service';
 import { CourseRepository } from './adapters/out/repository/course.repository';
+import { CourseReportPdfGenerator } from './adapters/out/pdf/course-report-pdf.generator';
 import { CourseOrmEntity } from './adapters/out/orm/course.orm-entity';
 import { ICourseRepository } from './core/ports/course.repository.interface';
+import { ICourseReportPdfGenerator } from './core/ports/course-report-pdf-generator.interface';
 
 // Company Adapters & Core
 import { CompanyOrmEntity } from './adapters/out/orm/company.orm-entity';
@@ -119,6 +123,7 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
   ],
   controllers: [
     AdminController,
+    AdminReportsController,
     AuthController,
     CourseController,
     CompanyController,
@@ -213,6 +218,22 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         return new CourseService(courseRepository);
       },
       inject: [ICourseRepository],
+    },
+    {
+      provide: CourseReportService,
+      useFactory: (
+        courseRepository: ICourseRepository,
+        pdfGenerator: CourseReportPdfGenerator,
+        logger: AmoresFatiLogger,
+      ) => {
+        logger.setContext(CourseReportService.name);
+        return new CourseReportService(courseRepository, pdfGenerator, logger);
+      },
+      inject: [ICourseRepository, ICourseReportPdfGenerator, AmoresFatiLogger],
+    },
+    {
+      provide: ICourseReportPdfGenerator,
+      useClass: CourseReportPdfGenerator,
     },
     {
       provide: ICourseRepository,
