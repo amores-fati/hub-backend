@@ -16,7 +16,10 @@ import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { AdminOrmEntity } from '../orm/admin.orm-entity';
 import { CompanyOrmEntity } from '../orm/company.orm-entity';
-import { ContactOrmEntity } from '../orm/contact.orm-entity';
+import { TelephoneCompanyOrmEntity } from '../orm/telephone-company.orm-entity';
+import { AddressCompanyOrmEntity } from '../orm/address-company.orm-entity';
+import { TelephoneStudentOrmEntity } from '../orm/telephone-student.orm-entity';
+import { AddressStudentOrmEntity } from '../orm/address-student.orm-entity';
 import { CourseOrmEntity } from '../orm/course.orm-entity';
 import { CurriculumSkillOrmEntity } from '../orm/curriculum-skill.orm-entity';
 import { CurriculumOrmEntity } from '../orm/curriculum.orm-entity';
@@ -112,9 +115,10 @@ async function ensureSeedMode(appDataSource: DataSource): Promise<boolean> {
   if (shouldReset) {
     await appDataSource.query(`TRUNCATE TABLE
       job_skills, curriculum_skills, skills, job_openings, curriculum,
-      in_person_course_details, courses, disabilities,
-      social_benefits,
-      students, admins, companies, contacts, users, settings
+      in_person_course_details, courses, disability, student_disability,
+      social_benefit, student_social_benefit, telephone_student,
+      telephone_company, address_student, address_company,
+      students, admins, companies, users, settings
       RESTART IDENTITY CASCADE`);
     logger.info('Dados anteriores removidos.');
   } else {
@@ -208,19 +212,24 @@ export async function seed(): Promise<void> {
       role: UserRoleEnum.COMPANY,
     });
     await appDataSource.getRepository(UserOrmEntity).save(user);
-    const contact = appDataSource.getRepository(ContactOrmEntity).create({
+    const telephone = appDataSource.getRepository(TelephoneCompanyOrmEntity).create({
       id: userId,
+      companyId: userId,
       phone: e.phone,
+    });
+    await appDataSource.getRepository(TelephoneCompanyOrmEntity).save(telephone);
+    const address = appDataSource.getRepository(AddressCompanyOrmEntity).create({
+      id: userId,
+      companyId: userId,
       city: e.city,
       state: e.state,
     });
-    await appDataSource.getRepository(ContactOrmEntity).save(contact);
+    await appDataSource.getRepository(AddressCompanyOrmEntity).save(address);
     const company = appDataSource.getRepository(CompanyOrmEntity).create({
       id: userId,
       cnpj: e.cnpj,
       name: e.name,
       responsibleName: e.responsibleName,
-      contact: contact,
     });
     await appDataSource.getRepository(CompanyOrmEntity).save(company);
     empresas.push(company);
@@ -468,16 +477,21 @@ export async function seed(): Promise<void> {
       role: UserRoleEnum.STUDENT,
     });
     await appDataSource.getRepository(UserOrmEntity).save(user);
-    const contact = appDataSource.getRepository(ContactOrmEntity).create({
+    const telephone = appDataSource.getRepository(TelephoneStudentOrmEntity).create({
       id: userId,
+      studentId: userId,
       phone: `(51) 90000-${numero}00`,
+    });
+    await appDataSource.getRepository(TelephoneStudentOrmEntity).save(telephone);
+    const address = appDataSource.getRepository(AddressStudentOrmEntity).create({
+      id: userId,
+      studentId: userId,
       city: a.city,
       state: a.state,
     });
-    await appDataSource.getRepository(ContactOrmEntity).save(contact);
+    await appDataSource.getRepository(AddressStudentOrmEntity).save(address);
     const student = appDataSource.getRepository(StudentOrmEntity).create({
       id: userId,
-      contact: contact,
       cpf: `${100000000 + i * 11111111}`.slice(0, 11),
       birthDate: new Date(a.birthDate),
       education: a.education,
@@ -495,25 +509,42 @@ export async function seed(): Promise<void> {
     });
     await appDataSource.getRepository(StudentOrmEntity).save(student);
 
-    const disability = appDataSource.getRepository(DisabilityOrmEntity).create({
-      studentId: userId,
-      hasDisability: a.hasDisability,
-      type: a.hasDisability ? a.disability : null,
-    });
-    await appDataSource.getRepository(DisabilityOrmEntity).save(disability);
+    // Link disabilities via student_disability table
+    if (a.hasDisability && a.disability) {
+      const disability = await appDataSource
+        .getRepository(DisabilityOrmEntity)
+        .findOne({ where: { name: a.disability } });
+      
+      if (disability) {
+        await appDataSource
+          .getRepository(StudentOrmEntity)
+          .createQueryBuilder()
+          .relation(StudentOrmEntity, 'disabilities')
+          .of(student)
+          .add(disability);
+      }
+    }
 
+    // Link social benefits via student_social_benefit table
     if (i % 3 === 0) {
-      const benefit = appDataSource
+      const benefitName = [
+        'Bolsa Família',
+        'BPC',
+        'Outros',
+      ][i % 3];
+      
+      const benefit = await appDataSource
         .getRepository(SocialBenefitOrmEntity)
-        .create({
-          student: student,
-          benefit: [
-            SocialBenefitType.BOLSA_FAMILIA,
-            SocialBenefitType.BPC,
-            SocialBenefitType.OTHERS,
-          ][i % 3],
-        });
-      await appDataSource.getRepository(SocialBenefitOrmEntity).save(benefit);
+        .findOne({ where: { name: benefitName } });
+      
+      if (benefit) {
+        await appDataSource
+          .getRepository(StudentOrmEntity)
+          .createQueryBuilder()
+          .relation(StudentOrmEntity, 'socialBenefits')
+          .of(student)
+          .add(benefit);
+      }
     }
     alunos.push(student);
   }

@@ -37,6 +37,8 @@ export class Student extends User {
   #committedToParticipate?: boolean;
   #disability?: Disability;
   #socialBenefits: SocialBenefit[];
+  #disabilities: string[];
+  #socialBenefitNames: string[];
   #householdSize?: number;
 
   constructor(
@@ -64,6 +66,8 @@ export class Student extends User {
     courseName?: string,
     familyIncome?: FamilyIncome,
     householdSize?: number,
+    disabilities: string[] = [],
+    socialBenefitNames: string[] = [],
   ) {
     super(id, email, password);
     this.#cpf = cpf;
@@ -88,6 +92,8 @@ export class Student extends User {
     this.#courseName = courseName;
     this.#familyIncome = familyIncome;
     this.#householdSize = householdSize;
+    this.#disabilities = disabilities;
+    this.#socialBenefitNames = socialBenefitNames;
     this.validateStudent();
   }
 
@@ -173,6 +179,14 @@ export class Student extends User {
 
   get socialBenefits(): SocialBenefit[] {
     return this.#socialBenefits;
+  }
+
+  get disabilities(): string[] {
+    return this.#disabilities;
+  }
+
+  get socialBenefitNames(): string[] {
+    return this.#socialBenefitNames;
   }
 
   public changeContact(newContact: Contact): void {

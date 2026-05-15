@@ -6,7 +6,8 @@ import { Company } from '../../../core/domain/company.entity';
 import { CompanyOrmEntity } from '../orm/company.orm-entity';
 import { Contact } from '../../../core/domain/contact.entity';
 import { UserOrmEntity } from '../orm/user.orm-entity';
-import { ContactOrmEntity } from '../orm/contact.orm-entity';
+import { TelephoneCompanyOrmEntity } from '../orm/telephone-company.orm-entity';
+import { AddressCompanyOrmEntity } from '../orm/address-company.orm-entity';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @Injectable()
@@ -22,7 +23,8 @@ export class CompanyRepository implements ICompanyRepository {
     await this.ormRepository.manager.transaction(
       async (transactionalEntityManager) => {
         await transactionalEntityManager.save(ormEntity.user);
-        await transactionalEntityManager.save(ormEntity.contact);
+        await transactionalEntityManager.save(ormEntity.telephone);
+        await transactionalEntityManager.save(ormEntity.address);
         await transactionalEntityManager.save(ormEntity);
       },
     );
@@ -32,7 +34,7 @@ export class CompanyRepository implements ICompanyRepository {
 
   async findAll(): Promise<Company[]> {
     const ormEntities = await this.ormRepository.find({
-      relations: ['user', 'contact'],
+      relations: ['user', 'telephone', 'address'],
     });
     return ormEntities.map((e) => this.mapToDomain(e));
   }
@@ -40,7 +42,7 @@ export class CompanyRepository implements ICompanyRepository {
   async findById(id: string): Promise<Company | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { id },
-      relations: ['user', 'contact'],
+      relations: ['user', 'telephone', 'address'],
     });
     return ormEntity ? this.mapToDomain(ormEntity) : null;
   }
@@ -52,7 +54,7 @@ export class CompanyRepository implements ICompanyRepository {
   async findByCnpj(cnpj: string): Promise<Company | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { cnpj },
-      relations: ['user', 'contact'],
+      relations: ['user', 'telephone', 'address'],
     });
     return ormEntity ? this.mapToDomain(ormEntity) : null;
   }
@@ -63,7 +65,8 @@ export class CompanyRepository implements ICompanyRepository {
     await this.ormRepository.manager.transaction(
       async (transactionalEntityManager) => {
         await transactionalEntityManager.save(ormEntity.user);
-        await transactionalEntityManager.save(ormEntity.contact);
+        await transactionalEntityManager.save(ormEntity.telephone);
+        await transactionalEntityManager.save(ormEntity.address);
         await transactionalEntityManager.save(ormEntity);
       },
     );
@@ -74,17 +77,21 @@ export class CompanyRepository implements ICompanyRepository {
   async delete(id: string): Promise<void> {
     const ormEntity = await this.ormRepository.findOne({
       where: { id },
-      relations: ['user', 'contact'],
+      relations: ['user', 'telephone', 'address'],
     });
 
     if (ormEntity) {
       await this.ormRepository.manager.transaction(
         async (transactionalEntityManager) => {
-          await transactionalEntityManager.remove(ormEntity);
-
-          if (ormEntity.contact) {
-            await transactionalEntityManager.remove(ormEntity.contact);
+          if (ormEntity.telephone) {
+            await transactionalEntityManager.remove(ormEntity.telephone);
           }
+
+          if (ormEntity.address) {
+            await transactionalEntityManager.remove(ormEntity.address);
+          }
+
+          await transactionalEntityManager.remove(ormEntity);
 
           if (ormEntity.user) {
             await transactionalEntityManager.remove(ormEntity.user);
@@ -107,29 +114,34 @@ export class CompanyRepository implements ICompanyRepository {
     ormEntity.user.password = company.password;
     ormEntity.user.role = UserRoleEnum.COMPANY;
 
-    ormEntity.contact = new ContactOrmEntity();
-    ormEntity.contact.id = company.contact.id;
-    ormEntity.contact.phone = company.contact.phone;
-    ormEntity.contact.neighbourhood = company.contact.neighbourhood || null;
-    ormEntity.contact.state = company.contact.state || null;
-    ormEntity.contact.city = company.contact.city || null;
-    ormEntity.contact.address = company.contact.address || null;
-    ormEntity.contact.cep = company.contact.cep || null;
-    ormEntity.contact.complement = company.contact.complement || null;
+    ormEntity.telephone = new TelephoneCompanyOrmEntity();
+    ormEntity.telephone.id = company.id;
+    ormEntity.telephone.companyId = company.id;
+    ormEntity.telephone.phone = company.contact.phone;
+
+    ormEntity.address = new AddressCompanyOrmEntity();
+    ormEntity.address.id = company.id;
+    ormEntity.address.companyId = company.id;
+    ormEntity.address.city = company.contact.city || null;
+    ormEntity.address.state = company.contact.state || null;
+    ormEntity.address.neighbourhood = company.contact.neighbourhood || null;
+    ormEntity.address.address = company.contact.address || null;
+    ormEntity.address.cep = company.contact.cep || null;
+    ormEntity.address.complement = company.contact.complement || null;
 
     return ormEntity;
   }
 
   private mapToDomain(ormEntity: CompanyOrmEntity): Company {
     const contact = new Contact(
-      ormEntity.contact.id,
-      ormEntity.contact.phone,
-      ormEntity.contact.neighbourhood || undefined,
-      ormEntity.contact.state || undefined,
-      ormEntity.contact.city || undefined,
-      ormEntity.contact.address || undefined,
-      ormEntity.contact.cep || undefined,
-      ormEntity.contact.complement || undefined,
+      ormEntity.telephone.id,
+      ormEntity.telephone.phone,
+      ormEntity.address.neighbourhood || undefined,
+      ormEntity.address.state || undefined,
+      ormEntity.address.city || undefined,
+      ormEntity.address.address || undefined,
+      ormEntity.address.cep || undefined,
+      ormEntity.address.complement || undefined,
     );
 
     return new Company(
