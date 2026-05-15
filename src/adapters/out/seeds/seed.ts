@@ -594,6 +594,7 @@ export async function seed(): Promise<void> {
       description: 'Vaga para dev React.',
       openingsCount: 2,
       isPcd: true,
+      announcementDate: new Date('2026-04-23T00:00:00.000Z'),
       company: empresas[0],
     },
     {
@@ -601,6 +602,7 @@ export async function seed(): Promise<void> {
       description: 'Python e SQL obrigatório.',
       openingsCount: 1,
       isPcd: false,
+      announcementDate: new Date('2026-04-24T00:00:00.000Z'),
       company: empresas[0],
     },
     {
@@ -608,6 +610,7 @@ export async function seed(): Promise<void> {
       description: 'Figma e pesquisa de UX.',
       openingsCount: 3,
       isPcd: true,
+      announcementDate: new Date('2026-04-25T00:00:00.000Z'),
       company: empresas[1],
     },
     {
@@ -615,6 +618,7 @@ export async function seed(): Promise<void> {
       description: 'Docker, K8s e AWS.',
       openingsCount: 1,
       isPcd: false,
+      announcementDate: new Date('2026-04-26T00:00:00.000Z'),
       company: empresas[1],
     },
     {
@@ -622,6 +626,7 @@ export async function seed(): Promise<void> {
       description: 'Node.js + React.',
       openingsCount: 2,
       isPcd: true,
+      announcementDate: new Date('2026-04-27T00:00:00.000Z'),
       company: empresas[2],
     },
   ];
@@ -632,6 +637,7 @@ export async function seed(): Promise<void> {
       description: v.description,
       openingsCount: v.openingsCount,
       isPcd: v.isPcd,
+      announcementDate: v.announcementDate,
       company: v.company,
     });
     await appDataSource.getRepository(JobOpeningOrmEntity).save(job);

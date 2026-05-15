@@ -8,6 +8,19 @@ import {
 } from 'typeorm';
 import { CompanyOrmEntity } from './company.orm-entity';
 
+const dateOnlyTransformer = {
+  to(value: Date | string | null | undefined): string | null | undefined {
+    if (value === null || value === undefined) return value;
+    const date = value instanceof Date ? value : new Date(value);
+    return date.toISOString().slice(0, 10);
+  },
+  from(value: string | Date | null | undefined): Date | null | undefined {
+    if (value === null || value === undefined) return value;
+    if (value instanceof Date) return value;
+    return new Date(`${value}T00:00:00.000Z`);
+  },
+};
+
 @Index('ix_job_openings__company_id', ['company'])
 @Entity('job_openings')
 export class JobOpeningOrmEntity {
@@ -43,4 +56,12 @@ export class JobOpeningOrmEntity {
 
   @Column({ name: 'is_pcd', default: false })
   isPcd: boolean;
+
+  @Column({
+    name: 'announcement_date',
+    type: 'date',
+    default: () => 'CURRENT_DATE',
+    transformer: dateOnlyTransformer,
+  })
+  announcementDate: Date;
 }

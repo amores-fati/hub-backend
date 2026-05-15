@@ -33,13 +33,18 @@ import { CourseController } from './adapters/in/controllers/course.controller';
 import { CourseService } from './core/services/course.service';
 import { CourseReportService } from './core/services/course-report.service';
 import { StudentReportService } from './core/services/student-report.service';
+import { VacancyReportService } from './core/services/vacancy-report.service';
 import { CourseRepository } from './adapters/out/repository/course.repository';
+import { VacancyReportRepository } from './adapters/out/repository/vacancy-report.repository';
 import { CourseReportPdfGenerator } from './adapters/out/pdf/course-report-pdf.generator';
 import { StudentReportPdfGenerator } from './adapters/out/pdf/student-report-pdf.generator';
+import { VacancyReportPdfGenerator } from './adapters/out/pdf/vacancy-report-pdf.generator';
 import { CourseOrmEntity } from './adapters/out/orm/course.orm-entity';
 import { ICourseRepository } from './core/ports/course.repository.interface';
 import { ICourseReportPdfGenerator } from './core/ports/course-report-pdf-generator.interface';
 import { IStudentReportPdfGenerator } from './core/ports/student-report-pdf-generator.interface';
+import { IVacancyReportRepository } from './core/ports/vacancy-report.repository.interface';
+import { IVacancyReportPdfGenerator } from './core/ports/vacancy-report-pdf-generator.interface';
 
 // Company Adapters & Core
 import { CompanyOrmEntity } from './adapters/out/orm/company.orm-entity';
@@ -55,6 +60,7 @@ import { DisabilityOrmEntity } from './adapters/out/orm/disability.orm-entity';
 import { SocialBenefitOrmEntity } from './adapters/out/orm/social-benefit.orm-entity';
 import { CurriculumOrmEntity } from './adapters/out/orm/curriculum.orm-entity';
 import { CurriculumSkillOrmEntity } from './adapters/out/orm/curriculum-skill.orm-entity';
+import { JobOpeningOrmEntity } from './adapters/out/orm/job-opening.orm-entity';
 import { SkillOrmEntity } from './adapters/out/orm/skill.orm-entity';
 import { InPersonCourseDetailOrmEntity } from './adapters/out/orm/in-person-course-detail.orm-entity';
 
@@ -122,6 +128,7 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       SettingOrmEntity,
       EnrollmentOrmEntity,
       InPersonCourseDetailOrmEntity,
+      JobOpeningOrmEntity,
     ]),
   ],
   controllers: [
@@ -261,6 +268,34 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
     {
       provide: IStudentReportPdfGenerator,
       useClass: StudentReportPdfGenerator,
+    },
+    {
+      provide: VacancyReportService,
+      useFactory: (
+        vacancyRepository: IVacancyReportRepository,
+        pdfGenerator: VacancyReportPdfGenerator,
+        logger: AmoresFatiLogger,
+      ) => {
+        logger.setContext(VacancyReportService.name);
+        return new VacancyReportService(
+          vacancyRepository,
+          pdfGenerator,
+          logger,
+        );
+      },
+      inject: [
+        IVacancyReportRepository,
+        IVacancyReportPdfGenerator,
+        AmoresFatiLogger,
+      ],
+    },
+    {
+      provide: IVacancyReportRepository,
+      useClass: VacancyReportRepository,
+    },
+    {
+      provide: IVacancyReportPdfGenerator,
+      useClass: VacancyReportPdfGenerator,
     },
     {
       provide: ICourseRepository,
