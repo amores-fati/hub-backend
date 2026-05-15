@@ -142,4 +142,18 @@ export class CompanyRepository implements ICompanyRepository {
       contact,
     );
   }
+
+  async findLocations(): Promise<{ city: string; uf: string }[]> {
+    const rawData = await this.ormRepository
+      .createQueryBuilder('company')
+      .innerJoin('company.contact', 'contact')
+      .select('contact.city', 'city')
+      .addSelect('contact.state', 'uf')
+      .where('contact.city IS NOT NULL')
+      .andWhere('contact.state IS NOT NULL')
+      .distinct(true)
+      .getRawMany();
+
+    return rawData as { city: string; uf: string }[];
+  }
 }

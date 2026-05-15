@@ -86,6 +86,10 @@ export class CourseRepository implements ICourseRepository {
     return this.mapToCoursesWithLocation(ormEntities);
   }
 
+  async delete(id: string): Promise<void> {
+    await this.ormRepository.delete(id);
+  }
+
   private mapToDomain(ormEntity: CourseOrmEntity): Course {
     return new Course(
       ormEntity.id,

@@ -161,6 +161,7 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         hashService: IHashService,
         curriculumRepository: ICurriculumRepository,
         studentRepository: IStudentRepository,
+        companyRepository: ICompanyRepository,
       ) => {
         return new AdminService(
           userRepository,
@@ -168,6 +169,7 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
           hashService,
           curriculumRepository,
           studentRepository,
+          companyRepository,
         );
       },
       inject: [
@@ -176,6 +178,7 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         IHashService,
         ICurriculumRepository,
         IStudentRepository,
+        ICompanyRepository,
       ],
     },
     {

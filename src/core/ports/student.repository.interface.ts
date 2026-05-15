@@ -74,4 +74,5 @@ export interface IStudentRepository {
   update(student: Student): Promise<Student>;
   delete(id: string): Promise<void>;
   softDeleteMany(ids: string[]): Promise<void>;
+  findLocations(): Promise<{ city: string; uf: string }[]>;
 }
