@@ -575,6 +575,7 @@ export async function seed(): Promise<void> {
       linkedin: `https://linkedin.com/in/aluno0${i + 1}`,
       github: `https://github.com/aluno0${i + 1}`,
       videoPresentation: `https://fatilab.com/videos/aluno0${i + 1}`,
+      preference: i % 2 === 0 ? 'Remoto' : 'Presencial',
     });
     await appDataSource.getRepository(CurriculumOrmEntity).save(curriculo);
     for (let j = 0; j < 3; j++) {

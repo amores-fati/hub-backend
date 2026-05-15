@@ -32,16 +32,21 @@ import { JwtStrategy } from './utils/strategies/jwt.strategy';
 import { CourseController } from './adapters/in/controllers/course.controller';
 import { CourseService } from './core/services/course.service';
 import { CourseReportService } from './core/services/course-report.service';
+import { ResumeReportService } from './core/services/resume-report.service';
 import { StudentReportService } from './core/services/student-report.service';
 import { VacancyReportService } from './core/services/vacancy-report.service';
 import { CourseRepository } from './adapters/out/repository/course.repository';
+import { ResumeReportRepository } from './adapters/out/repository/resume-report.repository';
 import { VacancyReportRepository } from './adapters/out/repository/vacancy-report.repository';
 import { CourseReportPdfGenerator } from './adapters/out/pdf/course-report-pdf.generator';
+import { ResumeReportPdfGenerator } from './adapters/out/pdf/resume-report-pdf.generator';
 import { StudentReportPdfGenerator } from './adapters/out/pdf/student-report-pdf.generator';
 import { VacancyReportPdfGenerator } from './adapters/out/pdf/vacancy-report-pdf.generator';
 import { CourseOrmEntity } from './adapters/out/orm/course.orm-entity';
 import { ICourseRepository } from './core/ports/course.repository.interface';
 import { ICourseReportPdfGenerator } from './core/ports/course-report-pdf-generator.interface';
+import { IResumeReportRepository } from './core/ports/resume-report.repository.interface';
+import { IResumeReportPdfGenerator } from './core/ports/resume-report-pdf-generator.interface';
 import { IStudentReportPdfGenerator } from './core/ports/student-report-pdf-generator.interface';
 import { IVacancyReportRepository } from './core/ports/vacancy-report.repository.interface';
 import { IVacancyReportPdfGenerator } from './core/ports/vacancy-report-pdf-generator.interface';
@@ -296,6 +301,30 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
     {
       provide: IVacancyReportPdfGenerator,
       useClass: VacancyReportPdfGenerator,
+    },
+    {
+      provide: ResumeReportService,
+      useFactory: (
+        resumeRepository: IResumeReportRepository,
+        pdfGenerator: ResumeReportPdfGenerator,
+        logger: AmoresFatiLogger,
+      ) => {
+        logger.setContext(ResumeReportService.name);
+        return new ResumeReportService(resumeRepository, pdfGenerator, logger);
+      },
+      inject: [
+        IResumeReportRepository,
+        IResumeReportPdfGenerator,
+        AmoresFatiLogger,
+      ],
+    },
+    {
+      provide: IResumeReportRepository,
+      useClass: ResumeReportRepository,
+    },
+    {
+      provide: IResumeReportPdfGenerator,
+      useClass: ResumeReportPdfGenerator,
     },
     {
       provide: ICourseRepository,
