@@ -15,7 +15,6 @@ import { JobOpeningOrmEntity } from '../adapters/out/orm/job-opening.orm-entity'
 import { AdminOrmEntity } from '../adapters/out/orm/admin.orm-entity';
 import { SkillOrmEntity } from '../adapters/out/orm/skill.orm-entity';
 import { CompanyOrmEntity } from '../adapters/out/orm/company.orm-entity';
-import { InPersonCourseDetailOrmEntity } from '../adapters/out/orm/in-person-course-detail.orm-entity';
 import { SettingOrmEntity } from '../adapters/out/orm/setting.orm-entity';
 import { EnrollmentOrmEntity } from '../adapters/out/orm/enrollment.orm-entity';
 import { SnakeNamingStrategy } from './snake-naming.strategy';
@@ -34,7 +33,6 @@ export const ORM_ENTITIES = [
   AdminOrmEntity,
   CompanyOrmEntity,
   SkillOrmEntity,
-  InPersonCourseDetailOrmEntity,
   SettingOrmEntity,
   EnrollmentOrmEntity,
 ] as const;

@@ -51,6 +51,21 @@ describe('CourseService', () => {
       expect(mockRepository.create).toHaveBeenCalledTimes(1);
     });
 
+    it('should create a course when optional linkAccess is omitted', async () => {
+      const commandWithoutLinkAccess = { ...createCommand };
+      delete commandWithoutLinkAccess.linkAccess;
+
+      (mockRepository.create as jest.Mock).mockImplementation((course) =>
+        Promise.resolve(course),
+      );
+
+      const result = await service.createCourse(commandWithoutLinkAccess);
+
+      expect(result).toBeInstanceOf(Course);
+      expect(result.linkAccess).toBeUndefined();
+      expect(mockRepository.create).toHaveBeenCalledTimes(1);
+    });
+
     it('should throw DomainException when course end date is before start date', async () => {
       await expect(
         service.createCourse({

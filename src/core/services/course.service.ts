@@ -22,6 +22,8 @@ export class CourseService {
       command.modality,
       command.linkAccess,
       command.vacancyCount,
+      command.shift,
+      command.address,
       command.description,
     );
 
@@ -48,6 +50,8 @@ export class CourseService {
       command.modality,
       command.linkAccess,
       command.vacancyCount,
+      command.shift,
+      command.address,
       command.description,
     );
 

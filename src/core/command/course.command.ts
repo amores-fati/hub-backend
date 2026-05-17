@@ -8,8 +8,10 @@ export interface CreateCourseCommand {
   startRegistrations: string;
   endRegistrations: string;
   modality: string;
-  linkAccess: string;
+  linkAccess?: string;
   vacancyCount: number;
+  shift: string;
+  address?: string;
 }
 
 export interface UpdateCourseCommand {
@@ -22,7 +24,9 @@ export interface UpdateCourseCommand {
   startRegistrations: string;
   endRegistrations: string;
   modality: string;
-  linkAccess: string;
+  linkAccess?: string;
   vacancyCount: number;
+  shift: string;
+  address?: string;
 }
 
