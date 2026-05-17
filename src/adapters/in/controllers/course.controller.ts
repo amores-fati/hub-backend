@@ -59,7 +59,7 @@ export class CourseController {
   @ApiBody({
     type: CreateCourseDto,
     description:
-      'Payload contendo os campos obrigatorios persistidos em courses.',
+      'Payload contendo os campos estruturais do curso.',
   })
   @ApiCreatedResponse({
     description:
