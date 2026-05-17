@@ -43,7 +43,6 @@ export class CourseRepository implements ICourseRepository {
     if (!ormEntity) return null;
     return this.mapToDomain(ormEntity);
   }
-
   async update(course: Course): Promise<Course> {
     await this.ormRepository.update(course.id, {
       name: course.name,
@@ -64,6 +63,10 @@ export class CourseRepository implements ICourseRepository {
       where: { id: course.id },
     });
     return this.mapToDomain(updated!);
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.ormRepository.delete(id);
   }
 
   private mapToDomain(ormEntity: CourseOrmEntity): Course {
