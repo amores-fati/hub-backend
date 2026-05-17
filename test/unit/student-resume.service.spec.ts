@@ -29,11 +29,13 @@ describe('StudentResumeService', () => {
   const studentRepository: jest.Mocked<IStudentRepository> = {
     create: jest.fn(),
     findAll: jest.fn(),
+    findAllWithFilter: jest.fn(),
     findById: jest.fn(),
     existsById: jest.fn(),
     findByCpf: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    softDeleteMany: jest.fn(),
   };
 
   const resumePhotoStorage: jest.Mocked<IResumePhotoStorage> = {

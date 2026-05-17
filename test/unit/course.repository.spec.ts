@@ -2,11 +2,9 @@ import { Repository } from 'typeorm';
 
 import { CourseRepository } from '../../src/adapters/out/repository/course.repository';
 import { CourseOrmEntity } from '../../src/adapters/out/orm/course.orm-entity';
-import { InPersonCourseDetailOrmEntity } from '../../src/adapters/out/orm/in-person-course-detail.orm-entity';
 
 describe('CourseRepository', () => {
   let ormRepository: Repository<CourseOrmEntity>;
-  let inPersonDetailRepository: Repository<InPersonCourseDetailOrmEntity>;
   let repository: CourseRepository;
 
   beforeEach(() => {
@@ -14,11 +12,7 @@ describe('CourseRepository', () => {
       find: jest.fn(),
     } as unknown as Repository<CourseOrmEntity>;
 
-    inPersonDetailRepository = {
-      find: jest.fn().mockResolvedValue([]),
-    } as unknown as Repository<InPersonCourseDetailOrmEntity>;
-
-    repository = new CourseRepository(ormRepository, inPersonDetailRepository);
+    repository = new CourseRepository(ormRepository);
   });
 
   it('should coerce database date strings when listing courses', async () => {
@@ -62,11 +56,9 @@ describe('CourseRepository', () => {
     ormEntity.modality = 'PRESENCIAL';
     ormEntity.linkAccess = 'https://fatilab.com/cursos/teste';
     ormEntity.vacancyCount = 20;
+    ormEntity.address = 'Porto Alegre - RS';
 
     (ormRepository.find as jest.Mock).mockResolvedValue([ormEntity]);
-    (inPersonDetailRepository.find as jest.Mock).mockResolvedValue([
-      { id: 'detail-id', address: 'Porto Alegre - RS', course: ormEntity },
-    ]);
 
     const result = await repository.findAllWithLocation();
 

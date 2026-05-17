@@ -10,8 +10,10 @@ export class Course {
   #startRegistrations: Date;
   #endRegistrations: Date;
   #modality: string;
-  #linkAccess: string;
+  #linkAccess?: string;
   #vacancyCount: number;
+  #shift: string | undefined;
+  #address: string | undefined;
   #description?: string;
 
   constructor(
@@ -24,8 +26,10 @@ export class Course {
     startRegistrations: Date,
     endRegistrations: Date,
     modality: string,
-    linkAccess: string,
+    linkAccess: string | undefined,
     vacancyCount: number,
+    shift?: string,
+    address?: string,
     description?: string,
   ) {
     this.#id = id;
@@ -39,6 +43,8 @@ export class Course {
     this.#modality = modality;
     this.#linkAccess = linkAccess;
     this.#vacancyCount = vacancyCount;
+    this.#shift = shift;
+    this.#address = address;
     this.#description = description;
     this.validateCourse();
   }
@@ -83,12 +89,20 @@ export class Course {
     return this.#modality;
   }
 
-  get linkAccess(): string {
+  get linkAccess(): string | undefined {
     return this.#linkAccess;
   }
 
   get vacancyCount(): number {
     return this.#vacancyCount;
+  }
+
+  get shift(): string | undefined {
+    return this.#shift;
+  }
+
+  get address(): string | undefined {
+    return this.#address;
   }
 
   private validateCourse(): void {
@@ -102,10 +116,9 @@ export class Course {
       this.#modality,
       'A modalidade do curso e obrigatoria.',
     );
-    this.validateRequiredText(
-      this.#linkAccess,
-      'O link de acesso do curso e obrigatorio.',
-    );
+    if (this.#linkAccess !== undefined && this.#linkAccess.trim().length === 0) {
+      throw new DomainException('O link de acesso do curso nao pode ser uma string vazia.');
+    }
     this.validateOptionalText(this.#description);
     this.validateVacancyCount(this.#vacancyCount);
     this.validateDateRange(
@@ -170,6 +183,8 @@ export class Course {
       modality: this.modality,
       linkAccess: this.linkAccess,
       vacancyCount: this.vacancyCount,
+      shift: this.shift ?? null,
+      address: this.address ?? null,
     };
   }
 }

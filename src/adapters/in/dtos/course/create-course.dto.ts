@@ -1,5 +1,6 @@
 import {
   IsDateString,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -25,13 +26,13 @@ export class CreateCourseDto {
   @IsNotEmpty()
   banner: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: 'Curso completo de desenvolvimento web com React e Node.js.',
     description: 'Descricao detalhada do curso.',
   })
-  @IsOptional()
   @IsString()
-  description?: string;
+  @IsNotEmpty()
+  description: string;
 
   @ApiProperty({
     example: '120h',
@@ -70,21 +71,39 @@ export class CreateCourseDto {
   endRegistrations: string;
 
   @ApiProperty({
-    example: 'ONLINE',
-    description: 'Modalidade do curso (Ex: ONLINE, PRESENCIAL).',
+    example: 'online',
+    description: 'Modalidade do curso (Ex: online, presential).',
   })
   @IsString()
   @IsNotEmpty()
+  @IsIn(['online', 'presential', 'ONLINE', 'PRESENCIAL'])
   modality: string;
 
   @ApiProperty({
+    example: 'morning',
+    description: 'Turno do curso (morning, afternoon ou evening).',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(['morning', 'afternoon', 'evening', 'manha-tarde'])
+  shift: string;
+
+  @ApiPropertyOptional({
+    example: 'Instituto Caldeira, Porto Alegre - RS',
+    description: 'Endereço do curso presencial.',
+  })
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @ApiPropertyOptional({
     example: 'https://fatilab.com/cursos/web',
     description:
       'URL do formulário de inscrição no site do parceiro responsável pelo curso. O aluno é redirecionado para este link ao se inscrever.',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  linkAccess: string;
+  linkAccess?: string;
 
   @ApiProperty({
     example: 30,

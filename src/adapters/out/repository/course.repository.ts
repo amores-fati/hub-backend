@@ -7,15 +7,12 @@ import {
 } from '../../../core/ports/course.repository.interface';
 import { Course } from '../../../core/domain/course.entity';
 import { CourseOrmEntity } from '../orm/course.orm-entity';
-import { InPersonCourseDetailOrmEntity } from '../orm/in-person-course-detail.orm-entity';
 
 @Injectable()
 export class CourseRepository implements ICourseRepository {
   constructor(
     @InjectRepository(CourseOrmEntity)
     private readonly ormRepository: Repository<CourseOrmEntity>,
-    @InjectRepository(InPersonCourseDetailOrmEntity)
-    private readonly inPersonDetailRepository: Repository<InPersonCourseDetailOrmEntity>,
   ) {}
 
   async create(course: Course): Promise<Course> {
@@ -35,18 +32,9 @@ export class CourseRepository implements ICourseRepository {
     const ormEntities = await this.ormRepository.find({
       order: { createdAt: 'DESC' },
     });
-    const details = await this.inPersonDetailRepository.find({
-      relations: { course: true },
-    });
-    const addressByCourseId = new Map<string, string>();
-    for (const detail of details) {
-      if (detail.course?.id) {
-        addressByCourseId.set(detail.course.id, detail.address);
-      }
-    }
     return ormEntities.map((entity) => ({
       course: this.mapToDomain(entity),
-      location: addressByCourseId.get(entity.id) ?? null,
+      location: entity.address ?? null,
     }));
   }
 
@@ -54,6 +42,27 @@ export class CourseRepository implements ICourseRepository {
     const ormEntity = await this.ormRepository.findOne({ where: { id } });
     if (!ormEntity) return null;
     return this.mapToDomain(ormEntity);
+  }
+  async update(course: Course): Promise<Course> {
+    await this.ormRepository.update(course.id, {
+      name: course.name,
+      banner: course.banner,
+      description: course.description ?? null,
+      courseLoad: course.courseLoad,
+      startDate: course.startDate,
+      endDate: course.endDate,
+      startRegistrations: course.startRegistrations,
+      endRegistrations: course.endRegistrations,
+      modality: course.modality,
+      linkAccess: course.linkAccess ?? null,
+      vacancyCount: course.vacancyCount,
+      shift: course.shift ?? null,
+      address: course.address ?? null,
+    });
+    const updated = await this.ormRepository.findOne({
+      where: { id: course.id },
+    });
+    return this.mapToDomain(updated!);
   }
 
   async delete(id: string): Promise<void> {
@@ -71,8 +80,10 @@ export class CourseRepository implements ICourseRepository {
       this.coerceDate(ormEntity.startRegistrations),
       this.coerceDate(ormEntity.endRegistrations),
       ormEntity.modality,
-      ormEntity.linkAccess,
+      ormEntity.linkAccess ?? undefined,
       ormEntity.vacancyCount,
+      ormEntity.shift ?? undefined,
+      ormEntity.address ?? undefined,
       ormEntity.description ?? undefined,
     );
   }
@@ -89,8 +100,10 @@ export class CourseRepository implements ICourseRepository {
       startRegistrations: course.startRegistrations,
       endRegistrations: course.endRegistrations,
       modality: course.modality,
-      linkAccess: course.linkAccess,
+      linkAccess: course.linkAccess ?? null,
       vacancyCount: course.vacancyCount,
+      shift: course.shift ?? null,
+      address: course.address ?? null,
       createdAt: new Date(),
     };
   }
