@@ -43,4 +43,12 @@ export class JobOpeningOrmEntity {
 
   @Column({ name: 'is_pcd', default: false })
   isPcd: boolean;
+
+  @Column({
+    name: 'workplace_type',
+    type: 'varchar',
+    length: 20,
+    default: 'presential',
+  })
+  workplaceType: string;
 }

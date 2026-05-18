@@ -4,6 +4,7 @@ import {
   ConflictException,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -37,6 +38,17 @@ import { CreateCompanyDto } from '../dtos/company/create-company.dto';
 import { PatchCompanyDto } from '../dtos/company/patch-company.dto';
 import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
+import {
+  CurrentUser,
+  type AuthenticatedUser,
+} from '../../../utils/decorators/current-user.decorator';
+import appDataSource from '../../../config/typeorm.datasource';
+import { JobOpeningOrmEntity } from '../../out/orm/job-opening.orm-entity';
+import { JobSkillOrmEntity } from '../../out/orm/job-skill.orm-entity';
+import { SkillOrmEntity } from '../../out/orm/skill.orm-entity';
+import { CompanyOrmEntity } from '../../out/orm/company.orm-entity';
+import { CreateUpdateJobOpeningDto } from '../dtos/job-opening/create-update-job-opening.dto';
+import { randomUUID } from 'crypto';
 
 @ApiTags('Companies')
 @Controller('companies')
@@ -46,6 +58,136 @@ export class CompanyController {
     private readonly logger: AmoresFatiLogger,
   ) {
     this.logger.setContext(CompanyController.name);
+  }
+
+  @RequireAuth(UserRoleEnum.COMPANY)
+  @Post('me/vacancies')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Cria uma nova vaga para a empresa autenticada' })
+  @ApiBody({ type: CreateUpdateJobOpeningDto })
+  @ApiCreatedResponse({ description: 'Vaga criada com sucesso.' })
+  @ApiBadRequestResponse({ description: 'Erro de validacao.' })
+  async createMyVacancy(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() createDto: CreateUpdateJobOpeningDto,
+  ) {
+    this.logger.info('Creating job opening for company (me)', {
+      userId: user.id,
+    });
+
+    const companyRepo = appDataSource.getRepository(CompanyOrmEntity);
+    const jobRepo = appDataSource.getRepository(JobOpeningOrmEntity);
+    const skillRepo = appDataSource.getRepository(SkillOrmEntity);
+    const jobSkillRepo = appDataSource.getRepository(JobSkillOrmEntity);
+
+    const company = await companyRepo.findOne({ where: { id: user.id } });
+    if (!company) {
+      this.logger.warn('Company not found for user', { userId: user.id });
+      throw new NotFoundException('Empresa nao encontrada.');
+    }
+
+    const job = jobRepo.create({
+      company,
+      name: createDto.title,
+      description: createDto.description,
+      openingsCount: createDto.vacancyCount,
+      applicationLink: createDto.link,
+      isPcd: createDto.isPcd,
+      workplaceType: createDto.workplaceType,
+    });
+
+    await jobRepo.save(job);
+
+    if (createDto.skills && createDto.skills.length > 0) {
+      for (const skillName of createDto.skills) {
+        let skill = await skillRepo.findOne({ where: { name: skillName } });
+        if (!skill) {
+          skill = skillRepo.create({ id: randomUUID(), name: skillName });
+          await skillRepo.save(skill);
+        }
+
+        const jobSkill = jobSkillRepo.create({
+          jobId: job.id,
+          skillId: skill.id,
+        });
+        await jobSkillRepo.save(jobSkill);
+      }
+    }
+
+    this.logger.info('Job opening created', {
+      jobId: job.id,
+      companyId: company.id,
+    });
+    return job;
+  }
+
+  @RequireAuth(UserRoleEnum.COMPANY)
+  @Put('me/vacancies/:id')
+  @ApiOperation({ summary: 'Atualiza uma vaga da propria empresa' })
+  @ApiBody({ type: CreateUpdateJobOpeningDto })
+  @ApiOkResponse({ description: 'Vaga atualizada com sucesso.' })
+  @ApiNotFoundResponse({ description: 'Vaga nao encontrada.' })
+  @ApiBadRequestResponse({ description: 'Erro de validacao.' })
+  async updateMyVacancy(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateDto: CreateUpdateJobOpeningDto,
+  ) {
+    this.logger.info('Updating job opening for company (me)', {
+      userId: user.id,
+      jobId: id,
+    });
+
+    const jobRepo = appDataSource.getRepository(JobOpeningOrmEntity);
+    const skillRepo = appDataSource.getRepository(SkillOrmEntity);
+    const jobSkillRepo = appDataSource.getRepository(JobSkillOrmEntity);
+
+    const job = await jobRepo.findOne({
+      where: { id },
+      relations: ['company'],
+    });
+    if (!job) {
+      this.logger.warn('Job opening not found', { jobId: id });
+      throw new NotFoundException('Vaga nao encontrada.');
+    }
+
+    if (!job.company || job.company.id !== user.id) {
+      this.logger.warn('Forbidden update attempt on job', {
+        jobId: id,
+        userId: user.id,
+      });
+      throw new ForbiddenException('A vaga pertence a outra empresa.');
+    }
+
+    job.name = updateDto.title;
+    job.description = updateDto.description;
+    job.openingsCount = updateDto.vacancyCount;
+    job.applicationLink = updateDto.link;
+    job.isPcd = updateDto.isPcd;
+    job.workplaceType = updateDto.workplaceType;
+
+    await jobRepo.save(job);
+
+    await jobSkillRepo.delete({ jobId: job.id });
+
+    if (updateDto.skills && updateDto.skills.length > 0) {
+      for (const skillName of updateDto.skills) {
+        let skill = await skillRepo.findOne({ where: { name: skillName } });
+        if (!skill) {
+          skill = skillRepo.create({ id: randomUUID(), name: skillName });
+          await skillRepo.save(skill);
+        }
+
+        const jobSkill = jobSkillRepo.create({
+          jobId: job.id,
+          skillId: skill.id,
+        });
+        await jobSkillRepo.save(jobSkill);
+      }
+    }
+
+    this.logger.info('Job opening updated', { jobId: job.id });
+    return job;
   }
 
   @Post()
