@@ -66,81 +66,135 @@ Enum social_benefit_type {
 // =====================================================================
 
 Table users {
-  id uuid [pk]
-  email varchar(100) [not null, unique]
+  id uuid [primary key]
+  email varchar(100) [not null]
   password_hash varchar(255) [not null]
-  role user_role [not null]
-  created_at timestamptz [not null, default: `NOW()`]
+  role varchar(20) [not null, note: 'CHECK: ADMIN | STUDENT | COMPANY']
   deleted_at timestamptz
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
 }
 
 Table admins {
-  id uuid [pk, ref: - users.id]
-}
-
-Table companies {
-  id uuid [pk, ref: - users.id]
-  cnpj varchar(18) [not null, unique]
-  name varchar(100) [not null]
-  responsible_name varchar(100) [not null]
-  contact_id uuid [not null, ref: - contacts.id]
+  id uuid [primary key, ref: - users.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
 }
 
 Table students {
-  id uuid [pk, ref: - users.id]
-  contact_id uuid [not null, ref: - contacts.id]
-  cpf varchar [not null, unique]
+  id uuid [primary key, ref: - users.id]
+  cpf varchar [unique, not null]
   full_name varchar [not null]
   social_name varchar
   date_of_birth date [not null]
-  gender gender [not null]
-  race race [not null]
-  education education_level
-  course_name varchar
+  gender varchar [not null]
+  race varchar [not null]
+  education varchar
   institution varchar
   activity_area varchar
   has_programming_experience boolean
-  family_income family_income
   motivation text
-  how_heard how_heard_channel
+  how_heard varchar
   has_computer boolean
   has_internet boolean
   committed_to_participate boolean
-  household_size int
+  family_income varchar
+  household_size integer
+  course_name varchar
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table companies {
+  id uuid [primary key, ref: - users.id]
+  cnpj varchar(18) [not null, unique]
+  name varchar(100) [not null]
+  responsible_name varchar(100) [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
 }
 
 // =====================================================================
-// Shared contact info (used by students and companies)
+// Telephones
 // =====================================================================
 
-Table contacts {
-  id uuid [pk]
+Table telephone_student {
+  id uuid [primary key]
+  student_id uuid [not null, ref: - students.id]
   phone varchar(20) [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table telephone_company {
+  id uuid [primary key]
+  company_id uuid [not null, ref: - companies.id]
+  phone varchar(20) [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+// =====================================================================
+// Addresses
+// =====================================================================
+
+Table address_student {
+  id uuid [primary key]
+  student_id uuid [not null, ref: - students.id]
   neighbourhood varchar
   state char(2)
   city varchar(100)
   address varchar(255)
   cep varchar(9)
   complement varchar(255)
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table address_company {
+  id uuid [primary key]
+  company_id uuid [not null, ref: - companies.id]
+  neighbourhood varchar
+  state char(2)
+  city varchar(100)
+  address varchar(255)
+  cep varchar(9)
+  complement varchar(255)
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
 }
 
 // =====================================================================
 // Student profile extras
 // =====================================================================
 
-Table disabilities {
-  student_id uuid [pk, ref: - students.id]
-  has_disability boolean [not null, default: false]
-  type varchar
+Table disability {
+  id uuid [primary key]
+  name varchar [not null, unique]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
 }
 
-Table social_benefits {
-  id int [pk, increment]
+Table student_disability {
   student_id uuid [not null, ref: > students.id]
-  benefit social_benefit_type [not null]
+  disability_id uuid [not null, ref: > disability.id]
+  indexes {
+    (student_id, disability_id) [pk]
+  }
+}
 
-  Indexes {
-    student_id [name: 'ix_social_benefits__student_id']
+Table social_benefit {
+  id uuid [primary key]
+  name varchar [not null, unique]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table student_social_benefit {
+  student_id uuid [not null, ref: > students.id]
+  social_benefit_id uuid [not null, ref: > social_benefit.id]
+  indexes {
+    (student_id, social_benefit_id) [pk]
   }
 }
 
@@ -149,28 +203,30 @@ Table social_benefits {
 // =====================================================================
 
 Table curriculum {
-  id uuid [pk]
-  student_id uuid [not null, ref: - students.id]
+  id uuid [primary key]
+  student_id uuid [unique, not null, ref: - students.id]
   is_available boolean [not null]
   about text
   linkedin varchar
   github varchar
-  profile_photo varchar
-  video_presentation varchar
+  profile_photo varchar [note: 'URL da imagem']
+  video_presentation varchar [note: 'URL do YouTube']
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
 }
 
 Table skills {
-  id uuid [pk]
+  id uuid [primary key]
   name varchar(100) [not null, unique]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
 }
 
 Table curriculum_skills {
   curriculum_id uuid [not null, ref: > curriculum.id]
   skill_id uuid [not null, ref: > skills.id]
-
-  Indexes {
+  indexes {
     (curriculum_id, skill_id) [pk]
-    skill_id [name: 'ix_curriculum_skills__skill_id']
   }
 }
 
@@ -179,37 +235,44 @@ Table curriculum_skills {
 // =====================================================================
 
 Table courses {
-  id uuid [pk]
+  id uuid [primary key]
   name varchar [not null]
-  banner varchar [not null]
+  banner varchar [not null, note: 'URL da imagem']
   description text
   course_load varchar [not null]
   start_date date [not null]
   end_date date [not null]
   start_registrations date [not null]
   end_registrations date [not null]
-  modality varchar [not null, default: 'ONLINE']
   link_access varchar [not null]
-  created_at timestamptz [not null, default: `NOW()`]
+  modality varchar [not null, default: 'ONLINE']
+  vacancy_count integer [not null, default: 0]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
 }
 
 Table in_person_course_details {
-  id uuid [pk]
-  course_id uuid [not null, ref: - courses.id]
+  id uuid [primary key]
+  course_id uuid [unique, not null, ref: - courses.id]
   address varchar [not null]
   start_date date [not null]
   shift varchar [not null]
   room varchar [not null]
   vacancies int [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
 }
 
 Table enrollments {
-  id uuid [pk]
-  // No FK constraint declared in the ORM, but logically references students/courses.
+  id uuid [primary key]
   student_id uuid [not null, ref: > students.id]
   course_id uuid [not null, ref: > courses.id]
-  type varchar(20) [not null]
-  created_at timestamptz [not null, default: `NOW()`]
+  type varchar(20) [not null, note: 'CHECK: ENROLLMENT | INTEREST']
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  indexes {
+    (student_id, course_id, type) [unique]
+  }
 }
 
 // =====================================================================
@@ -217,26 +280,24 @@ Table enrollments {
 // =====================================================================
 
 Table job_openings {
-  id uuid [pk]
+  id uuid [primary key, default: `uuid_generate_v4()`]
   company_id uuid [not null, ref: > companies.id]
   name varchar [not null]
   description text
   openings_count int [not null, default: 1]
-  application_link varchar(255)
   is_pcd boolean [not null, default: false]
-
-  Indexes {
-    company_id [name: 'ix_job_openings__company_id']
-  }
+  workplace_type varchar(100) [not null, note: 'CHECK: PRESENCIAL|ONLINE|HIBRIDO']
+  status boolean [not null]
+  application_link varchar(255)
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
 }
 
 Table job_skills {
   job_id uuid [not null, ref: > job_openings.id]
   skill_id uuid [not null, ref: > skills.id]
-
-  Indexes {
+  indexes {
     (job_id, skill_id) [pk]
-    skill_id [name: 'ix_job_skills__skill_id']
   }
 }
 
@@ -245,7 +306,9 @@ Table job_skills {
 // =====================================================================
 
 Table settings {
-  id uuid [pk]
+  id uuid [primary key]
   key varchar [not null, unique]
   value text [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
 }
