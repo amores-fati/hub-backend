@@ -10,6 +10,7 @@ export class Curriculum {
     private aboutValue: string | null = null,
     private linkedinUrlValue: string | null = null,
     private githubUrlValue: string | null = null,
+    private videoPresentationUrlValue: string | null = null,
     private photoUrlValue: string | null = null,
     private skillValues: CurriculumSkill[] = [],
   ) {}
@@ -26,6 +27,10 @@ export class Curriculum {
     return this.githubUrlValue;
   }
 
+  get videoPresentationUrl(): string | null {
+    return this.videoPresentationUrlValue;
+  }
+
   get photoUrl(): string | null {
     return this.photoUrlValue;
   }
@@ -38,6 +43,7 @@ export class Curriculum {
     about?: string | null;
     linkedinUrl?: string | null;
     githubUrl?: string | null;
+    videoPresentationUrl?: string | null;
   }): void {
     if (data.about !== undefined) {
       this.aboutValue = data.about;
@@ -49,6 +55,10 @@ export class Curriculum {
 
     if (data.githubUrl !== undefined) {
       this.githubUrlValue = data.githubUrl;
+    }
+
+    if (data.videoPresentationUrl !== undefined) {
+      this.videoPresentationUrlValue = data.videoPresentationUrl;
     }
   }
 
@@ -82,6 +92,7 @@ export class Curriculum {
       about: this.about,
       linkedinUrl: this.linkedinUrl,
       githubUrl: this.githubUrl,
+      videoPresentationUrl: this.videoPresentationUrl,
       photoUrl: this.photoUrl,
       skills: this.skills,
     };
