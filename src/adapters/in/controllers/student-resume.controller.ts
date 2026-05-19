@@ -73,6 +73,7 @@ export class StudentResumeController {
         about: 'Desenvolvedor em formacao.',
         linkedinUrl: 'https://www.linkedin.com/in/aluno',
         githubUrl: 'https://github.com/aluno',
+        videoPresentationUrl: 'https://www.youtube.com/watch?v=abc123',
         photoUrl: '/uploads/resume-photos/student-id/photo.webp',
         skills: [{ id: 'skill-id', skillName: 'TypeScript' }],
       },
@@ -97,7 +98,7 @@ export class StudentResumeController {
       throw error;
     }
   }
-  
+
   @RequireAuth(UserRoleEnum.ADMIN)
   @Get('students/:id/resume')
   @ApiOperation({ summary: 'Consulta o curriculo de um aluno (admin)' })
@@ -109,15 +110,14 @@ export class StudentResumeController {
         about: 'Desenvolvedor em formacao.',
         linkedinUrl: 'https://www.linkedin.com/in/aluno',
         githubUrl: 'https://github.com/aluno',
+        videoPresentationUrl: 'https://www.youtube.com/watch?v=abc123',
         photoUrl: '/uploads/resume-photos/student-id/photo.webp',
         skills: [{ id: 'skill-id', skillName: 'TypeScript' }],
       },
     },
   })
   @ApiNotFoundResponse({ description: 'Curriculo nao encontrado.' })
-  async getStudentResumeAsAdmin(
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
+  async getStudentResumeAsAdmin(@Param('id', ParseUUIDPipe) id: string) {
     try {
       this.logger.info('Admin fetching student resume', { studentId: id });
       const curriculum = await this.studentResumeService.getResume(id);
@@ -130,7 +130,6 @@ export class StudentResumeController {
       throw error;
     }
   }
-
 
   @RequireAuth(UserRoleEnum.STUDENT)
   @Put('students/me/resume')
