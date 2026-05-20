@@ -13,7 +13,10 @@ describe('CourseService', () => {
     findAll: jest.fn(),
     findAllWithLocation: jest.fn(),
     findById: jest.fn(),
+    findManyByIdsWithLocation: jest.fn(),
+    findManyWithLocationByFilters: jest.fn(),
     update: jest.fn(),
+    delete: jest.fn(),
   };
 
   const createCommand: CreateCourseCommand = {

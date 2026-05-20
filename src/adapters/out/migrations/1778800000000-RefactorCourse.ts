@@ -24,11 +24,15 @@ export class RefactorCourse1778800000000 implements MigrationInterface {
       }),
     );
 
-    await queryRunner.query('ALTER TABLE "courses" ALTER COLUMN "link_access" DROP NOT NULL;');
+    await queryRunner.query(
+      'ALTER TABLE "courses" ALTER COLUMN "link_access" DROP NOT NULL;',
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query('ALTER TABLE "courses" ALTER COLUMN "link_access" SET NOT NULL;');
+    await queryRunner.query(
+      'ALTER TABLE "courses" ALTER COLUMN "link_access" SET NOT NULL;',
+    );
 
     await queryRunner.dropColumn('courses', 'shift');
     await queryRunner.dropColumn('courses', 'address');

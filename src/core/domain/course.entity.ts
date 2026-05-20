@@ -1,4 +1,5 @@
 import { DomainException } from '../exceptions/domain.exception';
+import { CourseStatus } from './course-status.enum';
 
 export class Course {
   readonly #id: string;
@@ -15,6 +16,7 @@ export class Course {
   #shift: string | undefined;
   #address: string | undefined;
   #description?: string;
+  #status: CourseStatus;
 
   constructor(
     id: string,
@@ -31,6 +33,7 @@ export class Course {
     shift?: string,
     address?: string,
     description?: string,
+    status: CourseStatus = CourseStatus.ATIVO,
   ) {
     this.#id = id;
     this.#name = name;
@@ -46,6 +49,7 @@ export class Course {
     this.#shift = shift;
     this.#address = address;
     this.#description = description;
+    this.#status = status;
     this.validateCourse();
   }
 
@@ -97,6 +101,10 @@ export class Course {
     return this.#vacancyCount;
   }
 
+  get status(): CourseStatus {
+    return this.#status;
+  }
+
   get shift(): string | undefined {
     return this.#shift;
   }
@@ -116,11 +124,17 @@ export class Course {
       this.#modality,
       'A modalidade do curso e obrigatoria.',
     );
-    if (this.#linkAccess !== undefined && this.#linkAccess.trim().length === 0) {
-      throw new DomainException('O link de acesso do curso nao pode ser uma string vazia.');
+    if (
+      this.#linkAccess !== undefined &&
+      this.#linkAccess.trim().length === 0
+    ) {
+      throw new DomainException(
+        'O link de acesso do curso nao pode ser uma string vazia.',
+      );
     }
     this.validateOptionalText(this.#description);
     this.validateVacancyCount(this.#vacancyCount);
+    this.validateStatus(this.#status);
     this.validateDateRange(
       this.#startDate,
       this.#endDate,
@@ -155,6 +169,12 @@ export class Course {
     }
   }
 
+  private validateStatus(value: CourseStatus): void {
+    if (!Object.values(CourseStatus).includes(value)) {
+      throw new DomainException('O status do curso precisa ser valido.');
+    }
+  }
+
   private validateDateRange(
     startDate: Date,
     endDate: Date,
@@ -183,6 +203,7 @@ export class Course {
       modality: this.modality,
       linkAccess: this.linkAccess,
       vacancyCount: this.vacancyCount,
+      status: this.status,
       shift: this.shift ?? null,
       address: this.address ?? null,
     };
