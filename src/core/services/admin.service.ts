@@ -14,6 +14,14 @@ import {
   LocationResponseDto,
   LocationScope,
 } from '../../adapters/in/dtos/admin/get-locations.dto';
+import {
+  PaginatedResumesResponseDto,
+  ResumeListItemDto,
+} from '../../adapters/in/dtos/admin/paginated-resumes-response.dto';
+import {
+  ResumeFilterQuery,
+  PaginatedResumeListResult,
+} from '../ports/curriculum.repository.interface';
 
 export class AdminService {
   constructor(
@@ -69,5 +77,45 @@ export class AdminService {
       return this.studentRepository.findLocations();
     }
     return this.companyRepository.findLocations();
+  }
+
+  async getResumes(query: ResumeFilterQuery): Promise<PaginatedResumesResponseDto> {
+    const normalizedPage = Math.max(1, query.page);
+    const normalizedLimit = Math.max(1, Math.min(50, query.limit));
+
+    const filterQuery: ResumeFilterQuery = {
+      search: query.search,
+      page: normalizedPage,
+      limit: normalizedLimit,
+    };
+
+    const result: PaginatedResumeListResult =
+      await this.curriculumRepository.findAllWithFilter(filterQuery);
+
+    return {
+      data: result.items.map((item) => this.mapToResumeListItem(item)),
+      meta: {
+        page: normalizedPage,
+        limit: normalizedLimit,
+        total: result.total,
+        totalPages: Math.ceil(result.total / normalizedLimit),
+      },
+    };
+  }
+
+  private mapToResumeListItem(
+    item: any,
+  ): ResumeListItemDto {
+    return {
+      id: item.id,
+      cpf: item.cpf,
+      fullName: item.fullName,
+      socialName: item.socialName,
+      email: item.email,
+      isAvailable: item.isAvailable,
+      about: item.about,
+      linkedin: item.linkedin,
+      github: item.github,
+    };
   }
 }

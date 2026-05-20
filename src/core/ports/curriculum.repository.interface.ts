@@ -2,6 +2,29 @@ import { Curriculum, CurriculumSkill } from '../domain/curriculum.entity';
 
 export const ICurriculumRepository = Symbol('ICurriculumRepository');
 
+export interface ResumeListProjection {
+  id: string;
+  cpf: string;
+  fullName: string;
+  socialName?: string;
+  email: string;
+  isAvailable: boolean;
+  about?: string;
+  linkedin?: string;
+  github?: string;
+}
+
+export interface PaginatedResumeListResult {
+  items: ResumeListProjection[];
+  total: number;
+}
+
+export interface ResumeFilterQuery {
+  search?: string;
+  page: number;
+  limit: number;
+}
+
 export interface ICurriculumRepository {
   findByStudentId(studentId: string): Promise<Curriculum | null>;
   save(curriculum: Curriculum): Promise<Curriculum>;
@@ -11,4 +34,7 @@ export interface ICurriculumRepository {
     curriculumId: string,
     skillId: string,
   ): Promise<void>;
+  findAllWithFilter(
+    query: ResumeFilterQuery,
+  ): Promise<PaginatedResumeListResult>;
 }
