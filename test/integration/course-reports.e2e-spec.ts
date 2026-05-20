@@ -48,20 +48,9 @@ describe('AdminReportsController (e2e)', () => {
         name: 'Curso Inativo Presencial',
         modality: 'PRESENCIAL',
         status: CourseStatus.INATIVO,
+        address: 'Porto Alegre - RS',
+        shift: 'MANHA',
       });
-      await dataSource.query(
-        `INSERT INTO "in_person_course_details" (id, course_id, address, start_date, shift, room, vacancies)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [
-          randomUUID(),
-          inactiveCourseId,
-          'Porto Alegre - RS',
-          '2026-02-23',
-          'MANHA',
-          '101',
-          20,
-        ],
-      );
     };
 
     app = await createIntegrationApp({ seed });
@@ -151,14 +140,16 @@ async function insertCourse(
     name: string;
     modality: string;
     status: CourseStatus;
+    address?: string;
+    shift?: string;
   },
 ): Promise<void> {
   await dataSource.query(
     `INSERT INTO "courses" (
       id, name, banner, description, course_load, start_date, end_date,
       start_registrations, end_registrations, modality, link_access,
-      vacancy_count, status
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+      vacancy_count, status, address, shift
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
     [
       params.id,
       params.name,
@@ -173,6 +164,8 @@ async function insertCourse(
       'https://fatilab.com/cursos/teste',
       20,
       params.status,
+      params.address ?? null,
+      params.shift ?? null,
     ],
   );
 }
