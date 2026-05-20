@@ -61,6 +61,7 @@ export class AdminService {
       linkedinUrl: curriculum.linkedinUrl || '',
       githubUrl: curriculum.githubUrl || '',
       photoUrl: curriculum.photoUrl,
+      preference: curriculum.preference,
       skills: curriculum.skills.map((s) => ({
         id: s.id,
         skillName: s.skillName,
@@ -116,6 +117,7 @@ export class AdminService {
       about: item.about,
       linkedin: item.linkedin,
       github: item.github,
+      preference: item.preference,
     };
   }
 }

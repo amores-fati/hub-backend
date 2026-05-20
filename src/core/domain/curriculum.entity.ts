@@ -12,6 +12,7 @@ export class Curriculum {
     private githubUrlValue: string | null = null,
     private photoUrlValue: string | null = null,
     private skillValues: CurriculumSkill[] = [],
+    private preferenceValue: string | null = null,
   ) {}
 
   get about(): string | null {
@@ -34,10 +35,15 @@ export class Curriculum {
     return [...this.skillValues];
   }
 
+  get preference(): string | null {
+    return this.preferenceValue;
+  }
+
   updateProfile(data: {
     about?: string | null;
     linkedinUrl?: string | null;
     githubUrl?: string | null;
+    preference?: string | null;
   }): void {
     if (data.about !== undefined) {
       this.aboutValue = data.about;
@@ -49,6 +55,10 @@ export class Curriculum {
 
     if (data.githubUrl !== undefined) {
       this.githubUrlValue = data.githubUrl;
+    }
+
+    if (data.preference !== undefined) {
+      this.preferenceValue = data.preference;
     }
   }
 
@@ -84,6 +94,7 @@ export class Curriculum {
       githubUrl: this.githubUrl,
       photoUrl: this.photoUrl,
       skills: this.skills,
+      preference: this.preference,
     };
   }
 }

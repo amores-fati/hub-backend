@@ -27,4 +27,12 @@ export class UpdateStudentResumeDto implements UpsertStudentResumeCommand {
   @ValidateIf((_, value) => value !== undefined && value !== null)
   @IsString()
   githubUrl?: string | null;
+
+  @ApiPropertyOptional({
+    example: 'Backend',
+    nullable: true,
+  })
+  @ValidateIf((_, value) => value !== undefined && value !== null)
+  @IsString()
+  preference?: string | null;
 }

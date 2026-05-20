@@ -32,6 +32,9 @@ export class StudentResumeResponseDto {
   @ApiProperty({ nullable: true })
   photoUrl: string | null;
 
+  @ApiProperty({ nullable: true })
+  preference: string | null;
+
   @ApiProperty({ type: [SkillResponseDto] })
   skills: SkillResponseDto[];
 

@@ -27,6 +27,9 @@ export class ResumeListItemDto {
 
   @ApiProperty({ example: 'https://github.com/joao', required: false })
   github?: string;
+
+  @ApiProperty({ example: 'Backend', required: false })
+  preference?: string;
 }
 
 export class PaginatedResumesMetaDto {

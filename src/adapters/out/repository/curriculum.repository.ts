@@ -167,6 +167,7 @@ export class CurriculumRepository implements ICurriculumRepository {
       about: ormEntity.about || undefined,
       linkedin: ormEntity.linkedin || undefined,
       github: ormEntity.github || undefined,
+      preference: ormEntity.preference || undefined,
     };
   }
 
@@ -186,6 +187,7 @@ export class CurriculumRepository implements ICurriculumRepository {
     ormEntity.linkedin = curriculum.linkedinUrl;
     ormEntity.github = curriculum.githubUrl;
     ormEntity.profilePhoto = curriculum.photoUrl;
+    ormEntity.preference = curriculum.preference;
 
     return ormEntity;
   }
@@ -205,6 +207,7 @@ export class CurriculumRepository implements ICurriculumRepository {
         id: curriculumSkill.skill.id,
         skillName: curriculumSkill.skill.name,
       })),
+      ormEntity.preference,
     );
   }
 

@@ -2,6 +2,7 @@ export interface UpsertStudentResumeCommand {
   about?: string | null;
   linkedinUrl?: string | null;
   githubUrl?: string | null;
+  preference?: string | null;
 }
 
 export interface UploadStudentResumePhotoCommand {
