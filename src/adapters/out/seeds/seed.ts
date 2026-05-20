@@ -21,7 +21,6 @@ import { CourseOrmEntity } from '../orm/course.orm-entity';
 import { CurriculumSkillOrmEntity } from '../orm/curriculum-skill.orm-entity';
 import { CurriculumOrmEntity } from '../orm/curriculum.orm-entity';
 import { DisabilityOrmEntity } from '../orm/disability.orm-entity';
-import { InPersonCourseDetailOrmEntity } from '../orm/in-person-course-detail.orm-entity';
 import { JobOpeningOrmEntity } from '../orm/job-opening.orm-entity';
 import { JobSkillOrmEntity } from '../orm/job-skill.orm-entity';
 import { SettingOrmEntity } from '../orm/setting.orm-entity';
@@ -112,7 +111,7 @@ async function ensureSeedMode(appDataSource: DataSource): Promise<boolean> {
   if (shouldReset) {
     await appDataSource.query(`TRUNCATE TABLE
       job_skills, curriculum_skills, skills, job_openings, curriculum,
-      in_person_course_details, courses, disabilities,
+      courses, disabilities,
       social_benefits,
       students, admins, companies, contacts, users, settings
       RESTART IDENTITY CASCADE`);
@@ -258,6 +257,8 @@ export async function seed(): Promise<void> {
       linkAccess: 'https://www.amoresfati.org.br/',
       modality: 'PRESENCIAL',
       vacancyCount: 30,
+      shift: 'morning',
+      address: 'Instituto Caldeira - Porto Alegre/RS',
     },
   ];
 
@@ -519,24 +520,8 @@ export async function seed(): Promise<void> {
   }
   logger.info('15 alunos criados.');
 
-  // CURSOS PRESENCIAIS
+  // CURSOS PRESENCIAIS (Removido InPersonCourseDetail)
   const cursosPresenciais = cursos.filter((c) => c.modality === 'PRESENCIAL');
-  for (const presencial of cursosPresenciais) {
-    const personCourse = appDataSource
-      .getRepository(InPersonCourseDetailOrmEntity)
-      .create({
-        id: uuidv4(),
-        course: presencial,
-        address: 'Instituto Caldeira - Porto Alegre/RS',
-        startDate: presencial.startDate,
-        shift: 'manha-tarde',
-        room: 'Terças e Quintas',
-        vacancies: presencial.vacancyCount,
-      });
-    await appDataSource
-      .getRepository(InPersonCourseDetailOrmEntity)
-      .save(personCourse);
-  }
   logger.info(`${cursosPresenciais.length} cursos presenciais criados.`);
 
   // 5. SKILLS

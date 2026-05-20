@@ -44,6 +44,9 @@ export class CourseResponseDto {
   @ApiProperty({ example: 'Porto Alegre - RS', nullable: true })
   location: string | null;
 
+  @ApiProperty({ example: 'morning', nullable: true })
+  shift: string | null;
+
   @ApiProperty({
     example: 'https://fatilab.com/banners/web.jpg',
     nullable: true,
@@ -88,6 +91,7 @@ export function toCourseResponse(
     enrollmentStart: toIsoString(course.startRegistrations),
     enrollmentEnd: toIsoString(course.endRegistrations),
     location,
+    shift: course.shift ?? null,
     imageUrl: course.banner?.trim() ? course.banner : null,
     externalLink: course.linkAccess?.trim() ? course.linkAccess : null,
   };

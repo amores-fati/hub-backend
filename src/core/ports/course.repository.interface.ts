@@ -25,5 +25,6 @@ export interface ICourseRepository {
   findManyWithLocationByFilters(
     filters?: CourseReportFilters,
   ): Promise<CourseWithLocation[]>;
+  update(course: Course): Promise<Course>;
   delete(id: string): Promise<void>;
 }

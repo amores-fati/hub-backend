@@ -15,6 +15,8 @@ describe('CourseService', () => {
     findById: jest.fn(),
     findManyByIdsWithLocation: jest.fn(),
     findManyWithLocationByFilters: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
   };
 
   const createCommand: CreateCourseCommand = {
@@ -49,6 +51,21 @@ describe('CourseService', () => {
       expect(result.banner).toBe(createCommand.banner);
       expect(result.courseLoad).toBe(createCommand.courseLoad);
       expect(result.linkAccess).toBe(createCommand.linkAccess);
+      expect(mockRepository.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('should create a course when optional linkAccess is omitted', async () => {
+      const commandWithoutLinkAccess = { ...createCommand };
+      delete commandWithoutLinkAccess.linkAccess;
+
+      (mockRepository.create as jest.Mock).mockImplementation((course) =>
+        Promise.resolve(course),
+      );
+
+      const result = await service.createCourse(commandWithoutLinkAccess);
+
+      expect(result).toBeInstanceOf(Course);
+      expect(result.linkAccess).toBeUndefined();
       expect(mockRepository.create).toHaveBeenCalledTimes(1);
     });
 

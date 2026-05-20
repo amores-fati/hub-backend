@@ -115,9 +115,7 @@ export class StudentResumeController {
     },
   })
   @ApiNotFoundResponse({ description: 'Curriculo nao encontrado.' })
-  async getStudentResumeAsAdmin(
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
+  async getStudentResumeAsAdmin(@Param('id', ParseUUIDPipe) id: string) {
     try {
       this.logger.info('Admin fetching student resume', { studentId: id });
       const curriculum = await this.studentResumeService.getResume(id);
@@ -130,7 +128,6 @@ export class StudentResumeController {
       throw error;
     }
   }
-
 
   @RequireAuth(UserRoleEnum.STUDENT)
   @Put('students/me/resume')

@@ -11,8 +11,10 @@ export class Course {
   #startRegistrations: Date;
   #endRegistrations: Date;
   #modality: string;
-  #linkAccess: string;
+  #linkAccess?: string;
   #vacancyCount: number;
+  #shift: string | undefined;
+  #address: string | undefined;
   #description?: string;
   #status: CourseStatus;
 
@@ -26,8 +28,10 @@ export class Course {
     startRegistrations: Date,
     endRegistrations: Date,
     modality: string,
-    linkAccess: string,
+    linkAccess: string | undefined,
     vacancyCount: number,
+    shift?: string,
+    address?: string,
     description?: string,
     status: CourseStatus = CourseStatus.ATIVO,
   ) {
@@ -42,6 +46,8 @@ export class Course {
     this.#modality = modality;
     this.#linkAccess = linkAccess;
     this.#vacancyCount = vacancyCount;
+    this.#shift = shift;
+    this.#address = address;
     this.#description = description;
     this.#status = status;
     this.validateCourse();
@@ -87,7 +93,7 @@ export class Course {
     return this.#modality;
   }
 
-  get linkAccess(): string {
+  get linkAccess(): string | undefined {
     return this.#linkAccess;
   }
 
@@ -97,6 +103,14 @@ export class Course {
 
   get status(): CourseStatus {
     return this.#status;
+  }
+
+  get shift(): string | undefined {
+    return this.#shift;
+  }
+
+  get address(): string | undefined {
+    return this.#address;
   }
 
   private validateCourse(): void {
@@ -110,10 +124,14 @@ export class Course {
       this.#modality,
       'A modalidade do curso e obrigatoria.',
     );
-    this.validateRequiredText(
-      this.#linkAccess,
-      'O link de acesso do curso e obrigatorio.',
-    );
+    if (
+      this.#linkAccess !== undefined &&
+      this.#linkAccess.trim().length === 0
+    ) {
+      throw new DomainException(
+        'O link de acesso do curso nao pode ser uma string vazia.',
+      );
+    }
     this.validateOptionalText(this.#description);
     this.validateVacancyCount(this.#vacancyCount);
     this.validateStatus(this.#status);
@@ -186,6 +204,8 @@ export class Course {
       linkAccess: this.linkAccess,
       vacancyCount: this.vacancyCount,
       status: this.status,
+      shift: this.shift ?? null,
+      address: this.address ?? null,
     };
   }
 }
