@@ -98,6 +98,7 @@ describe('AdminService', () => {
         about: 'Sobre mim',
         linkedinUrl: 'linkedin.com/in/user',
         githubUrl: 'github.com/user',
+        videoPresentationUrl: 'https://www.youtube.com/watch?v=abc123',
         photoUrl: 'photo.jpg',
         skills: [
           { id: 's1', skillName: 'Node.js' },
@@ -118,6 +119,9 @@ describe('AdminService', () => {
       const result = await service.getStudentResume(studentId);
 
       expect(result.id).toBe('curr-1');
+      expect(result.videoPresentationUrl).toBe(
+        'https://www.youtube.com/watch?v=abc123',
+      );
       expect(result.student.fullName).toBe('Tarciso Mota');
       expect(mockCurriculumRepository.findByStudentId).toHaveBeenCalledWith(
         studentId,
