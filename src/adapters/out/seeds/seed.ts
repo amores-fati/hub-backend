@@ -282,6 +282,27 @@ export async function seed(): Promise<void> {
   }
   logger.info('2 cursos criados.');
 
+  // 3.5. DISABILITIES E BENEFITS
+  const disabilityTypes = ['VISUAL', 'AUDITIVA', 'FISICA', 'INTELECTUAL', 'PSICOSSOCIAL', 'MULTIPLA', 'TEA', 'OUTRA', 'NENHUMA'];
+  for (const type of disabilityTypes) {
+    const disability = appDataSource.getRepository(DisabilityOrmEntity).create({
+      id: uuidv4(),
+      name: type,
+    });
+    await appDataSource.getRepository(DisabilityOrmEntity).save(disability);
+  }
+  logger.info('Deficiências criadas.');
+
+  const benefitTypes = ['BOLSA FAMILIA', 'BPC', 'OUTROS'];
+  for (const type of benefitTypes) {
+    const benefit = appDataSource.getRepository(SocialBenefitOrmEntity).create({
+      id: uuidv4(),
+      name: type,
+    });
+    await appDataSource.getRepository(SocialBenefitOrmEntity).save(benefit);
+  }
+  logger.info('Benefícios Sociais criados.');
+
   // 4. ALUNOS (15)
   const alunosData = [
     {
@@ -512,9 +533,10 @@ export async function seed(): Promise<void> {
 
     // Link disabilities via student_disability table
     if (a.hasDisability && a.disability) {
+      const normalizedDisabilityName = a.disability.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
       const disability = await appDataSource
         .getRepository(DisabilityOrmEntity)
-        .findOne({ where: { name: a.disability } });
+        .findOne({ where: { name: normalizedDisabilityName } });
       
       if (disability) {
         await appDataSource
@@ -534,9 +556,10 @@ export async function seed(): Promise<void> {
         'Outros',
       ][i % 3];
       
+      const normalizedBenefitName = benefitName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
       const benefit = await appDataSource
         .getRepository(SocialBenefitOrmEntity)
-        .findOne({ where: { name: benefitName } });
+        .findOne({ where: { name: normalizedBenefitName } });
       
       if (benefit) {
         await appDataSource
