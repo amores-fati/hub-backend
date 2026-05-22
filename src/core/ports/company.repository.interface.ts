@@ -10,4 +10,5 @@ export interface ICompanyRepository {
   findByCnpj(cnpj: string): Promise<Company | null>;
   update(company: Company): Promise<Company>;
   delete(id: string): Promise<void>;
+  findLocations(): Promise<{ city: string; uf: string }[]>;
 }

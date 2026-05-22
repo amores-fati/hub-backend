@@ -3,6 +3,7 @@ import {
   Body,
   ConflictException,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -10,19 +11,24 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateCourseCommand } from '../../../core/command/course.command';
+import {
+  CreateCourseCommand,
+  UpdateCourseCommand,
+} from '../../../core/command/course.command';
 import { CourseService } from '../../../core/services/course.service';
 import { EnrollmentService } from '../../../core/services/enrollment.service';
 import { EnrollmentType } from '../../../core/domain/enrollment.entity';
@@ -55,8 +61,7 @@ export class CourseController {
   })
   @ApiBody({
     type: CreateCourseDto,
-    description:
-      'Payload contendo os campos obrigatorios persistidos em courses.',
+    description: 'Payload contendo os campos estruturais do curso.',
   })
   @ApiCreatedResponse({
     description:
@@ -100,6 +105,53 @@ export class CourseController {
     }
   }
 
+  @RequireAuth(UserRoleEnum.ADMIN)
+  @Put(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Atualiza um curso existente (admin)' })
+  @ApiParam({ name: 'id', description: 'UUID do curso', type: String })
+  @ApiBody({ type: CreateCourseDto })
+  @ApiOkResponse({ description: 'Curso atualizado com sucesso.' })
+  @ApiNotFoundResponse({
+    description: 'Curso não encontrado.',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'Curso não encontrado',
+        errorKind: 'NOT_FOUND',
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Erro de validação ou inconsistência de domínio.',
+  })
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateCourseDto,
+  ) {
+    this.logger.info('Updating course', { id });
+    try {
+      const command: UpdateCourseCommand = { ...dto };
+      const course = await this.courseService.updateCourse(id, command);
+      this.logger.info('Course updated', { id });
+      return course;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CourseNotFoundException') {
+        this.logger.warn('Course not found', { id });
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Curso não encontrado',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+      if (error instanceof Error && error.name === 'DomainException') {
+        this.logger.error('Course update domain error', { id });
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
+  }
+
   @Get()
   @ApiOperation({
     summary: 'Lista todos os cursos',
@@ -136,6 +188,38 @@ export class CourseController {
     return courses.map(({ course, location }) =>
       toCourseResponse(course, location),
     );
+  }
+
+  @RequireAuth(UserRoleEnum.ADMIN)
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Exclui um curso' })
+  @ApiParam({ name: 'id', description: 'UUID do curso', type: String })
+  @ApiNoContentResponse({ description: 'Curso excluído com sucesso.' })
+  @ApiNotFoundResponse({
+    description: 'Curso não encontrado.',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'Curso não encontrado',
+        errorKind: 'NOT_FOUND',
+      },
+    },
+  })
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    this.logger.info('Deleting course', { id });
+    try {
+      await this.courseService.deleteCourse(id);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CourseNotFoundException') {
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Curso não encontrado',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+      throw error;
+    }
   }
 
   @RequireAuth(UserRoleEnum.STUDENT)

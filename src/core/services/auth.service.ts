@@ -43,6 +43,7 @@ export class AuthService {
       this.companyRepository.existsById(user.id),
       this.adminRepository.existsById(user.id),
     ]);
+    console.log({ userId: user.id, isStudent, isCompany, isAdmin });
 
     let role: UserRoleEnum;
     if (isStudent) role = UserRoleEnum.STUDENT;

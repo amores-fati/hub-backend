@@ -23,8 +23,6 @@ export class CompanyRepository implements ICompanyRepository {
     await this.ormRepository.manager.transaction(
       async (transactionalEntityManager) => {
         await transactionalEntityManager.save(ormEntity.user);
-        await transactionalEntityManager.save(ormEntity.telephone);
-        await transactionalEntityManager.save(ormEntity.address);
         await transactionalEntityManager.save(ormEntity);
       },
     );
@@ -65,8 +63,6 @@ export class CompanyRepository implements ICompanyRepository {
     await this.ormRepository.manager.transaction(
       async (transactionalEntityManager) => {
         await transactionalEntityManager.save(ormEntity.user);
-        await transactionalEntityManager.save(ormEntity.telephone);
-        await transactionalEntityManager.save(ormEntity.address);
         await transactionalEntityManager.save(ormEntity);
       },
     );
@@ -153,5 +149,19 @@ export class CompanyRepository implements ICompanyRepository {
       ormEntity.responsibleName,
       contact,
     );
+  }
+
+  async findLocations(): Promise<{ city: string; uf: string }[]> {
+    const rawData = await this.ormRepository
+      .createQueryBuilder('company')
+      .innerJoin('company.address', 'address')
+      .select('address.city', 'city')
+      .addSelect('address.state', 'uf')
+      .where('address.city IS NOT NULL')
+      .andWhere('address.state IS NOT NULL')
+      .distinct(true)
+      .getRawMany();
+
+    return rawData as { city: string; uf: string }[];
   }
 }

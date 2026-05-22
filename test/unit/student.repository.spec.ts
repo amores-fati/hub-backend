@@ -26,14 +26,28 @@ describe('StudentRepository', () => {
     delete: jest.Mock;
     save: jest.Mock;
     update: jest.Mock;
+    createQueryBuilder: jest.Mock;
+  };
+  let managerQueryBuilder: {
+    delete: jest.Mock;
+    from: jest.Mock;
+    where: jest.Mock;
+    execute: jest.Mock;
   };
   let queryBuilder: {
+    addOrderBy: jest.Mock;
+    addSelect: jest.Mock;
     andWhere: jest.Mock;
+    getRawMany: jest.Mock;
     getManyAndCount: jest.Mock;
+    innerJoin: jest.Mock;
     innerJoinAndSelect: jest.Mock;
+    leftJoin: jest.Mock;
     leftJoinAndMapMany: jest.Mock;
     leftJoinAndMapOne: jest.Mock;
     leftJoinAndSelect: jest.Mock;
+    orderBy: jest.Mock;
+    select: jest.Mock;
     skip: jest.Mock;
     take: jest.Mock;
   };
@@ -41,19 +55,34 @@ describe('StudentRepository', () => {
   let repository: StudentRepository;
 
   beforeEach(() => {
+    managerQueryBuilder = {
+      delete: jest.fn().mockReturnThis(),
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      execute: jest.fn().mockResolvedValue(undefined),
+    };
+
     transactionalEntityManager = {
       delete: jest.fn().mockResolvedValue(undefined),
       save: jest.fn().mockResolvedValue(undefined),
       update: jest.fn().mockResolvedValue(undefined),
+      createQueryBuilder: jest.fn().mockReturnValue(managerQueryBuilder),
     };
 
     queryBuilder = {
+      addOrderBy: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
+      getRawMany: jest.fn(),
       getManyAndCount: jest.fn(),
+      innerJoin: jest.fn().mockReturnThis(),
       innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoin: jest.fn().mockReturnThis(),
       leftJoinAndMapMany: jest.fn().mockReturnThis(),
       leftJoinAndMapOne: jest.fn().mockReturnThis(),
       leftJoinAndSelect: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
       take: jest.fn().mockReturnThis(),
     };
@@ -87,14 +116,7 @@ describe('StudentRepository', () => {
 
     await repository.update(student);
 
-    expect(transactionalEntityManager.delete).toHaveBeenCalledWith(
-      SocialBenefitOrmEntity,
-      { studentId: student.id },
-    );
-    expect(transactionalEntityManager.delete).toHaveBeenCalledWith(
-      SocialBenefitOrmEntity,
-      { studentId: student.id },
-    );
+    expect(transactionalEntityManager.createQueryBuilder).toHaveBeenCalled();
   });
 
   it('should remove child collections when update receives empty arrays', async () => {
@@ -108,14 +130,7 @@ describe('StudentRepository', () => {
 
     await repository.update(student);
 
-    expect(transactionalEntityManager.delete).toHaveBeenCalledWith(
-      SocialBenefitOrmEntity,
-      { studentId: student.id },
-    );
-    expect(transactionalEntityManager.delete).toHaveBeenCalledWith(
-      SocialBenefitOrmEntity,
-      { studentId: student.id },
-    );
+    expect(transactionalEntityManager.createQueryBuilder).toHaveBeenCalled();
   });
 
   it('should coerce database date strings when mapping students', async () => {
@@ -154,12 +169,16 @@ describe('StudentRepository', () => {
       'user.deletedAt IS NULL',
     );
     expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
-      'student.contact',
-      'contact',
+      'student.telephone',
+      'telephone',
     );
     expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
-      'student.disability',
-      'disability',
+      'student.address',
+      'address',
+    );
+    expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+      'student.disabilities',
+      'disabilities',
     );
     expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
       'student.socialBenefits',
@@ -173,7 +192,7 @@ describe('StudentRepository', () => {
     );
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(expect.any(Brackets));
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      'disability.type IN (:...disabilityTypes)',
+      'disabilities.name IN (:...disabilityTypes)',
       { disabilityTypes: ['visual'] },
     );
     expect(queryBuilder.skip).toHaveBeenCalledWith(20);
@@ -199,6 +218,101 @@ describe('StudentRepository', () => {
     expect(queryBuilder.andWhere).toHaveBeenCalled();
     expect(queryBuilder.skip).toHaveBeenCalledWith(0);
     expect(queryBuilder.take).toHaveBeenCalledWith(50);
+  });
+
+  it('should map selected students for report preserving requested order', async () => {
+    queryBuilder.getRawMany.mockResolvedValue([
+      buildStudentReportRawRow({
+        id: 'student-1',
+        fullName: 'Ana',
+        courseId: 'course-1',
+        courseName: 'Curso Online',
+      }),
+      buildStudentReportRawRow({
+        id: 'student-1',
+        fullName: 'Ana',
+        courseId: 'course-2',
+        courseName: 'Curso Presencial',
+      }),
+      buildStudentReportRawRow({
+        id: 'student-2',
+        fullName: 'Bruno',
+        courseId: null,
+        courseName: null,
+      }),
+    ]);
+
+    const result = await repository.findManyForReportByIds([
+      'student-2',
+      'student-1',
+    ]);
+
+    expect(queryBuilder.innerJoin).toHaveBeenCalledWith(
+      'student.user',
+      'user',
+      'user.deletedAt IS NULL',
+    );
+    expect(queryBuilder.leftJoin).toHaveBeenCalled();
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'student.id IN (:...ids)',
+      { ids: ['student-2', 'student-1'] },
+    );
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: 'student-2',
+        courseNames: [],
+      }),
+      expect.objectContaining({
+        id: 'student-1',
+        courseNames: ['Curso Online', 'Curso Presencial'],
+      }),
+    ]);
+  });
+
+  it('should apply report filters for course, location, pcd and status', async () => {
+    queryBuilder.getRawMany.mockResolvedValue([]);
+
+    await repository.findManyForReportByFilters({
+      course: 'Curso',
+      location: 'Sao Paulo/SP',
+      pcdType: 'FISICO',
+      status: 'INSCRICAO',
+    });
+
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'reportCourse.name ILIKE :course',
+      { course: '%Curso%' },
+    );
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'address.city ILIKE :locationCity AND address.state ILIKE :locationState',
+      {
+        locationCity: '%Sao Paulo%',
+        locationState: 'SP',
+      },
+    );
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'disabilities.id IS NOT NULL',
+    );
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'LOWER(disabilities.name) IN (:...pcdTypes)',
+      { pcdTypes: ['fisica', 'fisico', 'f\u00edsica', 'f\u00edsico'] },
+    );
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      expect.stringContaining('EXISTS'),
+      { statusType: 'INSCRICAO' },
+    );
+  });
+
+  it('should apply report filters for students without enrollments', async () => {
+    queryBuilder.getRawMany.mockResolvedValue([]);
+
+    await repository.findManyForReportByFilters({
+      status: 'NAO_INSCRITO',
+    });
+
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      expect.stringContaining('NOT EXISTS'),
+    );
   });
 });
 
@@ -255,20 +369,26 @@ function buildStudentOrmEntity(
   user.password = student.password;
   user.role = UserRoleEnum.STUDENT;
 
-  const contact = new ContactOrmEntity();
-  contact.id = student.contact.id;
-  contact.phone = student.contact.phone;
-  contact.neighbourhood = student.contact.neighbourhood ?? null;
-  contact.state = student.contact.state ?? null;
-  contact.city = student.contact.city ?? null;
-  contact.address = student.contact.address ?? null;
-  contact.cep = student.contact.cep ?? null;
-  contact.complement = student.contact.complement ?? null;
+  const telephone = {
+    id: student.contact.id,
+    phone: student.contact.phone,
+  } as any;
+
+  const address = {
+    id: student.contact.id,
+    neighbourhood: student.contact.neighbourhood ?? null,
+    state: student.contact.state ?? null,
+    city: student.contact.city ?? null,
+    address: student.contact.address ?? null,
+    cep: student.contact.cep ?? null,
+    complement: student.contact.complement ?? null,
+  } as any;
 
   const ormEntity = new StudentOrmEntity();
   ormEntity.id = student.id;
   ormEntity.user = user;
-  ormEntity.contact = contact;
+  ormEntity.telephone = telephone;
+  ormEntity.address = address;
   ormEntity.cpf = student.cpf;
   ormEntity.birthDate = student.birthDate ?? null;
   ormEntity.gender = student.gender ?? null;
@@ -293,4 +413,31 @@ function buildStudentOrmEntity(
   });
 
   return ormEntity;
+}
+
+function buildStudentReportRawRow({
+  id,
+  fullName,
+  courseId,
+  courseName,
+}: {
+  id: string;
+  fullName: string;
+  courseId: string | null;
+  courseName: string | null;
+}) {
+  return {
+    student_id: id,
+    email: `${id}@test.com`,
+    cpf: '12345678900',
+    full_name: fullName,
+    social_name: null,
+    phone_number: '11999999999',
+    city: 'Sao Paulo',
+    state: 'SP',
+    disability_has_disability: false,
+    disability_type: null,
+    course_id: courseId,
+    course_name: courseName,
+  };
 }

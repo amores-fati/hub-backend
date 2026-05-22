@@ -24,7 +24,6 @@ import { CourseOrmEntity } from '../orm/course.orm-entity';
 import { CurriculumSkillOrmEntity } from '../orm/curriculum-skill.orm-entity';
 import { CurriculumOrmEntity } from '../orm/curriculum.orm-entity';
 import { DisabilityOrmEntity } from '../orm/disability.orm-entity';
-import { InPersonCourseDetailOrmEntity } from '../orm/in-person-course-detail.orm-entity';
 import { JobOpeningOrmEntity } from '../orm/job-opening.orm-entity';
 import { JobSkillOrmEntity } from '../orm/job-skill.orm-entity';
 import { SettingOrmEntity } from '../orm/setting.orm-entity';
@@ -115,7 +114,7 @@ async function ensureSeedMode(appDataSource: DataSource): Promise<boolean> {
   if (shouldReset) {
     await appDataSource.query(`TRUNCATE TABLE
       job_skills, curriculum_skills, skills, job_openings, curriculum,
-      in_person_course_details, courses, disability, student_disability,
+      courses, disability, student_disability,
       social_benefit, student_social_benefit, telephone_student,
       telephone_company, address_student, address_company,
       students, admins, companies, users, settings
@@ -212,6 +211,13 @@ export async function seed(): Promise<void> {
       role: UserRoleEnum.COMPANY,
     });
     await appDataSource.getRepository(UserOrmEntity).save(user);
+    const company = appDataSource.getRepository(CompanyOrmEntity).create({
+      id: userId,
+      cnpj: e.cnpj,
+      name: e.name,
+      responsibleName: e.responsibleName,
+    });
+    await appDataSource.getRepository(CompanyOrmEntity).save(company);
     const telephone = appDataSource.getRepository(TelephoneCompanyOrmEntity).create({
       id: userId,
       companyId: userId,
@@ -225,13 +231,6 @@ export async function seed(): Promise<void> {
       state: e.state,
     });
     await appDataSource.getRepository(AddressCompanyOrmEntity).save(address);
-    const company = appDataSource.getRepository(CompanyOrmEntity).create({
-      id: userId,
-      cnpj: e.cnpj,
-      name: e.name,
-      responsibleName: e.responsibleName,
-    });
-    await appDataSource.getRepository(CompanyOrmEntity).save(company);
     empresas.push(company);
   }
   logger.info('3 empresas criadas.');
@@ -267,6 +266,8 @@ export async function seed(): Promise<void> {
       linkAccess: 'https://www.amoresfati.org.br/',
       modality: 'PRESENCIAL',
       vacancyCount: 30,
+      shift: 'morning',
+      address: 'Instituto Caldeira - Porto Alegre/RS',
     },
   ];
 
@@ -477,19 +478,6 @@ export async function seed(): Promise<void> {
       role: UserRoleEnum.STUDENT,
     });
     await appDataSource.getRepository(UserOrmEntity).save(user);
-    const telephone = appDataSource.getRepository(TelephoneStudentOrmEntity).create({
-      id: userId,
-      studentId: userId,
-      phone: `(51) 90000-${numero}00`,
-    });
-    await appDataSource.getRepository(TelephoneStudentOrmEntity).save(telephone);
-    const address = appDataSource.getRepository(AddressStudentOrmEntity).create({
-      id: userId,
-      studentId: userId,
-      city: a.city,
-      state: a.state,
-    });
-    await appDataSource.getRepository(AddressStudentOrmEntity).save(address);
     const student = appDataSource.getRepository(StudentOrmEntity).create({
       id: userId,
       cpf: `${100000000 + i * 11111111}`.slice(0, 11),
@@ -508,6 +496,19 @@ export async function seed(): Promise<void> {
       howHeard: a.howHeard,
     });
     await appDataSource.getRepository(StudentOrmEntity).save(student);
+    const telephone = appDataSource.getRepository(TelephoneStudentOrmEntity).create({
+      id: userId,
+      studentId: userId,
+      phone: `(51) 90000-${numero}00`,
+    });
+    await appDataSource.getRepository(TelephoneStudentOrmEntity).save(telephone);
+    const address = appDataSource.getRepository(AddressStudentOrmEntity).create({
+      id: userId,
+      studentId: userId,
+      city: a.city,
+      state: a.state,
+    });
+    await appDataSource.getRepository(AddressStudentOrmEntity).save(address);
 
     // Link disabilities via student_disability table
     if (a.hasDisability && a.disability) {
@@ -550,24 +551,8 @@ export async function seed(): Promise<void> {
   }
   logger.info('15 alunos criados.');
 
-  // CURSOS PRESENCIAIS
+  // CURSOS PRESENCIAIS (Removido InPersonCourseDetail)
   const cursosPresenciais = cursos.filter((c) => c.modality === 'PRESENCIAL');
-  for (const presencial of cursosPresenciais) {
-    const personCourse = appDataSource
-      .getRepository(InPersonCourseDetailOrmEntity)
-      .create({
-        id: uuidv4(),
-        course: presencial,
-        address: 'Instituto Caldeira - Porto Alegre/RS',
-        startDate: presencial.startDate,
-        shift: 'manha-tarde',
-        room: 'Terças e Quintas',
-        vacancies: presencial.vacancyCount,
-      });
-    await appDataSource
-      .getRepository(InPersonCourseDetailOrmEntity)
-      .save(personCourse);
-  }
   logger.info(`${cursosPresenciais.length} cursos presenciais criados.`);
 
   // 5. SKILLS
@@ -606,6 +591,7 @@ export async function seed(): Promise<void> {
       linkedin: `https://linkedin.com/in/aluno0${i + 1}`,
       github: `https://github.com/aluno0${i + 1}`,
       videoPresentation: `https://fatilab.com/videos/aluno0${i + 1}`,
+      preference: i % 2 === 0 ? 'Remoto' : 'Presencial',
     });
     await appDataSource.getRepository(CurriculumOrmEntity).save(curriculo);
     for (let j = 0; j < 3; j++) {
@@ -625,6 +611,7 @@ export async function seed(): Promise<void> {
       description: 'Vaga para dev React.',
       openingsCount: 2,
       isPcd: true,
+      announcementDate: new Date('2026-04-23T00:00:00.000Z'),
       company: empresas[0],
     },
     {
@@ -632,6 +619,7 @@ export async function seed(): Promise<void> {
       description: 'Python e SQL obrigatório.',
       openingsCount: 1,
       isPcd: false,
+      announcementDate: new Date('2026-04-24T00:00:00.000Z'),
       company: empresas[0],
     },
     {
@@ -639,6 +627,7 @@ export async function seed(): Promise<void> {
       description: 'Figma e pesquisa de UX.',
       openingsCount: 3,
       isPcd: true,
+      announcementDate: new Date('2026-04-25T00:00:00.000Z'),
       company: empresas[1],
     },
     {
@@ -646,6 +635,7 @@ export async function seed(): Promise<void> {
       description: 'Docker, K8s e AWS.',
       openingsCount: 1,
       isPcd: false,
+      announcementDate: new Date('2026-04-26T00:00:00.000Z'),
       company: empresas[1],
     },
     {
@@ -653,6 +643,7 @@ export async function seed(): Promise<void> {
       description: 'Node.js + React.',
       openingsCount: 2,
       isPcd: true,
+      announcementDate: new Date('2026-04-27T00:00:00.000Z'),
       company: empresas[2],
     },
   ];
@@ -663,6 +654,7 @@ export async function seed(): Promise<void> {
       description: v.description,
       openingsCount: v.openingsCount,
       isPcd: v.isPcd,
+      announcementDate: v.announcementDate,
       company: v.company,
     });
     await appDataSource.getRepository(JobOpeningOrmEntity).save(job);

@@ -6,7 +6,6 @@ export class AddMetadataColumns1778600000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
 
     const tablesWithBoth = [
-      'users',
       'admins',
       'students',
       'companies',
@@ -32,7 +31,7 @@ export class AddMetadataColumns1778600000000 implements MigrationInterface {
 
     // --- tables that already have created_at, only need updated_at ---
 
-    const tablesOnlyUpdated = ['courses', 'enrollments'];
+    const tablesOnlyUpdated = ['users', 'courses', 'enrollments'];
 
     for (const table of tablesOnlyUpdated) {
       await queryRunner.query(`
@@ -44,7 +43,6 @@ export class AddMetadataColumns1778600000000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     const tablesWithBoth = [
-      'users',
       'admins',
       'students',
       'companies',
@@ -66,7 +64,7 @@ export class AddMetadataColumns1778600000000 implements MigrationInterface {
       );
     }
 
-    const tablesOnlyUpdated = ['courses', 'enrollments'];
+    const tablesOnlyUpdated = ['users', 'courses', 'enrollments'];
 
     for (const table of tablesOnlyUpdated) {
       await queryRunner.query(

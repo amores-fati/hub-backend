@@ -30,6 +30,9 @@ export class StudentResumeResponseDto {
   githubUrl: string;
 
   @ApiProperty({ nullable: true })
+  videoPresentationUrl: string | null;
+
+  @ApiProperty({ nullable: true })
   photoUrl: string | null;
 
   @ApiProperty({ type: [SkillResponseDto] })

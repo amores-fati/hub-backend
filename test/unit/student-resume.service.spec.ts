@@ -29,11 +29,13 @@ describe('StudentResumeService', () => {
   const studentRepository: jest.Mocked<IStudentRepository> = {
     create: jest.fn(),
     findAll: jest.fn(),
+    findAllWithFilter: jest.fn(),
     findById: jest.fn(),
     existsById: jest.fn(),
     findByCpf: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    softDeleteMany: jest.fn(),
   };
 
   const resumePhotoStorage: jest.Mocked<IResumePhotoStorage> = {
@@ -278,6 +280,7 @@ function buildCurriculum(): Curriculum {
     'Sobre o aluno',
     'https://www.linkedin.com/in/aluno',
     'https://github.com/aluno',
+    'https://www.youtube.com/watch?v=abc123',
     '/uploads/photo.webp',
     [{ id: 'skill-id', skillName: 'TypeScript' }],
   );
