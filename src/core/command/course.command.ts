@@ -1,3 +1,5 @@
+import { CourseStatus } from '../domain/course-status.enum';
+
 export interface CreateCourseCommand {
   name: string;
   banner: string;
@@ -10,6 +12,7 @@ export interface CreateCourseCommand {
   modality: string;
   linkAccess?: string;
   vacancyCount: number;
+  status?: CourseStatus;
   shift: string;
   address?: string;
 }
@@ -29,4 +32,3 @@ export interface UpdateCourseCommand {
   shift: string;
   address?: string;
 }
-

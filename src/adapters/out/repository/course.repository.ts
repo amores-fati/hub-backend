@@ -1,11 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import {
+  FindOptionsWhere,
+  ILike,
+  In,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Repository,
+} from 'typeorm';
+import {
+  CourseReportFilters,
   CourseWithLocation,
   ICourseRepository,
 } from '../../../core/ports/course.repository.interface';
 import { Course } from '../../../core/domain/course.entity';
+import { CourseStatus } from '../../../core/domain/course-status.enum';
 import { CourseOrmEntity } from '../orm/course.orm-entity';
 
 @Injectable()
@@ -65,6 +74,45 @@ export class CourseRepository implements ICourseRepository {
     return this.mapToDomain(updated!);
   }
 
+  async findManyByIdsWithLocation(
+    ids: string[],
+  ): Promise<CourseWithLocation[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const ormEntities = await this.ormRepository.find({
+      where: { id: In(ids) },
+      order: { createdAt: 'DESC' },
+    });
+    const entitiesById = new Map(
+      ormEntities.map((entity) => [entity.id, entity]),
+    );
+    const orderedEntities = ids
+      .map((id) => entitiesById.get(id))
+      .filter((entity): entity is CourseOrmEntity => Boolean(entity));
+
+    return orderedEntities.map((entity) => ({
+      course: this.mapToDomain(entity),
+      location: entity.address ?? null,
+    }));
+  }
+
+  async findManyWithLocationByFilters(
+    filters: CourseReportFilters = {},
+  ): Promise<CourseWithLocation[]> {
+    const where = this.buildFilterWhere(filters);
+    const ormEntities = await this.ormRepository.find({
+      where,
+      order: { createdAt: 'DESC' },
+    });
+
+    return ormEntities.map((entity) => ({
+      course: this.mapToDomain(entity),
+      location: entity.address ?? null,
+    }));
+  }
+
   async delete(id: string): Promise<void> {
     await this.ormRepository.delete(id);
   }
@@ -85,6 +133,7 @@ export class CourseRepository implements ICourseRepository {
       ormEntity.shift ?? undefined,
       ormEntity.address ?? undefined,
       ormEntity.description ?? undefined,
+      this.normalizeStatus(ormEntity.status),
     );
   }
 
@@ -102,6 +151,7 @@ export class CourseRepository implements ICourseRepository {
       modality: course.modality,
       linkAccess: course.linkAccess ?? null,
       vacancyCount: course.vacancyCount,
+      status: course.status,
       shift: course.shift ?? null,
       address: course.address ?? null,
       createdAt: new Date(),
@@ -110,5 +160,41 @@ export class CourseRepository implements ICourseRepository {
 
   private coerceDate(value: Date | string): Date {
     return value instanceof Date ? value : new Date(value);
+  }
+
+  private normalizeStatus(value?: string): CourseStatus {
+    return Object.values(CourseStatus).includes(value as CourseStatus)
+      ? (value as CourseStatus)
+      : CourseStatus.ATIVO;
+  }
+
+  private buildFilterWhere(
+    filters: CourseReportFilters,
+  ): FindOptionsWhere<CourseOrmEntity> {
+    const where: FindOptionsWhere<CourseOrmEntity> = {};
+
+    const search = filters.search?.trim();
+    if (search) {
+      where.name = ILike(`%${search}%`);
+    }
+
+    const modality = filters.modality?.trim();
+    if (modality) {
+      where.modality = modality;
+    }
+
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
+    if (filters.startDate) {
+      where.startDate = MoreThanOrEqual(this.coerceDate(filters.startDate));
+    }
+
+    if (filters.endDate) {
+      where.endDate = LessThanOrEqual(this.coerceDate(filters.endDate));
+    }
+
+    return where;
   }
 }

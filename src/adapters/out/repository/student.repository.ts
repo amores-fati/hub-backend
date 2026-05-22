@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, Repository } from 'typeorm';
+import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm';
 
 import {
   IStudentRepository,
   PaginatedStudentListResult,
   StudentFilterQuery,
+  StudentReportFilters,
+  StudentReportProjection,
 } from '../../../core/ports/student.repository.interface';
 import { Student } from '../../../core/domain/student.entity';
 import { Contact } from '../../../core/domain/contact.entity';
@@ -19,6 +21,7 @@ import { DisabilityOrmEntity } from '../orm/disability.orm-entity';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 import { EnrollmentOrmEntity } from '../orm/enrollment.orm-entity';
 import { CourseOrmEntity } from '../orm/course.orm-entity';
+import { EnrollmentType } from '../../../core/domain/enrollment.entity';
 
 type EnrollmentWithCourse = EnrollmentOrmEntity & {
   course?: CourseOrmEntity;
@@ -27,6 +30,21 @@ type EnrollmentWithCourse = EnrollmentOrmEntity & {
 type StudentWithEnrollments = StudentOrmEntity & {
   enrollments?: EnrollmentWithCourse[];
 };
+
+interface StudentReportRawRow {
+  student_id: string;
+  email: string;
+  cpf: string;
+  full_name: string;
+  social_name: string | null;
+  phone_number: string | null;
+  city: string | null;
+  state: string | null;
+  disability_has_disability: boolean | null;
+  disability_type: string | null;
+  course_id: string | null;
+  course_name: string | null;
+}
 
 @Injectable()
 export class StudentRepository implements IStudentRepository {
@@ -167,6 +185,39 @@ export class StudentRepository implements IStudentRepository {
       ),
       total,
     };
+  }
+
+  async findManyForReportByIds(
+    ids: string[],
+  ): Promise<StudentReportProjection[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const queryBuilder = this.createStudentReportQueryBuilder();
+
+    queryBuilder.andWhere('student.id IN (:...ids)', { ids });
+
+    const rows = await queryBuilder.getRawMany<StudentReportRawRow>();
+    const students = this.mapReportRows(rows);
+    const orderById = new Map(ids.map((id, index) => [id, index]));
+
+    return students.sort(
+      (left, right) =>
+        (orderById.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
+        (orderById.get(right.id) ?? Number.MAX_SAFE_INTEGER),
+    );
+  }
+
+  async findManyForReportByFilters(
+    filters: StudentReportFilters = {},
+  ): Promise<StudentReportProjection[]> {
+    const queryBuilder = this.createStudentReportQueryBuilder();
+
+    this.applyStudentReportFilters(queryBuilder, filters);
+
+    const rows = await queryBuilder.getRawMany<StudentReportRawRow>();
+    return this.mapReportRows(rows);
   }
 
   async findById(id: string): Promise<Student | null> {
@@ -328,6 +379,226 @@ export class StudentRepository implements IStudentRepository {
   private normalizeCpf(value: string): string | undefined {
     const digits = value.replace(/\D/g, '');
     return digits ? digits : undefined;
+  }
+
+  private createStudentReportQueryBuilder(): SelectQueryBuilder<StudentOrmEntity> {
+    return this.ormRepository
+      .createQueryBuilder('student')
+      .innerJoin('student.user', 'user', 'user.deletedAt IS NULL')
+      .leftJoin('student.contact', 'contact')
+      .leftJoin('student.disability', 'disability')
+      .leftJoin(
+        EnrollmentOrmEntity,
+        'reportEnrollment',
+        'reportEnrollment.studentId = student.id AND reportEnrollment.type = :reportEnrollmentType',
+        { reportEnrollmentType: EnrollmentType.ENROLLMENT },
+      )
+      .leftJoin(
+        CourseOrmEntity,
+        'reportCourse',
+        'reportCourse.id = reportEnrollment.courseId',
+      )
+      .select('student.id', 'student_id')
+      .addSelect('user.email', 'email')
+      .addSelect('student.cpf', 'cpf')
+      .addSelect('student.fullName', 'full_name')
+      .addSelect('student.socialName', 'social_name')
+      .addSelect('contact.phone', 'phone_number')
+      .addSelect('contact.city', 'city')
+      .addSelect('contact.state', 'state')
+      .addSelect('disability.hasDisability', 'disability_has_disability')
+      .addSelect('disability.type', 'disability_type')
+      .addSelect('reportCourse.id', 'course_id')
+      .addSelect('reportCourse.name', 'course_name')
+      .orderBy('student.fullName', 'ASC')
+      .addOrderBy('reportEnrollment.createdAt', 'DESC', 'NULLS LAST');
+  }
+
+  private applyStudentReportFilters(
+    queryBuilder: SelectQueryBuilder<StudentOrmEntity>,
+    filters: StudentReportFilters,
+  ): void {
+    if (filters.search) {
+      const search = this.buildLikeFilter(filters.search);
+      const normalizedCpf = this.normalizeCpf(filters.search);
+
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb.where('student.socialName ILIKE :search', { search })
+            .orWhere('student.fullName ILIKE :search', { search })
+            .orWhere('user.email ILIKE :search', { search });
+
+          if (normalizedCpf) {
+            qb.orWhere(
+              "regexp_replace(student.cpf, '\\D', '', 'g') ILIKE :cpf",
+              { cpf: this.buildLikeFilter(normalizedCpf) },
+            );
+          }
+        }),
+      );
+    }
+
+    if (filters.course) {
+      if (this.isUuid(filters.course)) {
+        queryBuilder.andWhere('reportCourse.id = :courseId', {
+          courseId: filters.course,
+        });
+      } else {
+        queryBuilder.andWhere('reportCourse.name ILIKE :course', {
+          course: this.buildLikeFilter(filters.course),
+        });
+      }
+    }
+
+    if (filters.location) {
+      this.applyLocationFilter(queryBuilder, filters.location);
+    }
+
+    if (filters.pcdType) {
+      queryBuilder
+        .andWhere('disability.hasDisability = :hasDisability', {
+          hasDisability: true,
+        })
+        .andWhere('LOWER(disability.type) IN (:...pcdTypes)', {
+          pcdTypes: this.expandPcdTypeFilter(filters.pcdType),
+        });
+    }
+
+    if (filters.status === 'ENROLLMENT' || filters.status === 'INTEREST') {
+      queryBuilder.andWhere(
+        `EXISTS (
+          SELECT 1
+          FROM "enrollments" "statusEnrollment"
+          WHERE "statusEnrollment"."student_id" = student.id
+            AND "statusEnrollment"."type" = :statusType
+        )`,
+        { statusType: filters.status },
+      );
+    }
+
+    if (filters.status === 'NAO_INSCRITO') {
+      queryBuilder.andWhere(
+        `NOT EXISTS (
+          SELECT 1
+          FROM "enrollments" "statusEnrollment"
+          WHERE "statusEnrollment"."student_id" = student.id
+        )`,
+      );
+    }
+  }
+
+  private applyLocationFilter(
+    queryBuilder: SelectQueryBuilder<StudentOrmEntity>,
+    location: string,
+  ): void {
+    const [city, state] = location.split('/').map((value) => value.trim());
+
+    if (city && state) {
+      queryBuilder.andWhere(
+        'contact.city ILIKE :locationCity AND contact.state ILIKE :locationState',
+        {
+          locationCity: this.buildLikeFilter(city),
+          locationState: state,
+        },
+      );
+      return;
+    }
+
+    queryBuilder.andWhere(
+      new Brackets((qb) => {
+        qb.where('contact.city ILIKE :location', {
+          location: this.buildLikeFilter(location),
+        })
+          .orWhere('contact.state ILIKE :location', {
+            location: this.buildLikeFilter(location),
+          })
+          .orWhere('contact.address ILIKE :location', {
+            location: this.buildLikeFilter(location),
+          });
+      }),
+    );
+  }
+
+  private mapReportRows(
+    rows: StudentReportRawRow[],
+  ): StudentReportProjection[] {
+    const studentsById = new Map<string, StudentReportProjection>();
+    const courseIdsByStudentId = new Map<string, Set<string>>();
+
+    for (const row of rows) {
+      let student = studentsById.get(row.student_id);
+
+      if (!student) {
+        student = {
+          id: row.student_id,
+          email: row.email,
+          cpf: row.cpf,
+          fullName: row.full_name,
+          socialName: row.social_name || undefined,
+          phoneNumber: row.phone_number ?? '',
+          city: row.city || undefined,
+          state: row.state || undefined,
+          courseNames: [],
+          hasDisability: row.disability_has_disability ?? undefined,
+          disabilityType: row.disability_type || undefined,
+        };
+        studentsById.set(row.student_id, student);
+        courseIdsByStudentId.set(row.student_id, new Set<string>());
+      }
+
+      if (row.course_id && row.course_name) {
+        const courseIds = courseIdsByStudentId.get(row.student_id)!;
+
+        if (!courseIds.has(row.course_id)) {
+          courseIds.add(row.course_id);
+          student.courseNames.push(row.course_name);
+        }
+      }
+    }
+
+    return Array.from(studentsById.values());
+  }
+
+  private isUuid(value: string): boolean {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value,
+    );
+  }
+
+  private expandPcdTypeFilter(value: string): string[] {
+    const normalized = this.normalizeKey(value);
+    const aliases: Record<string, string[]> = {
+      fisica: ['fisica', 'fisico', 'f\u00edsica', 'f\u00edsico'],
+      fisico: ['fisica', 'fisico', 'f\u00edsica', 'f\u00edsico'],
+      visual: ['visual', 'ocular'],
+      ocular: ['visual', 'ocular'],
+      auditiva: ['auditiva', 'auditivo'],
+      auditivo: ['auditiva', 'auditivo'],
+      intelectual: ['intelectual'],
+      psicossocial: ['psicossocial'],
+      multipla: ['multipla', 'multiplo', 'm\u00faltipla', 'm\u00faltiplo'],
+      multiplo: ['multipla', 'multiplo', 'm\u00faltipla', 'm\u00faltiplo'],
+      tea: ['tea'],
+      outra: ['outra', 'outro'],
+      outro: ['outra', 'outro'],
+    };
+
+    return Array.from(
+      new Set([
+        ...(aliases[normalized] ?? []),
+        value.trim().toLowerCase(),
+        normalized,
+      ]),
+    );
+  }
+
+  private normalizeKey(value: string): string {
+    return value
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[\s-]+/g, '_')
+      .toLowerCase();
   }
 
   private mapToListProjection(ormEntity: StudentWithEnrollments) {

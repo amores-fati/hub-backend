@@ -25,7 +25,10 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateCourseCommand, UpdateCourseCommand } from '../../../core/command/course.command';
+import {
+  CreateCourseCommand,
+  UpdateCourseCommand,
+} from '../../../core/command/course.command';
 import { CourseService } from '../../../core/services/course.service';
 import { EnrollmentService } from '../../../core/services/enrollment.service';
 import { EnrollmentType } from '../../../core/domain/enrollment.entity';
@@ -58,8 +61,7 @@ export class CourseController {
   })
   @ApiBody({
     type: CreateCourseDto,
-    description:
-      'Payload contendo os campos estruturais do curso.',
+    description: 'Payload contendo os campos estruturais do curso.',
   })
   @ApiCreatedResponse({
     description:
@@ -197,7 +199,11 @@ export class CourseController {
   @ApiNotFoundResponse({
     description: 'Curso não encontrado.',
     schema: {
-      example: { statusCode: 404, message: 'Curso não encontrado', errorKind: 'NOT_FOUND' },
+      example: {
+        statusCode: 404,
+        message: 'Curso não encontrado',
+        errorKind: 'NOT_FOUND',
+      },
     },
   })
   async remove(@Param('id', ParseUUIDPipe) id: string) {
