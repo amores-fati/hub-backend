@@ -182,19 +182,17 @@ async function insertCompany(
     [params.id, params.email, 'not-used', UserRoleEnum.COMPANY],
   );
   await dataSource.query(
-    `INSERT INTO "contacts" (id, phone, city, state) VALUES ($1, $2, $3, $4)`,
-    [params.id, '51999999999', 'Porto Alegre', 'RS'],
+    `INSERT INTO "companies" (id, cnpj, name, responsible_name)
+     VALUES ($1, $2, $3, $4)`,
+    [params.id, '12.345.678/9001-10', 'Empresa de Vagas', 'Pessoa Responsavel'],
   );
   await dataSource.query(
-    `INSERT INTO "companies" (id, contact_id, cnpj, name, responsible_name)
-     VALUES ($1, $2, $3, $4, $5)`,
-    [
-      params.id,
-      params.id,
-      '12.345.678/9001-10',
-      'Empresa de Vagas',
-      'Pessoa Responsavel',
-    ],
+    `INSERT INTO "address_company" (id, company_id, city, state) VALUES ($1, $2, $3, $4)`,
+    [randomUUID(), params.id, 'Porto Alegre', 'RS'],
+  );
+  await dataSource.query(
+    `INSERT INTO "telephone_company" (id, company_id, phone) VALUES ($1, $2, $3)`,
+    [randomUUID(), params.id, '51999999999'],
   );
 }
 

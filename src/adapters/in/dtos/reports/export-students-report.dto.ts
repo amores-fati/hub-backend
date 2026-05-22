@@ -36,8 +36,8 @@ export class ExportStudentsReportFiltersDto {
   pcdType?: string;
 
   @ApiPropertyOptional({
-    example: 'ENROLLMENT',
-    enum: ['ENROLLMENT', 'INTEREST', 'NAO_INSCRITO'],
+    example: 'INSCRICAO',
+    enum: ['INSCRICAO', 'INTERESSE', 'NAO_INSCRITO'],
   })
   @IsOptional()
   @IsString()

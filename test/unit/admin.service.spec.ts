@@ -37,6 +37,8 @@ describe('AdminService', () => {
   const mockStudentRepository = {
     findById: jest.fn(),
     findLocations: jest.fn(),
+    findManyForReportByIds: jest.fn(),
+    findManyForReportByFilters: jest.fn(),
   };
   const mockCompanyRepository = {
     findLocations: jest.fn(),

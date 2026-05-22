@@ -59,8 +59,6 @@ import { CompanyService } from './core/services/company.service';
 import { ICompanyRepository } from './core/ports/company.repository.interface';
 import { CompanyRepository } from './adapters/out/repository/company.repository';
 
-// Additional ORM Entities
-import { ContactOrmEntity } from './adapters/out/orm/contact.orm-entity';
 import { DisabilityOrmEntity } from './adapters/out/orm/disability.orm-entity';
 import { SocialBenefitOrmEntity } from './adapters/out/orm/social-benefit.orm-entity';
 import { CurriculumOrmEntity } from './adapters/out/orm/curriculum.orm-entity';
@@ -123,7 +121,6 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       CourseOrmEntity,
       CompanyOrmEntity,
       StudentOrmEntity,
-      ContactOrmEntity,
       DisabilityOrmEntity,
       SocialBenefitOrmEntity,
       CurriculumOrmEntity,

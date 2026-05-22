@@ -36,6 +36,11 @@ describe('StudentResumeService', () => {
     update: jest.fn(),
     delete: jest.fn(),
     softDeleteMany: jest.fn(),
+    findDisabilitiesByNames: jest.fn(),
+    findSocialBenefitsByNames: jest.fn(),
+    findLocations: jest.fn(),
+    findManyForReportByIds: jest.fn(),
+    findManyForReportByFilters: jest.fn(),
   };
 
   const resumePhotoStorage: jest.Mocked<IResumePhotoStorage> = {

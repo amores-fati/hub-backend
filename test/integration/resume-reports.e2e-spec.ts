@@ -212,23 +212,26 @@ async function insertStudentWithResume(
     [params.studentId, params.email, 'not-used', UserRoleEnum.STUDENT],
   );
   await dataSource.query(
-    `INSERT INTO "contacts" (id, phone, city, state, address) VALUES ($1, $2, $3, $4, $5)`,
-    [params.studentId, '51999999999', 'Porto Alegre', 'RS', 'Rua Teste'],
-  );
-  await dataSource.query(
     `INSERT INTO "students" (
-      id, contact_id, cpf, date_of_birth, gender, race, full_name, activity_area
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      id, cpf, date_of_birth, gender, race, full_name, activity_area
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
     [
-      params.studentId,
       params.studentId,
       params.cpf,
       '1995-05-20',
-      'FEMALE',
-      'BROWN',
+      'FEMININO',
+      'BRANCO',
       params.fullName,
       params.activityArea,
     ],
+  );
+  await dataSource.query(
+    `INSERT INTO "address_student" (id, student_id, city, state, address) VALUES ($1, $2, $3, $4, $5)`,
+    [randomUUID(), params.studentId, 'Porto Alegre', 'RS', 'Rua Teste'],
+  );
+  await dataSource.query(
+    `INSERT INTO "telephone_student" (id, student_id, phone) VALUES ($1, $2, $3)`,
+    [randomUUID(), params.studentId, '51999999999'],
   );
   await dataSource.query(
     `INSERT INTO "curriculum" (
@@ -249,11 +252,13 @@ async function insertLimitResumes(
   count: number,
 ): Promise<void> {
   const userParams: unknown[] = [];
-  const contactParams: unknown[] = [];
+  const addressParams: unknown[] = [];
+  const telephoneParams: unknown[] = [];
   const studentParams: unknown[] = [];
   const curriculumParams: unknown[] = [];
   const userValues: string[] = [];
-  const contactValues: string[] = [];
+  const addressValues: string[] = [];
+  const telephoneValues: string[] = [];
   const studentValues: string[] = [];
   const curriculumValues: string[] = [];
 
@@ -272,21 +277,25 @@ async function insertLimitResumes(
       UserRoleEnum.STUDENT,
     );
 
-    contactValues.push(
-      `($${contactParams.length + 1}, $${contactParams.length + 2}, $${contactParams.length + 3}, $${contactParams.length + 4})`,
+    addressValues.push(
+      `($${addressParams.length + 1}, $${addressParams.length + 2}, $${addressParams.length + 3}, $${addressParams.length + 4})`,
     );
-    contactParams.push(studentId, '51900000000', 'Porto Alegre', 'RS');
+    addressParams.push(randomUUID(), studentId, 'Porto Alegre', 'RS');
+
+    telephoneValues.push(
+      `($${telephoneParams.length + 1}, $${telephoneParams.length + 2}, $${telephoneParams.length + 3})`,
+    );
+    telephoneParams.push(randomUUID(), studentId, '51900000000');
 
     studentValues.push(
-      `($${studentParams.length + 1}, $${studentParams.length + 2}, $${studentParams.length + 3}, $${studentParams.length + 4}, $${studentParams.length + 5}, $${studentParams.length + 6}, $${studentParams.length + 7}, $${studentParams.length + 8})`,
+      `($${studentParams.length + 1}, $${studentParams.length + 2}, $${studentParams.length + 3}, $${studentParams.length + 4}, $${studentParams.length + 5}, $${studentParams.length + 6}, $${studentParams.length + 7})`,
     );
     studentParams.push(
       studentId,
-      studentId,
       cpf,
       '1995-05-20',
-      'MALE',
-      'WHITE',
+      'MASCULINO',
+      'BRANCO',
       `Limit Resume Student ${index}`,
       'Dados',
     );
@@ -308,14 +317,18 @@ async function insertLimitResumes(
     userParams,
   );
   await dataSource.query(
-    `INSERT INTO "contacts" (id, phone, city, state) VALUES ${contactValues.join(', ')}`,
-    contactParams,
-  );
-  await dataSource.query(
     `INSERT INTO "students" (
-      id, contact_id, cpf, date_of_birth, gender, race, full_name, activity_area
+      id, cpf, date_of_birth, gender, race, full_name, activity_area
     ) VALUES ${studentValues.join(', ')}`,
     studentParams,
+  );
+  await dataSource.query(
+    `INSERT INTO "address_student" (id, student_id, city, state) VALUES ${addressValues.join(', ')}`,
+    addressParams,
+  );
+  await dataSource.query(
+    `INSERT INTO "telephone_student" (id, student_id, phone) VALUES ${telephoneValues.join(', ')}`,
+    telephoneParams,
   );
   await dataSource.query(
     `INSERT INTO "curriculum" (

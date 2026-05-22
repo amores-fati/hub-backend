@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  Brackets,
+  EntityManager,
+  In,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
+import { randomUUID } from 'crypto';
 
 import {
   IStudentRepository,
@@ -11,13 +18,12 @@ import {
 } from '../../../core/ports/student.repository.interface';
 import { Student } from '../../../core/domain/student.entity';
 import { Contact } from '../../../core/domain/contact.entity';
-import { Disability } from '../../../core/domain/disability.entity';
-import { SocialBenefit } from '../../../core/domain/social-benefit.entity';
-import { SocialBenefitOrmEntity } from '../orm/social-benefit.orm-entity';
 import { StudentOrmEntity } from '../orm/student.orm-entity';
+import { TelephoneStudentOrmEntity } from '../orm/telephone-student.orm-entity';
+import { AddressStudentOrmEntity } from '../orm/address-student.orm-entity';
 import { UserOrmEntity } from '../orm/user.orm-entity';
-import { ContactOrmEntity } from '../orm/contact.orm-entity';
 import { DisabilityOrmEntity } from '../orm/disability.orm-entity';
+import { SocialBenefitOrmEntity } from '../orm/social-benefit.orm-entity';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 import { EnrollmentOrmEntity } from '../orm/enrollment.orm-entity';
 import { CourseOrmEntity } from '../orm/course.orm-entity';
@@ -40,7 +46,6 @@ interface StudentReportRawRow {
   phone_number: string | null;
   city: string | null;
   state: string | null;
-  disability_has_disability: boolean | null;
   disability_type: string | null;
   course_id: string | null;
   course_name: string | null;
@@ -55,28 +60,35 @@ export class StudentRepository implements IStudentRepository {
 
   async create(student: Student): Promise<Student> {
     const ormEntity = this.mapToOrm(student);
-    const relatedRecords = this.detachChildRelations(ormEntity);
 
     await this.ormRepository.manager.transaction(
       async (transactionalEntityManager) => {
         await transactionalEntityManager.save(ormEntity.user);
-        await transactionalEntityManager.save(ormEntity.contact);
-
         await transactionalEntityManager.save(ormEntity);
 
-        if (relatedRecords.disability) {
-          await transactionalEntityManager.save(relatedRecords.disability);
-        }
+        await this.syncDisabilities(
+          transactionalEntityManager,
+          ormEntity.id,
+          student.disabilities ?? [],
+        );
 
-        if (relatedRecords.socialBenefits.length > 0) {
-          await transactionalEntityManager.save(relatedRecords.socialBenefits);
-        }
+        await this.syncSocialBenefits(
+          transactionalEntityManager,
+          ormEntity.id,
+          student.socialBenefitNames ?? [],
+        );
       },
     );
 
     const savedEntity = await this.ormRepository.findOne({
       where: { id: student.id },
-      relations: ['user', 'contact', 'disability', 'socialBenefits'],
+      relations: [
+        'user',
+        'telephone',
+        'address',
+        'disabilities',
+        'socialBenefits',
+      ],
     });
 
     return this.mapToDomain(savedEntity!);
@@ -84,7 +96,13 @@ export class StudentRepository implements IStudentRepository {
 
   async findAll(): Promise<Student[]> {
     const ormEntities = await this.ormRepository.find({
-      relations: ['user', 'contact', 'disability', 'socialBenefits'],
+      relations: [
+        'user',
+        'telephone',
+        'address',
+        'disabilities',
+        'socialBenefits',
+      ],
     });
 
     return ormEntities
@@ -98,8 +116,9 @@ export class StudentRepository implements IStudentRepository {
     const queryBuilder = this.ormRepository
       .createQueryBuilder('student')
       .innerJoinAndSelect('student.user', 'user', 'user.deletedAt IS NULL')
-      .leftJoinAndSelect('student.contact', 'contact')
-      .leftJoinAndSelect('student.disability', 'disability')
+      .leftJoinAndSelect('student.telephone', 'telephone')
+      .leftJoinAndSelect('student.address', 'address')
+      .leftJoinAndSelect('student.disabilities', 'disabilities')
       .leftJoinAndSelect('student.socialBenefits', 'socialBenefits')
       .leftJoinAndMapMany(
         'student.enrollments',
@@ -135,32 +154,33 @@ export class StudentRepository implements IStudentRepository {
     }
 
     if (query.modality) {
-      queryBuilder.andWhere('course.modality = :modality', {
-        modality: query.modality,
-      });
+      if (query.modality === 'NAO_INSCRITO') {
+        queryBuilder.andWhere('enrollment.id IS NULL');
+      } else {
+        queryBuilder.andWhere('course.modality = :modality', {
+          modality: query.modality,
+        });
+      }
     }
 
     if (query.city && query.city.length > 0) {
       queryBuilder.andWhere(
         new Brackets((qb) => {
-          query.city!.forEach((cityState, index) => {
-            const [city, state] = cityState.split('/');
-            const cityParam = `city_${index}`;
-            const stateParam = `state_${index}`;
-
-            const condition = state
-              ? `(contact.city ILIKE :${cityParam} AND contact.state ILIKE :${stateParam})`
-              : `contact.city ILIKE :${cityParam}`;
-
-            if (index === 0) {
-              qb.where(condition, {
-                [cityParam]: this.buildLikeFilter(city.trim()),
-                ...(state ? { [stateParam]: state.trim() } : {}),
-              });
+          query.city!.forEach((location, index) => {
+            const [city, state] = location
+              .split('/')
+              .map((value) => value.trim());
+            if (city && state) {
+              qb.orWhere(
+                `(address.city ILIKE :city${index} AND address.state ILIKE :state${index})`,
+                {
+                  [`city${index}`]: this.buildLikeFilter(city),
+                  [`state${index}`]: state,
+                },
+              );
             } else {
-              qb.orWhere(condition, {
-                [cityParam]: this.buildLikeFilter(city.trim()),
-                ...(state ? { [stateParam]: state.trim() } : {}),
+              qb.orWhere(`address.city ILIKE :loc${index}`, {
+                [`loc${index}`]: this.buildLikeFilter(location),
               });
             }
           });
@@ -169,7 +189,7 @@ export class StudentRepository implements IStudentRepository {
     }
 
     if (query.disabilityType && query.disabilityType.length > 0) {
-      queryBuilder.andWhere('disability.type IN (:...disabilityTypes)', {
+      queryBuilder.andWhere('disabilities.name IN (:...disabilityTypes)', {
         disabilityTypes: query.disabilityType,
       });
     }
@@ -223,7 +243,13 @@ export class StudentRepository implements IStudentRepository {
   async findById(id: string): Promise<Student | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { id },
-      relations: ['user', 'contact', 'disability', 'socialBenefits'],
+      relations: [
+        'user',
+        'telephone',
+        'address',
+        'disabilities',
+        'socialBenefits',
+      ],
     });
 
     return ormEntity && ormEntity.user ? this.mapToDomain(ormEntity) : null;
@@ -239,7 +265,13 @@ export class StudentRepository implements IStudentRepository {
   ): Promise<Student | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { cpf },
-      relations: ['user', 'contact', 'disability', 'socialBenefits'],
+      relations: [
+        'user',
+        'telephone',
+        'address',
+        'disabilities',
+        'socialBenefits',
+      ],
       withDeleted: includeDeleted,
     });
 
@@ -248,40 +280,46 @@ export class StudentRepository implements IStudentRepository {
 
   async update(student: Student): Promise<Student> {
     const ormEntity = this.mapToOrm(student);
-    const relatedRecords = this.detachChildRelations(ormEntity);
-    const shouldReplaceSocialBenefits =
-      relatedRecords.socialBenefits.length === 0 ||
-      relatedRecords.socialBenefits.some((benefit) => benefit.id == null);
 
     await this.ormRepository.manager.transaction(
       async (transactionalEntityManager) => {
         await transactionalEntityManager.save(ormEntity.user);
-        await transactionalEntityManager.save(ormEntity.contact);
         await transactionalEntityManager.update(
           StudentOrmEntity,
           { id: ormEntity.id },
           this.mapStudentFieldsToUpdate(ormEntity),
         );
 
-        if (relatedRecords.disability) {
-          await transactionalEntityManager.save(relatedRecords.disability);
-        }
+        await this.syncDisabilities(
+          transactionalEntityManager,
+          ormEntity.id,
+          student.disabilities ?? [],
+        );
 
-        if (shouldReplaceSocialBenefits) {
-          await transactionalEntityManager.delete(SocialBenefitOrmEntity, {
-            studentId: ormEntity.id,
-          });
-        }
+        await this.syncSocialBenefits(
+          transactionalEntityManager,
+          ormEntity.id,
+          student.socialBenefitNames ?? [],
+        );
 
-        if (relatedRecords.socialBenefits.length > 0) {
-          await transactionalEntityManager.save(relatedRecords.socialBenefits);
+        if (ormEntity.telephone) {
+          await transactionalEntityManager.save(ormEntity.telephone);
+        }
+        if (ormEntity.address) {
+          await transactionalEntityManager.save(ormEntity.address);
         }
       },
     );
 
     const savedEntity = await this.ormRepository.findOne({
       where: { id: student.id },
-      relations: ['user', 'contact', 'disability', 'socialBenefits'],
+      relations: [
+        'user',
+        'telephone',
+        'address',
+        'disabilities',
+        'socialBenefits',
+      ],
     });
 
     return this.mapToDomain(savedEntity!);
@@ -290,24 +328,34 @@ export class StudentRepository implements IStudentRepository {
   async delete(id: string): Promise<void> {
     const ormEntity = await this.ormRepository.findOne({
       where: { id },
-      relations: ['user', 'contact', 'disability', 'socialBenefits'],
+      relations: [
+        'user',
+        'telephone',
+        'address',
+        'disabilities',
+        'socialBenefits',
+      ],
     });
 
     if (ormEntity) {
       await this.ormRepository.manager.transaction(
         async (transactionalEntityManager) => {
-          if (ormEntity.socialBenefits?.length > 0) {
-            await transactionalEntityManager.remove(ormEntity.socialBenefits);
-          }
-          if (ormEntity.disability) {
-            await transactionalEntityManager.remove(ormEntity.disability);
-          }
+          await transactionalEntityManager
+            .createQueryBuilder()
+            .delete()
+            .from('student_disability')
+            .where('student_id = :id', { id })
+            .execute();
+
+          await transactionalEntityManager
+            .createQueryBuilder()
+            .delete()
+            .from('student_social_benefit')
+            .where('student_id = :id', { id })
+            .execute();
 
           await transactionalEntityManager.remove(ormEntity);
 
-          if (ormEntity.contact) {
-            await transactionalEntityManager.remove(ormEntity.contact);
-          }
           if (ormEntity.user) {
             await transactionalEntityManager.remove(ormEntity.user);
           }
@@ -318,6 +366,112 @@ export class StudentRepository implements IStudentRepository {
 
   async softDeleteMany(ids: string[]): Promise<void> {
     await this.ormRepository.manager.softDelete(UserOrmEntity, { id: In(ids) });
+  }
+
+  private async syncDisabilities(
+    manager: EntityManager,
+    studentId: string,
+    disabilityNames: string[],
+  ): Promise<void> {
+    await manager
+      .createQueryBuilder()
+      .delete()
+      .from('student_disability')
+      .where('student_id = :studentId', { studentId })
+      .execute();
+
+    if (disabilityNames.length > 0) {
+      const upperNames = disabilityNames.map((n) =>
+        n
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toUpperCase(),
+      );
+      const disabilities = await manager
+        .getRepository(DisabilityOrmEntity)
+        .findBy({ name: In(upperNames) });
+
+      const existingNames = disabilities.map(
+        (d: DisabilityOrmEntity) => d.name,
+      );
+      const missingNames = upperNames.filter(
+        (name) => !existingNames.includes(name),
+      );
+
+      for (const missing of missingNames) {
+        const newDisability = manager
+          .getRepository(DisabilityOrmEntity)
+          .create({
+            id: randomUUID(),
+            name: missing,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        await manager.getRepository(DisabilityOrmEntity).save(newDisability);
+        disabilities.push(newDisability);
+      }
+
+      for (const disability of disabilities) {
+        await manager
+          .createQueryBuilder()
+          .insert()
+          .into('student_disability')
+          .values({ student_id: studentId, disability_id: disability.id })
+          .execute();
+      }
+    }
+  }
+
+  private async syncSocialBenefits(
+    manager: EntityManager,
+    studentId: string,
+    benefitNames: string[],
+  ): Promise<void> {
+    await manager
+      .createQueryBuilder()
+      .delete()
+      .from('student_social_benefit')
+      .where('student_id = :studentId', { studentId })
+      .execute();
+
+    if (benefitNames.length > 0) {
+      const upperNames = benefitNames.map((n) =>
+        n
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toUpperCase(),
+      );
+      const benefits = await manager
+        .getRepository(SocialBenefitOrmEntity)
+        .findBy({ name: In(upperNames) });
+
+      const existingNames = benefits.map((b: SocialBenefitOrmEntity) => b.name);
+      const missingNames = upperNames.filter(
+        (name) => !existingNames.includes(name),
+      );
+
+      for (const missing of missingNames) {
+        const newBenefit = manager
+          .getRepository(SocialBenefitOrmEntity)
+          .create({
+            id: randomUUID(),
+            name: missing,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        await manager.getRepository(SocialBenefitOrmEntity).save(newBenefit);
+        benefits.push(newBenefit);
+      }
+
+      for (const benefit of benefits) {
+        await manager
+          .createQueryBuilder()
+          .insert()
+          .into('student_social_benefit')
+          .values({ student_id: studentId, social_benefit_id: benefit.id })
+          .execute();
+      }
+    }
   }
 
   private mapToOrm(student: Student): StudentOrmEntity {
@@ -342,6 +496,7 @@ export class StudentRepository implements IStudentRepository {
     ormEntity.hasInternet = student.hasInternet ?? null;
     ormEntity.committedToParticipate = student.committedToParticipate ?? null;
     ormEntity.householdSize = student.householdSize ?? null;
+    ormEntity.socialName = student.socialName || null;
 
     ormEntity.user = new UserOrmEntity();
     ormEntity.user.id = student.id;
@@ -349,25 +504,20 @@ export class StudentRepository implements IStudentRepository {
     ormEntity.user.password = student.password;
     ormEntity.user.role = UserRoleEnum.STUDENT;
 
-    ormEntity.contact = new ContactOrmEntity();
-    ormEntity.contact.id = student.contact.id;
-    ormEntity.contact.phone = student.contact.phone;
-    ormEntity.contact.neighbourhood = student.contact.neighbourhood || null;
-    ormEntity.contact.state = student.contact.state || null;
-    ormEntity.contact.city = student.contact.city || null;
-    ormEntity.contact.address = student.contact.address || null;
-    ormEntity.contact.cep = student.contact.cep || null;
-    ormEntity.contact.complement = student.contact.complement || null;
+    ormEntity.telephone = new TelephoneStudentOrmEntity();
+    ormEntity.telephone.id = student.id;
+    ormEntity.telephone.studentId = student.id;
+    ormEntity.telephone.phone = student.contact.phone;
 
-    ormEntity.disability = student.disability
-      ? this.mapDisabilityToOrm(student.disability, ormEntity)
-      : null;
-
-    ormEntity.socialBenefits = student.socialBenefits.map((benefit) =>
-      this.mapSocialBenefitToOrm(benefit, student.id, ormEntity),
-    );
-
-    ormEntity.socialName = student.socialName || null;
+    ormEntity.address = new AddressStudentOrmEntity();
+    ormEntity.address.id = student.id;
+    ormEntity.address.studentId = student.id;
+    ormEntity.address.neighbourhood = student.contact.neighbourhood || null;
+    ormEntity.address.state = student.contact.state || null;
+    ormEntity.address.city = student.contact.city || null;
+    ormEntity.address.address = student.contact.address || null;
+    ormEntity.address.cep = student.contact.cep || null;
+    ormEntity.address.complement = student.contact.complement || null;
 
     return ormEntity;
   }
@@ -385,8 +535,9 @@ export class StudentRepository implements IStudentRepository {
     return this.ormRepository
       .createQueryBuilder('student')
       .innerJoin('student.user', 'user', 'user.deletedAt IS NULL')
-      .leftJoin('student.contact', 'contact')
-      .leftJoin('student.disability', 'disability')
+      .leftJoin('student.telephone', 'telephone')
+      .leftJoin('student.address', 'address')
+      .leftJoin('student.disabilities', 'disabilities')
       .leftJoin(
         EnrollmentOrmEntity,
         'reportEnrollment',
@@ -403,11 +554,10 @@ export class StudentRepository implements IStudentRepository {
       .addSelect('student.cpf', 'cpf')
       .addSelect('student.fullName', 'full_name')
       .addSelect('student.socialName', 'social_name')
-      .addSelect('contact.phone', 'phone_number')
-      .addSelect('contact.city', 'city')
-      .addSelect('contact.state', 'state')
-      .addSelect('disability.hasDisability', 'disability_has_disability')
-      .addSelect('disability.type', 'disability_type')
+      .addSelect('telephone.phone', 'phone_number')
+      .addSelect('address.city', 'city')
+      .addSelect('address.state', 'state')
+      .addSelect('disabilities.name', 'disability_type')
       .addSelect('reportCourse.id', 'course_id')
       .addSelect('reportCourse.name', 'course_name')
       .orderBy('student.fullName', 'ASC')
@@ -456,15 +606,13 @@ export class StudentRepository implements IStudentRepository {
 
     if (filters.pcdType) {
       queryBuilder
-        .andWhere('disability.hasDisability = :hasDisability', {
-          hasDisability: true,
-        })
-        .andWhere('LOWER(disability.type) IN (:...pcdTypes)', {
+        .andWhere('disabilities.id IS NOT NULL')
+        .andWhere('LOWER(disabilities.name) IN (:...pcdTypes)', {
           pcdTypes: this.expandPcdTypeFilter(filters.pcdType),
         });
     }
 
-    if (filters.status === 'ENROLLMENT' || filters.status === 'INTEREST') {
+    if (filters.status === 'INSCRICAO' || filters.status === 'INTERESSE') {
       queryBuilder.andWhere(
         `EXISTS (
           SELECT 1
@@ -495,7 +643,7 @@ export class StudentRepository implements IStudentRepository {
 
     if (city && state) {
       queryBuilder.andWhere(
-        'contact.city ILIKE :locationCity AND contact.state ILIKE :locationState',
+        'address.city ILIKE :locationCity AND address.state ILIKE :locationState',
         {
           locationCity: this.buildLikeFilter(city),
           locationState: state,
@@ -506,13 +654,13 @@ export class StudentRepository implements IStudentRepository {
 
     queryBuilder.andWhere(
       new Brackets((qb) => {
-        qb.where('contact.city ILIKE :location', {
+        qb.where('address.city ILIKE :location', {
           location: this.buildLikeFilter(location),
         })
-          .orWhere('contact.state ILIKE :location', {
+          .orWhere('address.state ILIKE :location', {
             location: this.buildLikeFilter(location),
           })
-          .orWhere('contact.address ILIKE :location', {
+          .orWhere('address.address ILIKE :location', {
             location: this.buildLikeFilter(location),
           });
       }),
@@ -539,11 +687,20 @@ export class StudentRepository implements IStudentRepository {
           city: row.city || undefined,
           state: row.state || undefined,
           courseNames: [],
-          hasDisability: row.disability_has_disability ?? undefined,
+          hasDisability: row.disability_type ? true : false,
           disabilityType: row.disability_type || undefined,
         };
         studentsById.set(row.student_id, student);
         courseIdsByStudentId.set(row.student_id, new Set<string>());
+      } else {
+        if (row.disability_type) {
+          student.hasDisability = true;
+          if (!student.disabilityType) {
+            student.disabilityType = row.disability_type;
+          } else if (!student.disabilityType.includes(row.disability_type)) {
+            student.disabilityType += `, ${row.disability_type}`;
+          }
+        }
       }
 
       if (row.course_id && row.course_name) {
@@ -608,31 +765,17 @@ export class StudentRepository implements IStudentRepository {
       cpf: ormEntity.cpf,
       fullName: ormEntity.fullName,
       socialName: ormEntity.socialName || undefined,
-      phoneNumber: ormEntity.contact.phone,
-      city: ormEntity.contact.city || undefined,
-      state: ormEntity.contact.state || undefined,
-      hasDisability: ormEntity.disability?.hasDisability,
-      disabilityType: ormEntity.disability?.type || undefined,
+      phoneNumber: ormEntity.telephone?.phone || '',
+      city: ormEntity.address?.city || undefined,
+      state: ormEntity.address?.state || undefined,
+      hasDisability: (ormEntity.disabilities?.length ?? 0) > 0,
+      disabilityType:
+        ormEntity.disabilities?.map((d) => d.name).join(', ') || undefined,
       enrollments: (ormEntity.enrollments ?? []).map((enrollment) => ({
         courseId: enrollment.courseId,
         courseModality: enrollment.course?.modality ?? 'ONLINE',
       })),
     };
-  }
-
-  private detachChildRelations(ormEntity: StudentOrmEntity): {
-    disability: DisabilityOrmEntity | null;
-    socialBenefits: SocialBenefitOrmEntity[];
-  } {
-    const relatedRecords = {
-      disability: ormEntity.disability,
-      socialBenefits: ormEntity.socialBenefits,
-    };
-
-    ormEntity.disability = null;
-    ormEntity.socialBenefits = [];
-
-    return relatedRecords;
   }
 
   private mapStudentFieldsToUpdate(
@@ -662,28 +805,19 @@ export class StudentRepository implements IStudentRepository {
 
   private mapToDomain(ormEntity: StudentOrmEntity): Student {
     const contact = new Contact(
-      ormEntity.contact.id,
-      ormEntity.contact.phone,
-      ormEntity.contact.neighbourhood || undefined,
-      ormEntity.contact.state || undefined,
-      ormEntity.contact.city || undefined,
-      ormEntity.contact.address || undefined,
-      ormEntity.contact.cep || undefined,
-      ormEntity.contact.complement || undefined,
+      ormEntity.telephone.id,
+      ormEntity.telephone.phone,
+      ormEntity.address.neighbourhood || undefined,
+      ormEntity.address.state || undefined,
+      ormEntity.address.city || undefined,
+      ormEntity.address.address || undefined,
+      ormEntity.address.cep || undefined,
+      ormEntity.address.complement || undefined,
     );
 
-    const disability = ormEntity.disability
-      ? new Disability(
-          ormEntity.disability.studentId,
-          ormEntity.disability.hasDisability,
-          ormEntity.disability.type || undefined,
-        )
-      : undefined;
-
-    const socialBenefits = ormEntity.socialBenefits.map(
-      (benefit) =>
-        new SocialBenefit(benefit.id, benefit.studentId, benefit.benefit),
-    );
+    const disabilities = ormEntity.disabilities?.map((d) => d.name) || [];
+    const socialBenefitNames =
+      ormEntity.socialBenefits?.map((b) => b.name) || [];
 
     return new Student(
       ormEntity.id,
@@ -704,50 +838,23 @@ export class StudentRepository implements IStudentRepository {
       ormEntity.hasComputer ?? undefined,
       ormEntity.hasInternet ?? undefined,
       ormEntity.committedToParticipate ?? undefined,
-      disability,
-      socialBenefits,
       ormEntity.socialName || undefined,
       ormEntity.courseName || undefined,
       ormEntity.familyIncome || undefined,
       ormEntity.householdSize || undefined,
+      disabilities,
+      socialBenefitNames,
     );
-  }
-
-  private mapDisabilityToOrm(
-    disability: Disability,
-    student: StudentOrmEntity,
-  ): DisabilityOrmEntity {
-    const orm = new DisabilityOrmEntity();
-    orm.studentId = disability.studentId;
-    orm.hasDisability = disability.hasDisability;
-    orm.type = disability.type || null;
-    orm.student = student;
-    return orm;
-  }
-
-  private mapSocialBenefitToOrm(
-    benefit: SocialBenefit,
-    studentId: string,
-    student: StudentOrmEntity,
-  ): SocialBenefitOrmEntity {
-    const orm = new SocialBenefitOrmEntity();
-    if (benefit.id > 0) {
-      orm.id = benefit.id;
-    }
-    orm.studentId = studentId;
-    orm.benefit = benefit.benefit;
-    orm.student = student;
-    return orm;
   }
 
   async findLocations(): Promise<{ city: string; uf: string }[]> {
     const rawData = await this.ormRepository
       .createQueryBuilder('student')
-      .innerJoin('student.contact', 'contact')
-      .select('contact.city', 'city')
-      .addSelect('contact.state', 'uf')
-      .where('contact.city IS NOT NULL')
-      .andWhere('contact.state IS NOT NULL')
+      .innerJoin('student.address', 'address')
+      .select('address.city', 'city')
+      .addSelect('address.state', 'uf')
+      .where('address.city IS NOT NULL')
+      .andWhere('address.state IS NOT NULL')
       .distinct(true)
       .getRawMany();
 

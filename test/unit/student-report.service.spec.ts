@@ -41,6 +41,7 @@ describe('StudentReportService', () => {
       update: jest.fn(),
       delete: jest.fn(),
       softDeleteMany: jest.fn(),
+      findLocations: jest.fn(),
     };
     pdfGenerator = {
       generate: jest.fn().mockResolvedValue(Buffer.from('%PDF-1.3')),
@@ -120,7 +121,7 @@ describe('StudentReportService', () => {
       course: 'Curso',
       location: 'Sao Paulo/SP',
       pcdType: 'FISICO',
-      status: 'ENROLLMENT',
+      status: 'INSCRICAO',
     });
   });
 

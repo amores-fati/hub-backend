@@ -26,7 +26,7 @@ export interface PaginatedStudentListResult {
   total: number;
 }
 
-export type StudentReportStatus = 'ENROLLMENT' | 'INTEREST' | 'NAO_INSCRITO';
+export type StudentReportStatus = 'INSCRICAO' | 'INTERESSE' | 'NAO_INSCRITO';
 
 export interface StudentReportFilters {
   search?: string;

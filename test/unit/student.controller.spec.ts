@@ -21,6 +21,11 @@ describe('StudentService - getMyProfile (getStudentById)', () => {
     existsById: jest.fn(),
     findAllWithFilter: jest.fn(),
     softDeleteMany: jest.fn(),
+    findDisabilitiesByNames: jest.fn(),
+    findSocialBenefitsByNames: jest.fn(),
+    findLocations: jest.fn(),
+    findManyForReportByIds: jest.fn(),
+    findManyForReportByFilters: jest.fn(),
   };
 
   const mockUserRepository: IUserRepository = {

@@ -38,6 +38,8 @@ describe('CourseReportService', () => {
       findAll: jest.fn(),
       findAllWithLocation: jest.fn(),
       findById: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
       findManyByIdsWithLocation: jest.fn(),
       findManyWithLocationByFilters: jest.fn(),
     };

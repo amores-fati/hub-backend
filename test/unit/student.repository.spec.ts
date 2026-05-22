@@ -2,14 +2,13 @@ import { Brackets, Repository } from 'typeorm';
 
 import { Contact } from '../../src/core/domain/contact.entity';
 import { Gender, Race } from '../../src/core/domain/enums/student-profile.enum';
-import { SocialBenefitType } from '../../src/core/domain/enums/social-benefit.enum';
-import { SocialBenefit } from '../../src/core/domain/social-benefit.entity';
 import { Student } from '../../src/core/domain/student.entity';
 import { StudentRepository } from '../../src/adapters/out/repository/student.repository';
-import { ContactOrmEntity } from '../../src/adapters/out/orm/contact.orm-entity';
 import { SocialBenefitOrmEntity } from '../../src/adapters/out/orm/social-benefit.orm-entity';
 import { StudentOrmEntity } from '../../src/adapters/out/orm/student.orm-entity';
 import { UserOrmEntity } from '../../src/adapters/out/orm/user.orm-entity';
+import { AddressStudentOrmEntity } from '../../src/adapters/out/orm/address-student.orm-entity';
+import { TelephoneStudentOrmEntity } from '../../src/adapters/out/orm/telephone-student.orm-entity';
 import { UserRoleEnum } from '../../src/core/domain/enums/user-role.enum';
 
 describe('StudentRepository', () => {
@@ -26,6 +25,13 @@ describe('StudentRepository', () => {
     delete: jest.Mock;
     save: jest.Mock;
     update: jest.Mock;
+    createQueryBuilder: jest.Mock;
+  };
+  let managerQueryBuilder: {
+    delete: jest.Mock;
+    from: jest.Mock;
+    where: jest.Mock;
+    execute: jest.Mock;
   };
   let queryBuilder: {
     addOrderBy: jest.Mock;
@@ -48,10 +54,18 @@ describe('StudentRepository', () => {
   let repository: StudentRepository;
 
   beforeEach(() => {
+    managerQueryBuilder = {
+      delete: jest.fn().mockReturnThis(),
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      execute: jest.fn().mockResolvedValue(undefined),
+    };
+
     transactionalEntityManager = {
       delete: jest.fn().mockResolvedValue(undefined),
       save: jest.fn().mockResolvedValue(undefined),
       update: jest.fn().mockResolvedValue(undefined),
+      createQueryBuilder: jest.fn().mockReturnValue(managerQueryBuilder),
     };
 
     queryBuilder = {
@@ -88,9 +102,7 @@ describe('StudentRepository', () => {
 
   it('should replace child collections when update receives new items', async () => {
     const student = buildStudent({
-      socialBenefits: [
-        new SocialBenefit(-1, 'student-id', SocialBenefitType.OTHERS),
-      ],
+      socialBenefitNames: ['OUTROS'],
     });
 
     (ormRepository.findOne as jest.Mock).mockResolvedValue(
@@ -101,19 +113,12 @@ describe('StudentRepository', () => {
 
     await repository.update(student);
 
-    expect(transactionalEntityManager.delete).toHaveBeenCalledWith(
-      SocialBenefitOrmEntity,
-      { studentId: student.id },
-    );
-    expect(transactionalEntityManager.delete).toHaveBeenCalledWith(
-      SocialBenefitOrmEntity,
-      { studentId: student.id },
-    );
+    expect(transactionalEntityManager.createQueryBuilder).toHaveBeenCalled();
   });
 
   it('should remove child collections when update receives empty arrays', async () => {
     const student = buildStudent({
-      socialBenefits: [],
+      socialBenefitNames: [],
     });
 
     (ormRepository.findOne as jest.Mock).mockResolvedValue(
@@ -122,14 +127,7 @@ describe('StudentRepository', () => {
 
     await repository.update(student);
 
-    expect(transactionalEntityManager.delete).toHaveBeenCalledWith(
-      SocialBenefitOrmEntity,
-      { studentId: student.id },
-    );
-    expect(transactionalEntityManager.delete).toHaveBeenCalledWith(
-      SocialBenefitOrmEntity,
-      { studentId: student.id },
-    );
+    expect(transactionalEntityManager.createQueryBuilder).toHaveBeenCalled();
   });
 
   it('should coerce database date strings when mapping students', async () => {
@@ -168,12 +166,16 @@ describe('StudentRepository', () => {
       'user.deletedAt IS NULL',
     );
     expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
-      'student.contact',
-      'contact',
+      'student.telephone',
+      'telephone',
     );
     expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
-      'student.disability',
-      'disability',
+      'student.address',
+      'address',
+    );
+    expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+      'student.disabilities',
+      'disabilities',
     );
     expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
       'student.socialBenefits',
@@ -187,7 +189,7 @@ describe('StudentRepository', () => {
     );
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(expect.any(Brackets));
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      'disability.type IN (:...disabilityTypes)',
+      'disabilities.name IN (:...disabilityTypes)',
       { disabilityTypes: ['visual'] },
     );
     expect(queryBuilder.skip).toHaveBeenCalledWith(20);
@@ -271,7 +273,7 @@ describe('StudentRepository', () => {
       course: 'Curso',
       location: 'Sao Paulo/SP',
       pcdType: 'FISICO',
-      status: 'ENROLLMENT',
+      status: 'INSCRICAO',
     });
 
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
@@ -279,23 +281,22 @@ describe('StudentRepository', () => {
       { course: '%Curso%' },
     );
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      'contact.city ILIKE :locationCity AND contact.state ILIKE :locationState',
+      'address.city ILIKE :locationCity AND address.state ILIKE :locationState',
       {
         locationCity: '%Sao Paulo%',
         locationState: 'SP',
       },
     );
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      'disability.hasDisability = :hasDisability',
-      { hasDisability: true },
+      'disabilities.id IS NOT NULL',
     );
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      'LOWER(disability.type) IN (:...pcdTypes)',
+      'LOWER(disabilities.name) IN (:...pcdTypes)',
       { pcdTypes: ['fisica', 'fisico', 'f\u00edsica', 'f\u00edsico'] },
     );
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
       expect.stringContaining('EXISTS'),
-      { statusType: 'ENROLLMENT' },
+      { statusType: 'INSCRICAO' },
     );
   });
 
@@ -313,9 +314,9 @@ describe('StudentRepository', () => {
 });
 
 function buildStudent({
-  socialBenefits = [],
+  socialBenefitNames = [],
 }: {
-  socialBenefits?: SocialBenefit[];
+  socialBenefitNames?: string[];
 } = {}): Student {
   return new Student(
     'student-id',
@@ -336,20 +337,9 @@ function buildStudent({
     Gender.MALE,
     Race.WHITE,
     'Student Name',
-    undefined, // education
-    undefined, // institution
-    undefined, // activityArea
-    undefined, // hasProgrammingExperience
-    undefined, // motivation
-    undefined, // howHeard
-    undefined, // hasComputer
-    undefined, // hasInternet
-    undefined, // committedToParticipate
-    undefined, // disability
-    socialBenefits,
-    undefined, // socialName
-    undefined, // courseName
-    undefined, // familyIncome
+    undefined, // householdSize
+    [], // disabilities
+    socialBenefitNames,
   );
 }
 
@@ -365,20 +355,26 @@ function buildStudentOrmEntity(
   user.password = student.password;
   user.role = UserRoleEnum.STUDENT;
 
-  const contact = new ContactOrmEntity();
-  contact.id = student.contact.id;
-  contact.phone = student.contact.phone;
-  contact.neighbourhood = student.contact.neighbourhood ?? null;
-  contact.state = student.contact.state ?? null;
-  contact.city = student.contact.city ?? null;
-  contact.address = student.contact.address ?? null;
-  contact.cep = student.contact.cep ?? null;
-  contact.complement = student.contact.complement ?? null;
+  const telephone = {
+    id: student.contact.id,
+    phone: student.contact.phone,
+  } as TelephoneStudentOrmEntity;
+
+  const address = {
+    id: student.contact.id,
+    neighbourhood: student.contact.neighbourhood ?? null,
+    state: student.contact.state ?? null,
+    city: student.contact.city ?? null,
+    address: student.contact.address ?? null,
+    cep: student.contact.cep ?? null,
+    complement: student.contact.complement ?? null,
+  } as AddressStudentOrmEntity;
 
   const ormEntity = new StudentOrmEntity();
   ormEntity.id = student.id;
   ormEntity.user = user;
-  ormEntity.contact = contact;
+  ormEntity.telephone = telephone;
+  ormEntity.address = address;
   ormEntity.cpf = student.cpf;
   ormEntity.birthDate = student.birthDate ?? null;
   ormEntity.gender = student.gender ?? null;
@@ -393,12 +389,10 @@ function buildStudentOrmEntity(
   ormEntity.hasComputer = student.hasComputer ?? null;
   ormEntity.hasInternet = student.hasInternet ?? null;
   ormEntity.committedToParticipate = student.committedToParticipate ?? null;
-  ormEntity.disability = null;
   ormEntity.socialBenefits = (options.socialBenefitIds ?? []).map((id) => {
     const benefit = new SocialBenefitOrmEntity();
-    benefit.id = id;
-    benefit.studentId = student.id;
-    benefit.benefit = SocialBenefitType.OTHERS;
+    benefit.id = String(id);
+    benefit.name = 'OUTROS';
     return benefit;
   });
 

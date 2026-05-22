@@ -1,8 +1,7 @@
 import { randomUUID } from 'crypto';
 import { Student } from '../domain/student.entity';
 import { Contact } from '../domain/contact.entity';
-import { Disability } from '../domain/disability.entity';
-import { SocialBenefit } from '../domain/social-benefit.entity';
+
 import {
   IStudentRepository,
   StudentFilterQuery,
@@ -86,19 +85,13 @@ export class StudentService {
       command.contact.complement,
     );
 
-    const disability = command.disability
-      ? new Disability(
-          studentId,
-          command.disability.hasDisability,
-          command.disability.type,
-        )
-      : undefined;
+    const disabilities =
+      command.disability?.hasDisability && command.disability.type
+        ? [command.disability.type]
+        : [];
 
-    const socialBenefits =
-      command.socialBenefits?.map(
-        (benefit, index) =>
-          new SocialBenefit(-(index + 1), studentId, benefit.benefit),
-      ) || [];
+    const socialBenefitNames =
+      command.socialBenefits?.map((benefit) => benefit.benefit) || [];
 
     const birthDate =
       command.birthDate instanceof Date
@@ -124,12 +117,12 @@ export class StudentService {
       command.hasComputer,
       command.hasInternet,
       command.committedToParticipate,
-      disability,
-      socialBenefits,
       command.socialName,
       command.courseName,
       command.familyIncome,
       command.householdSize,
+      disabilities,
+      socialBenefitNames,
     );
 
     return this.studentRepository.create(student);
@@ -233,19 +226,15 @@ export class StudentService {
     });
 
     if (command.disability) {
-      const disability = new Disability(
-        student.id,
-        command.disability.hasDisability,
-        command.disability.type,
-      );
-      student.changeDisability(disability);
+      const disabilities =
+        command.disability.hasDisability && command.disability.type
+          ? [command.disability.type]
+          : [];
+      student.changeDisabilities(disabilities);
     }
 
     if (command.socialBenefits) {
-      const benefits = command.socialBenefits.map(
-        (benefit, index) =>
-          new SocialBenefit(-(index + 1), student.id, benefit.benefit),
-      );
+      const benefits = command.socialBenefits.map((benefit) => benefit.benefit);
       student.replaceSocialBenefits(benefits);
     }
 
@@ -291,22 +280,15 @@ export class StudentService {
     });
 
     if (command.isPcd !== undefined || command.disabilityType !== undefined) {
-      student.changeDisability(
-        new Disability(
-          student.id,
-          command.isPcd ?? false,
-          command.disabilityType,
-        ),
+      const isPcd = command.isPcd ?? false;
+      student.changeDisabilities(
+        isPcd && command.disabilityType ? [command.disabilityType] : [],
       );
     }
 
     if (command.socialBenefits !== undefined) {
       student.replaceSocialBenefits([
-        new SocialBenefit(
-          -1,
-          student.id,
-          this.mapSocialBenefit(command.socialBenefits),
-        ),
+        this.mapSocialBenefit(command.socialBenefits),
       ]);
     }
 
@@ -372,18 +354,15 @@ export class StudentService {
     }
 
     if (command.disability) {
-      const disability = new Disability(
-        student.id,
-        command.disability.hasDisability ?? false,
-        command.disability.type,
-      );
-      student.changeDisability(disability);
+      const isPcd = command.disability.hasDisability ?? false;
+      const disabilities =
+        isPcd && command.disability.type ? [command.disability.type] : [];
+      student.changeDisabilities(disabilities);
     }
 
     if (command.socialBenefits) {
       const benefits = command.socialBenefits.map(
-        (benefit, index) =>
-          new SocialBenefit(-(index + 1), student.id, benefit.benefit!),
+        (benefit) => benefit.benefit!,
       );
       student.replaceSocialBenefits(benefits);
     }

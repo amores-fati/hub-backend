@@ -256,27 +256,44 @@ async function insertStudent(
     [params.id, params.email, 'not-used', UserRoleEnum.STUDENT],
   );
   await dataSource.query(
-    `INSERT INTO "contacts" (id, phone, city, state, address) VALUES ($1, $2, $3, $4, $5)`,
-    [params.id, params.phone, params.city, params.state, 'Rua Teste'],
-  );
-  await dataSource.query(
     `INSERT INTO "students" (
-      id, contact_id, cpf, date_of_birth, gender, race, full_name
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      id, cpf, date_of_birth, gender, race, full_name
+    ) VALUES ($1, $2, $3, $4, $5, $6)`,
     [
-      params.id,
       params.id,
       params.cpf,
       '1995-05-20',
-      'FEMALE',
-      'BROWN',
+      'FEMININO',
+      'BRANCO',
       params.fullName,
     ],
   );
   await dataSource.query(
-    `INSERT INTO "disabilities" (student_id, has_disability, type) VALUES ($1, $2, $3)`,
-    [params.id, params.hasDisability, params.disabilityType],
+    `INSERT INTO "address_student" (id, student_id, city, state, address) VALUES ($1, $2, $3, $4, $5)`,
+    [randomUUID(), params.id, params.city, params.state, 'Rua Teste'],
   );
+  await dataSource.query(
+    `INSERT INTO "telephone_student" (id, student_id, phone) VALUES ($1, $2, $3)`,
+    [randomUUID(), params.id, params.phone],
+  );
+  if (params.hasDisability && params.disabilityType) {
+    const disabilityId = randomUUID();
+    await dataSource.query(
+      `INSERT INTO "disability" (id, name, created_at, updated_at) VALUES ($1, $2, NOW(), NOW()) ON CONFLICT (name) DO NOTHING`,
+      [disabilityId, params.disabilityType],
+    );
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const res = await dataSource.query(
+      `SELECT id FROM "disability" WHERE name = $1`,
+      [params.disabilityType],
+    );
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const actualDisabilityId = res[0].id;
+    await dataSource.query(
+      `INSERT INTO "student_disability" (student_id, disability_id) VALUES ($1, $2)`,
+      [params.id, actualDisabilityId],
+    );
+  }
 }
 
 async function insertEnrollment(
@@ -298,11 +315,13 @@ async function insertLimitStudents(
   count: number,
 ): Promise<void> {
   const userParams: unknown[] = [];
-  const contactParams: unknown[] = [];
-  const studentParams: unknown[] = [];
+  const addressParams: unknown[] = [];
+  const telephoneParams: unknown[] = [];
   const userValues: string[] = [];
-  const contactValues: string[] = [];
+  const addressValues: string[] = [];
+  const telephoneValues: string[] = [];
   const studentValues: string[] = [];
+  const studentParams: unknown[] = [];
 
   for (let index = 0; index < count; index++) {
     const id = randomUUID();
@@ -312,23 +331,27 @@ async function insertLimitStudents(
     userValues.push(
       `($${userParams.length + 1}, $${userParams.length + 2}, $${userParams.length + 3}, $${userParams.length + 4})`,
     );
-    userParams.push(id, email, 'not-used', UserRoleEnum.STUDENT);
+    userParams.push(id, email, 'not-used', 'ESTUDANTE');
 
-    contactValues.push(
-      `($${contactParams.length + 1}, $${contactParams.length + 2}, $${contactParams.length + 3}, $${contactParams.length + 4})`,
+    addressValues.push(
+      `($${addressParams.length + 1}, $${addressParams.length + 2}, $${addressParams.length + 3}, $${addressParams.length + 4})`,
     );
-    contactParams.push(id, '51900000000', 'Porto Alegre', 'RS');
+    addressParams.push(randomUUID(), id, 'Porto Alegre', 'RS');
+
+    telephoneValues.push(
+      `($${telephoneParams.length + 1}, $${telephoneParams.length + 2}, $${telephoneParams.length + 3})`,
+    );
+    telephoneParams.push(randomUUID(), id, '51900000000');
 
     studentValues.push(
-      `($${studentParams.length + 1}, $${studentParams.length + 2}, $${studentParams.length + 3}, $${studentParams.length + 4}, $${studentParams.length + 5}, $${studentParams.length + 6}, $${studentParams.length + 7})`,
+      `($${studentParams.length + 1}, $${studentParams.length + 2}, $${studentParams.length + 3}, $${studentParams.length + 4}, $${studentParams.length + 5}, $${studentParams.length + 6})`,
     );
     studentParams.push(
       id,
-      id,
       cpf,
       '1995-05-20',
-      'MALE',
-      'WHITE',
+      'MASCULINO',
+      'BRANCO',
       `Limit Student ${index}`,
     );
   }
@@ -338,14 +361,18 @@ async function insertLimitStudents(
     userParams,
   );
   await dataSource.query(
-    `INSERT INTO "contacts" (id, phone, city, state) VALUES ${contactValues.join(', ')}`,
-    contactParams,
-  );
-  await dataSource.query(
     `INSERT INTO "students" (
-      id, contact_id, cpf, date_of_birth, gender, race, full_name
+      id, cpf, date_of_birth, gender, race, full_name
     ) VALUES ${studentValues.join(', ')}`,
     studentParams,
+  );
+  await dataSource.query(
+    `INSERT INTO "address_student" (id, student_id, city, state) VALUES ${addressValues.join(', ')}`,
+    addressParams,
+  );
+  await dataSource.query(
+    `INSERT INTO "telephone_student" (id, student_id, phone) VALUES ${telephoneValues.join(', ')}`,
+    telephoneParams,
   );
 }
 

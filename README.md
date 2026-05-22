@@ -90,21 +90,29 @@ erDiagram
     USERS ||--o| COMPANIES : "is company"
     USERS ||--o| STUDENTS : "is student"
 
-    STUDENTS ||--|| CONTACTS : "lives at"
-    COMPANIES ||--|| CONTACTS : "located at"
+    STUDENTS ||--o| TELEPHONE_STUDENT : "has"
+    STUDENTS ||--o| ADDRESS_STUDENT : "has"
+    COMPANIES ||--o| TELEPHONE_COMPANY : "has"
+    COMPANIES ||--o| ADDRESS_COMPANY : "has"
 
-    STUDENTS ||--o| DISABILITIES : "declares"
-    STUDENTS ||--o{ SOCIAL_BENEFITS : "receives"
+    STUDENTS ||--o{ STUDENT_DISABILITY : "has"
+    DISABILITY ||--o{ STUDENT_DISABILITY : "assigned to"
+
+    STUDENTS ||--o{ STUDENT_SOCIAL_BENEFIT : "has"
+    SOCIAL_BENEFIT ||--o{ STUDENT_SOCIAL_BENEFIT : "assigned to"
+
     STUDENTS ||--o| CURRICULUM : "owns"
-
     CURRICULUM ||--o{ CURRICULUM_SKILLS : "lists"
     SKILLS ||--o{ CURRICULUM_SKILLS : "is listed in"
-
-    COURSES ||--o| IN_PERSON_COURSE_DETAILS : "extends"
 
     COMPANIES ||--o{ JOB_OPENINGS : "publishes"
     JOB_OPENINGS ||--o{ JOB_SKILLS : "requires"
     SKILLS ||--o{ JOB_SKILLS : "is required in"
+
+    STUDENTS ||--o{ ENROLLMENTS : "enrolls"
+    COURSES ||--o{ ENROLLMENTS : "offers"
+
+    COURSES ||--o| IN_PERSON_COURSE_DETAILS : "has details"
 
     USERS {
         uuid id PK
@@ -112,6 +120,7 @@ erDiagram
         varchar password_hash
         varchar role
         timestamptz created_at
+        timestamptz deleted_at
     }
     ADMINS {
         uuid id PK
@@ -121,12 +130,11 @@ erDiagram
         varchar cnpj UK
         varchar name
         varchar responsible_name
-        uuid contact_id FK
     }
     STUDENTS {
         uuid id PK
-        uuid contact_id FK
         varchar cpf UK
+        varchar full_name
         varchar social_name
         date date_of_birth
         varchar gender
@@ -142,10 +150,16 @@ erDiagram
         boolean has_computer
         boolean has_internet
         boolean committed_to_participate
+        int household_size
     }
-    CONTACTS {
+    TELEPHONE_STUDENT {
         uuid id PK
+        uuid student_id FK
         varchar phone
+    }
+    ADDRESS_STUDENT {
+        uuid id PK
+        uuid student_id FK
         varchar neighbourhood
         char state
         varchar city
@@ -153,36 +167,40 @@ erDiagram
         varchar cep
         varchar complement
     }
-    DISABILITIES {
-        uuid student_id PK
-        boolean has_disability
-        varchar type
-    }
-    SOCIAL_BENEFITS {
-        int id PK
-        uuid student_id FK
-        varchar benefit
-    }
-    COURSES {
+    TELEPHONE_COMPANY {
         uuid id PK
-        varchar name
-        varchar banner
-        text description
-        varchar course_load
-        date start_date
-        date end_date
-        date start_registrations
-        date end_registrations
-        varchar link_access
+        uuid company_id FK
+        varchar phone
     }
-    IN_PERSON_COURSE_DETAILS {
+    ADDRESS_COMPANY {
         uuid id PK
-        uuid course_id FK
+        uuid company_id FK
+        varchar neighbourhood
+        char state
+        varchar city
         varchar address
-        date start_date
-        varchar shift
-        varchar room
-        int vacancies
+        varchar cep
+        varchar complement
+    }
+    DISABILITY {
+        uuid id PK
+        varchar name UK
+        timestamp created_at
+        timestamp updated_at
+    }
+    SOCIAL_BENEFIT {
+        uuid id PK
+        varchar name UK
+        timestamp created_at
+        timestamp updated_at
+    }
+    STUDENT_DISABILITY {
+        uuid student_id PK
+        uuid disability_id PK
+    }
+    STUDENT_SOCIAL_BENEFIT {
+        uuid student_id PK
+        uuid social_benefit_id PK
     }
     CURRICULUM {
         uuid id PK
@@ -202,6 +220,30 @@ erDiagram
         uuid id PK
         varchar name UK
     }
+    COURSE {
+        uuid id PK
+        varchar name
+        varchar banner
+        text description
+        varchar course_load
+        date start_date
+        date end_date
+        date start_registrations
+        date end_registrations
+        varchar modality
+        varchar link_access
+        int vacancy_count
+        timestamptz created_at
+    }
+    IN_PERSON_COURSE_DETAILS {
+        uuid id PK
+        uuid course_id FK
+        varchar address
+        date start_date
+        varchar shift
+        varchar room
+        int vacancies
+    }
     JOB_OPENINGS {
         uuid id PK
         uuid company_id FK
@@ -210,22 +252,25 @@ erDiagram
         int openings_count
         varchar application_link
         boolean is_pcd
+        boolean is_active
+        varchar workplace_type
     }
     JOB_SKILLS {
         uuid job_id PK
         uuid skill_id PK
     }
+    ENROLLMENTS {
+        uuid id PK
+        uuid student_id FK
+        uuid course_id FK
+        varchar type
+        timestamptz created_at
+    }
     SETTINGS {
         uuid id PK
         varchar key UK
-        varchar value
+        text value
     }
-
-## Endpoints Públicos
-
-| Método | Rota | Descrição |
-| --- | --- | --- |
-| `GET` | `/settings/public/:key` | Retorna o valor de uma configuração pública (ex: `whatsapp_phone`) |
 ```
 
 ## E2E
