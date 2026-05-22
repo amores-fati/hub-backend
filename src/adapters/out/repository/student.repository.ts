@@ -22,6 +22,7 @@ import { EnrollmentOrmEntity } from '../orm/enrollment.orm-entity';
 import { CourseOrmEntity } from '../orm/course.orm-entity';
 import { EnrollmentType } from '../../../core/domain/enrollment.entity';
 
+
 type EnrollmentWithCourse = EnrollmentOrmEntity & {
   course?: CourseOrmEntity;
 };
@@ -310,9 +311,26 @@ export class StudentRepository implements IStudentRepository {
       .execute();
 
     if (disabilityNames.length > 0) {
+      const upperNames = disabilityNames.map((n) => n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase());
       const disabilities = await manager
         .getRepository(DisabilityOrmEntity)
-        .findBy({ name: In(disabilityNames) });
+        .findBy({ name: In(upperNames) });
+
+      const existingNames = disabilities.map((d: DisabilityOrmEntity) => d.name);
+      const missingNames = upperNames.filter(name => !existingNames.includes(name));
+
+      for (const missing of missingNames) {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { randomUUID } = require('crypto');
+        const newDisability = manager.getRepository(DisabilityOrmEntity).create({
+          id: randomUUID(),
+          name: missing,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        await manager.getRepository(DisabilityOrmEntity).save(newDisability);
+        disabilities.push(newDisability);
+      }
 
       for (const disability of disabilities) {
         await manager
@@ -338,9 +356,26 @@ export class StudentRepository implements IStudentRepository {
       .execute();
 
     if (benefitNames.length > 0) {
+      const upperNames = benefitNames.map((n) => n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase());
       const benefits = await manager
         .getRepository(SocialBenefitOrmEntity)
-        .findBy({ name: In(benefitNames) });
+        .findBy({ name: In(upperNames) });
+
+      const existingNames = benefits.map((b: SocialBenefitOrmEntity) => b.name);
+      const missingNames = upperNames.filter(name => !existingNames.includes(name));
+
+      for (const missing of missingNames) {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { randomUUID } = require('crypto');
+        const newBenefit = manager.getRepository(SocialBenefitOrmEntity).create({
+          id: randomUUID(),
+          name: missing,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        await manager.getRepository(SocialBenefitOrmEntity).save(newBenefit);
+        benefits.push(newBenefit);
+      }
 
       for (const benefit of benefits) {
         await manager
@@ -685,12 +720,12 @@ export class StudentRepository implements IStudentRepository {
     const contact = new Contact(
       ormEntity.telephone.id,
       ormEntity.telephone.phone,
-      undefined,
+      ormEntity.address.neighbourhood || undefined,
       ormEntity.address.state || undefined,
       ormEntity.address.city || undefined,
-      undefined,
-      undefined,
-      undefined,
+      ormEntity.address.address || undefined,
+      ormEntity.address.cep || undefined,
+      ormEntity.address.complement || undefined,
     );
 
     const disabilities = ormEntity.disabilities?.map((d) => d.name) || [];
@@ -716,8 +751,6 @@ export class StudentRepository implements IStudentRepository {
       ormEntity.hasComputer ?? undefined,
       ormEntity.hasInternet ?? undefined,
       ormEntity.committedToParticipate ?? undefined,
-      undefined, // disability (old - deprecated)
-      [], // socialBenefits (old - deprecated)
       ormEntity.socialName || undefined,
       ormEntity.courseName || undefined,
       ormEntity.familyIncome || undefined,
