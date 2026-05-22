@@ -73,6 +73,7 @@ describe('StudentResumeController', () => {
         about: 'Sobre o aluno',
         linkedinUrl: 'https://www.linkedin.com/in/aluno',
         githubUrl: 'https://github.com/aluno',
+        videoPresentationUrl: 'https://www.youtube.com/watch?v=abc123',
         photoUrl: '/uploads/photo.webp',
         skills: [{ id: 'skill-id', skillName: 'TypeScript' }],
       });
@@ -268,6 +269,7 @@ function buildCurriculum(): Curriculum {
     'Sobre o aluno',
     'https://www.linkedin.com/in/aluno',
     'https://github.com/aluno',
+    'https://www.youtube.com/watch?v=abc123',
     '/uploads/photo.webp',
     [{ id: 'skill-id', skillName: 'TypeScript' }],
   );

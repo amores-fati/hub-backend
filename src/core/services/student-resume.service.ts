@@ -133,6 +133,7 @@ export class StudentResumeService {
   private validateUrls(command: UpsertStudentResumeCommand): void {
     this.validateUrl('linkedinUrl', command.linkedinUrl);
     this.validateUrl('githubUrl', command.githubUrl);
+    this.validateUrl('videoPresentationUrl', command.videoPresentationUrl);
   }
 
   private normalizeSkillName(skillName?: string): string {

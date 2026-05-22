@@ -280,6 +280,7 @@ function buildCurriculum(): Curriculum {
     'Sobre o aluno',
     'https://www.linkedin.com/in/aluno',
     'https://github.com/aluno',
+    'https://www.youtube.com/watch?v=abc123',
     '/uploads/photo.webp',
     [{ id: 'skill-id', skillName: 'TypeScript' }],
   );

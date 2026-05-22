@@ -27,4 +27,12 @@ export class UpdateStudentResumeDto implements UpsertStudentResumeCommand {
   @ValidateIf((_, value) => value !== undefined && value !== null)
   @IsString()
   githubUrl?: string | null;
+
+  @ApiPropertyOptional({
+    example: 'https://www.youtube.com/watch?v=abc123',
+    nullable: true,
+  })
+  @ValidateIf((_, value) => value !== undefined && value !== null)
+  @IsString()
+  videoPresentationUrl?: string | null;
 }

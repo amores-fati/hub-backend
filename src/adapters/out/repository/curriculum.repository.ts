@@ -98,6 +98,7 @@ export class CurriculumRepository implements ICurriculumRepository {
     ormEntity.about = curriculum.about;
     ormEntity.linkedin = curriculum.linkedinUrl;
     ormEntity.github = curriculum.githubUrl;
+    ormEntity.videoPresentation = curriculum.videoPresentationUrl;
     ormEntity.profilePhoto = curriculum.photoUrl;
 
     return ormEntity;
@@ -113,6 +114,7 @@ export class CurriculumRepository implements ICurriculumRepository {
       ormEntity.about,
       ormEntity.linkedin,
       ormEntity.github,
+      ormEntity.videoPresentation,
       ormEntity.profilePhoto,
       (ormEntity.curriculumSkills ?? []).map((curriculumSkill) => ({
         id: curriculumSkill.skill.id,
