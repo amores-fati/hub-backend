@@ -363,6 +363,14 @@ export class Student extends User {
       committedToParticipate: this.committedToParticipate,
       disabilities: this.disabilities,
       socialBenefitNames: this.socialBenefitNames,
+      disability: this.disabilities.length > 0
+        ? { hasDisability: true, type: this.disabilities.join(', ') }
+        : { hasDisability: false, type: undefined },
+      socialBenefits: this.socialBenefitNames.map((name, i) => ({
+        id: -(i + 1),
+        studentId: this.id,
+        benefit: name
+      })),
       fullName: this.fullName,
       socialName: this.socialName,
       courseName: this.courseName,

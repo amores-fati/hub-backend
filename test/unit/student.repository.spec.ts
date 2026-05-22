@@ -2,8 +2,6 @@ import { Brackets, Repository } from 'typeorm';
 
 import { Contact } from '../../src/core/domain/contact.entity';
 import { Gender, Race } from '../../src/core/domain/enums/student-profile.enum';
-import { SocialBenefitType } from '../../src/core/domain/enums/social-benefit.enum';
-import { SocialBenefit } from '../../src/core/domain/social-benefit.entity';
 import { Student } from '../../src/core/domain/student.entity';
 import { StudentRepository } from '../../src/adapters/out/repository/student.repository';
 import { ContactOrmEntity } from '../../src/adapters/out/orm/contact.orm-entity';
@@ -103,9 +101,7 @@ describe('StudentRepository', () => {
 
   it('should replace child collections when update receives new items', async () => {
     const student = buildStudent({
-      socialBenefits: [
-        new SocialBenefit(-1, 'student-id', SocialBenefitType.OTHERS),
-      ],
+      socialBenefitNames: ['OUTROS'],
     });
 
     (ormRepository.findOne as jest.Mock).mockResolvedValue(
@@ -121,7 +117,7 @@ describe('StudentRepository', () => {
 
   it('should remove child collections when update receives empty arrays', async () => {
     const student = buildStudent({
-      socialBenefits: [],
+      socialBenefitNames: [],
     });
 
     (ormRepository.findOne as jest.Mock).mockResolvedValue(
@@ -317,9 +313,9 @@ describe('StudentRepository', () => {
 });
 
 function buildStudent({
-  socialBenefits = [],
+  socialBenefitNames = [],
 }: {
-  socialBenefits?: SocialBenefit[];
+  socialBenefitNames?: string[];
 } = {}): Student {
   return new Student(
     'student-id',
@@ -340,20 +336,9 @@ function buildStudent({
     Gender.MALE,
     Race.WHITE,
     'Student Name',
-    undefined, // education
-    undefined, // institution
-    undefined, // activityArea
-    undefined, // hasProgrammingExperience
-    undefined, // motivation
-    undefined, // howHeard
-    undefined, // hasComputer
-    undefined, // hasInternet
-    undefined, // committedToParticipate
-    undefined, // disability
-    socialBenefits,
-    undefined, // socialName
-    undefined, // courseName
-    undefined, // familyIncome
+    undefined, // householdSize
+    [], // disabilities
+    socialBenefitNames,
   );
 }
 
@@ -403,12 +388,10 @@ function buildStudentOrmEntity(
   ormEntity.hasComputer = student.hasComputer ?? null;
   ormEntity.hasInternet = student.hasInternet ?? null;
   ormEntity.committedToParticipate = student.committedToParticipate ?? null;
-  ormEntity.disability = null;
   ormEntity.socialBenefits = (options.socialBenefitIds ?? []).map((id) => {
     const benefit = new SocialBenefitOrmEntity();
-    benefit.id = id;
-    benefit.studentId = student.id;
-    benefit.benefit = SocialBenefitType.OTHERS;
+    benefit.id = String(id);
+    benefit.name = 'OUTROS';
     return benefit;
   });
 

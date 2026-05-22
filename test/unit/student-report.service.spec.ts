@@ -41,6 +41,7 @@ describe('StudentReportService', () => {
       update: jest.fn(),
       delete: jest.fn(),
       softDeleteMany: jest.fn(),
+      findLocations: jest.fn(),
     };
     pdfGenerator = {
       generate: jest.fn().mockResolvedValue(Buffer.from('%PDF-1.3')),

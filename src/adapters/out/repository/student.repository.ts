@@ -136,9 +136,33 @@ export class StudentRepository implements IStudentRepository {
     }
 
     if (query.modality) {
-      queryBuilder.andWhere('course.modality = :modality', {
-        modality: query.modality,
-      });
+      if (query.modality === 'NAO_INSCRITO') {
+        queryBuilder.andWhere('enrollment.id IS NULL');
+      } else {
+        queryBuilder.andWhere('course.modality = :modality', {
+          modality: query.modality,
+        });
+      }
+    }
+
+    if (query.city && query.city.length > 0) {
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          query.city!.forEach((location, index) => {
+            const [city, state] = location.split('/').map((value) => value.trim());
+            if (city && state) {
+              qb.orWhere(`(address.city ILIKE :city${index} AND address.state ILIKE :state${index})`, {
+                [`city${index}`]: this.buildLikeFilter(city),
+                [`state${index}`]: state,
+              });
+            } else {
+              qb.orWhere(`address.city ILIKE :loc${index}`, {
+                [`loc${index}`]: this.buildLikeFilter(location),
+              });
+            }
+          });
+        }),
+      );
     }
 
 

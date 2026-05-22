@@ -32,6 +32,9 @@ describe('StudentService', () => {
     update: jest.fn(),
     delete: jest.fn(),
     softDeleteMany: jest.fn(),
+    findLocations: jest.fn(),
+    findManyForReportByIds: jest.fn(),
+    findManyForReportByFilters: jest.fn(),
     existsById: jest.fn(),
   };
 
@@ -381,9 +384,7 @@ describe('StudentService', () => {
           mockContact,
           new Date('1991-01-01'),
           Gender.FEMALE,
-          Race.BLACK,
-          'Duplicado da Silva',
-        ),
+          Race.BLACK, 'Duplicado da Silva'),
       );
 
       await expect(
@@ -407,8 +408,7 @@ describe('StudentService', () => {
           mockStudent.birthDate,
           mockStudent.gender,
           mockStudent.race,
-          mockStudent.fullName,
-        ),
+          mockStudent.fullName),
       );
       (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(null);
       (mockRepository.update as jest.Mock).mockImplementation((student) =>
@@ -455,9 +455,7 @@ describe('StudentService', () => {
           mockContact,
           new Date('1991-01-01'),
           Gender.FEMALE,
-          Race.BLACK,
-          'Duplicado da Silva',
-        ),
+          Race.BLACK, 'Duplicado da Silva'),
       );
 
       await expect(
