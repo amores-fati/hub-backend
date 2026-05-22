@@ -1,12 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class RefactorDisabilitiesToNtoN1778900000000
-  implements MigrationInterface
-{
+export class RefactorDisabilitiesToNtoN1778900000000 implements MigrationInterface {
   name = 'RefactorDisabilitiesToNtoN1778900000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       CREATE TABLE "disability" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -17,7 +14,6 @@ export class RefactorDisabilitiesToNtoN1778900000000
         CONSTRAINT "uq_disability__name" UNIQUE ("name")
       )
     `);
-
 
     await queryRunner.query(`
       CREATE TABLE "student_disability" (
@@ -35,7 +31,6 @@ export class RefactorDisabilitiesToNtoN1778900000000
       )
     `);
 
-
     await queryRunner.query(`
       INSERT INTO "disability" ("id", "name", "created_at", "updated_at")
       SELECT DISTINCT uuid_generate_v4(), TRIM(unnested.value), NOW(), NOW()
@@ -44,7 +39,6 @@ export class RefactorDisabilitiesToNtoN1778900000000
       WHERE "type" IS NOT NULL AND TRIM(unnested.value) <> ''
       ON CONFLICT ("name") DO NOTHING
     `);
-
 
     await queryRunner.query(`
       INSERT INTO "student_disability" ("student_id", "disability_id", "created_at", "updated_at")
@@ -58,12 +52,10 @@ export class RefactorDisabilitiesToNtoN1778900000000
       ON CONFLICT DO NOTHING
     `);
 
-
     await queryRunner.query(`DROP TABLE "disabilities"`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       CREATE TABLE "disabilities" (
         "student_id" uuid NOT NULL,

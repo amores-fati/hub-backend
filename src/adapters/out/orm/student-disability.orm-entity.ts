@@ -24,7 +24,8 @@ export class StudentDisabilityOrmEntity {
   })
   @JoinColumn({
     name: 'disability_id',
-    foreignKeyConstraintName: 'fk_student_disability__disability_id__disabilities',
+    foreignKeyConstraintName:
+      'fk_student_disability__disability_id__disabilities',
   })
   disability: DisabilityOrmEntity;
 }

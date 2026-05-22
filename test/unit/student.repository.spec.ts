@@ -4,10 +4,11 @@ import { Contact } from '../../src/core/domain/contact.entity';
 import { Gender, Race } from '../../src/core/domain/enums/student-profile.enum';
 import { Student } from '../../src/core/domain/student.entity';
 import { StudentRepository } from '../../src/adapters/out/repository/student.repository';
-import { ContactOrmEntity } from '../../src/adapters/out/orm/contact.orm-entity';
 import { SocialBenefitOrmEntity } from '../../src/adapters/out/orm/social-benefit.orm-entity';
 import { StudentOrmEntity } from '../../src/adapters/out/orm/student.orm-entity';
 import { UserOrmEntity } from '../../src/adapters/out/orm/user.orm-entity';
+import { AddressStudentOrmEntity } from '../../src/adapters/out/orm/address-student.orm-entity';
+import { TelephoneStudentOrmEntity } from '../../src/adapters/out/orm/telephone-student.orm-entity';
 import { UserRoleEnum } from '../../src/core/domain/enums/user-role.enum';
 
 describe('StudentRepository', () => {
@@ -357,7 +358,7 @@ function buildStudentOrmEntity(
   const telephone = {
     id: student.contact.id,
     phone: student.contact.phone,
-  } as any;
+  } as TelephoneStudentOrmEntity;
 
   const address = {
     id: student.contact.id,
@@ -367,7 +368,7 @@ function buildStudentOrmEntity(
     address: student.contact.address ?? null,
     cep: student.contact.cep ?? null,
     complement: student.contact.complement ?? null,
-  } as any;
+  } as AddressStudentOrmEntity;
 
   const ormEntity = new StudentOrmEntity();
   ormEntity.id = student.id;

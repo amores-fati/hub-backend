@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  Brackets,
+  EntityManager,
+  In,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
+import { randomUUID } from 'crypto';
 
 import {
   IStudentRepository,
@@ -21,7 +28,6 @@ import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 import { EnrollmentOrmEntity } from '../orm/enrollment.orm-entity';
 import { CourseOrmEntity } from '../orm/course.orm-entity';
 import { EnrollmentType } from '../../../core/domain/enrollment.entity';
-
 
 type EnrollmentWithCourse = EnrollmentOrmEntity & {
   course?: CourseOrmEntity;
@@ -76,7 +82,13 @@ export class StudentRepository implements IStudentRepository {
 
     const savedEntity = await this.ormRepository.findOne({
       where: { id: student.id },
-      relations: ['user', 'telephone', 'address', 'disabilities', 'socialBenefits'],
+      relations: [
+        'user',
+        'telephone',
+        'address',
+        'disabilities',
+        'socialBenefits',
+      ],
     });
 
     return this.mapToDomain(savedEntity!);
@@ -84,7 +96,13 @@ export class StudentRepository implements IStudentRepository {
 
   async findAll(): Promise<Student[]> {
     const ormEntities = await this.ormRepository.find({
-      relations: ['user', 'telephone', 'address', 'disabilities', 'socialBenefits'],
+      relations: [
+        'user',
+        'telephone',
+        'address',
+        'disabilities',
+        'socialBenefits',
+      ],
     });
 
     return ormEntities
@@ -149,12 +167,17 @@ export class StudentRepository implements IStudentRepository {
       queryBuilder.andWhere(
         new Brackets((qb) => {
           query.city!.forEach((location, index) => {
-            const [city, state] = location.split('/').map((value) => value.trim());
+            const [city, state] = location
+              .split('/')
+              .map((value) => value.trim());
             if (city && state) {
-              qb.orWhere(`(address.city ILIKE :city${index} AND address.state ILIKE :state${index})`, {
-                [`city${index}`]: this.buildLikeFilter(city),
-                [`state${index}`]: state,
-              });
+              qb.orWhere(
+                `(address.city ILIKE :city${index} AND address.state ILIKE :state${index})`,
+                {
+                  [`city${index}`]: this.buildLikeFilter(city),
+                  [`state${index}`]: state,
+                },
+              );
             } else {
               qb.orWhere(`address.city ILIKE :loc${index}`, {
                 [`loc${index}`]: this.buildLikeFilter(location),
@@ -164,7 +187,6 @@ export class StudentRepository implements IStudentRepository {
         }),
       );
     }
-
 
     if (query.disabilityType && query.disabilityType.length > 0) {
       queryBuilder.andWhere('disabilities.name IN (:...disabilityTypes)', {
@@ -221,7 +243,13 @@ export class StudentRepository implements IStudentRepository {
   async findById(id: string): Promise<Student | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { id },
-      relations: ['user', 'telephone', 'address', 'disabilities', 'socialBenefits'],
+      relations: [
+        'user',
+        'telephone',
+        'address',
+        'disabilities',
+        'socialBenefits',
+      ],
     });
 
     return ormEntity && ormEntity.user ? this.mapToDomain(ormEntity) : null;
@@ -237,7 +265,13 @@ export class StudentRepository implements IStudentRepository {
   ): Promise<Student | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { cpf },
-      relations: ['user', 'telephone', 'address', 'disabilities', 'socialBenefits'],
+      relations: [
+        'user',
+        'telephone',
+        'address',
+        'disabilities',
+        'socialBenefits',
+      ],
       withDeleted: includeDeleted,
     });
 
@@ -279,7 +313,13 @@ export class StudentRepository implements IStudentRepository {
 
     const savedEntity = await this.ormRepository.findOne({
       where: { id: student.id },
-      relations: ['user', 'telephone', 'address', 'disabilities', 'socialBenefits'],
+      relations: [
+        'user',
+        'telephone',
+        'address',
+        'disabilities',
+        'socialBenefits',
+      ],
     });
 
     return this.mapToDomain(savedEntity!);
@@ -288,7 +328,13 @@ export class StudentRepository implements IStudentRepository {
   async delete(id: string): Promise<void> {
     const ormEntity = await this.ormRepository.findOne({
       where: { id },
-      relations: ['user', 'telephone', 'address', 'disabilities', 'socialBenefits'],
+      relations: [
+        'user',
+        'telephone',
+        'address',
+        'disabilities',
+        'socialBenefits',
+      ],
     });
 
     if (ormEntity) {
@@ -323,7 +369,7 @@ export class StudentRepository implements IStudentRepository {
   }
 
   private async syncDisabilities(
-    manager: any,
+    manager: EntityManager,
     studentId: string,
     disabilityNames: string[],
   ): Promise<void> {
@@ -335,23 +381,32 @@ export class StudentRepository implements IStudentRepository {
       .execute();
 
     if (disabilityNames.length > 0) {
-      const upperNames = disabilityNames.map((n) => n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase());
+      const upperNames = disabilityNames.map((n) =>
+        n
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toUpperCase(),
+      );
       const disabilities = await manager
         .getRepository(DisabilityOrmEntity)
         .findBy({ name: In(upperNames) });
 
-      const existingNames = disabilities.map((d: DisabilityOrmEntity) => d.name);
-      const missingNames = upperNames.filter(name => !existingNames.includes(name));
+      const existingNames = disabilities.map(
+        (d: DisabilityOrmEntity) => d.name,
+      );
+      const missingNames = upperNames.filter(
+        (name) => !existingNames.includes(name),
+      );
 
       for (const missing of missingNames) {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { randomUUID } = require('crypto');
-        const newDisability = manager.getRepository(DisabilityOrmEntity).create({
-          id: randomUUID(),
-          name: missing,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
+        const newDisability = manager
+          .getRepository(DisabilityOrmEntity)
+          .create({
+            id: randomUUID(),
+            name: missing,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
         await manager.getRepository(DisabilityOrmEntity).save(newDisability);
         disabilities.push(newDisability);
       }
@@ -368,7 +423,7 @@ export class StudentRepository implements IStudentRepository {
   }
 
   private async syncSocialBenefits(
-    manager: any,
+    manager: EntityManager,
     studentId: string,
     benefitNames: string[],
   ): Promise<void> {
@@ -380,23 +435,30 @@ export class StudentRepository implements IStudentRepository {
       .execute();
 
     if (benefitNames.length > 0) {
-      const upperNames = benefitNames.map((n) => n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase());
+      const upperNames = benefitNames.map((n) =>
+        n
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toUpperCase(),
+      );
       const benefits = await manager
         .getRepository(SocialBenefitOrmEntity)
         .findBy({ name: In(upperNames) });
 
       const existingNames = benefits.map((b: SocialBenefitOrmEntity) => b.name);
-      const missingNames = upperNames.filter(name => !existingNames.includes(name));
+      const missingNames = upperNames.filter(
+        (name) => !existingNames.includes(name),
+      );
 
       for (const missing of missingNames) {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { randomUUID } = require('crypto');
-        const newBenefit = manager.getRepository(SocialBenefitOrmEntity).create({
-          id: randomUUID(),
-          name: missing,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
+        const newBenefit = manager
+          .getRepository(SocialBenefitOrmEntity)
+          .create({
+            id: randomUUID(),
+            name: missing,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
         await manager.getRepository(SocialBenefitOrmEntity).save(newBenefit);
         benefits.push(newBenefit);
       }
@@ -425,7 +487,8 @@ export class StudentRepository implements IStudentRepository {
     ormEntity.courseName = student.courseName || null;
     ormEntity.institution = student.institution || null;
     ormEntity.activityArea = student.activityArea || null;
-    ormEntity.hasProgrammingExperience = student.hasProgrammingExperience ?? null;
+    ormEntity.hasProgrammingExperience =
+      student.hasProgrammingExperience ?? null;
     ormEntity.familyIncome = student.familyIncome || null;
     ormEntity.motivation = student.motivation || null;
     ormEntity.howHeard = student.howHeard || null;

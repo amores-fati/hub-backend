@@ -184,12 +184,7 @@ async function insertCompany(
   await dataSource.query(
     `INSERT INTO "companies" (id, cnpj, name, responsible_name)
      VALUES ($1, $2, $3, $4)`,
-    [
-      params.id,
-      '12.345.678/9001-10',
-      'Empresa de Vagas',
-      'Pessoa Responsavel',
-    ],
+    [params.id, '12.345.678/9001-10', 'Empresa de Vagas', 'Pessoa Responsavel'],
   );
   await dataSource.query(
     `INSERT INTO "address_company" (id, company_id, city, state) VALUES ($1, $2, $3, $4)`,

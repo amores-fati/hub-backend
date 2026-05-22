@@ -24,7 +24,8 @@ export class StudentSocialBenefitOrmEntity {
   })
   @JoinColumn({
     name: 'social_benefit_id',
-    foreignKeyConstraintName: 'fk_student_social_benefit__social_benefit_id__social_benefits',
+    foreignKeyConstraintName:
+      'fk_student_social_benefit__social_benefit_id__social_benefits',
   })
   socialBenefit: SocialBenefitOrmEntity;
 }

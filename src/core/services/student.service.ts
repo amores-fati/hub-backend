@@ -85,9 +85,10 @@ export class StudentService {
       command.contact.complement,
     );
 
-    const disabilities = command.disability?.hasDisability && command.disability.type
-      ? [command.disability.type]
-      : [];
+    const disabilities =
+      command.disability?.hasDisability && command.disability.type
+        ? [command.disability.type]
+        : [];
 
     const socialBenefitNames =
       command.socialBenefits?.map((benefit) => benefit.benefit) || [];
@@ -225,16 +226,15 @@ export class StudentService {
     });
 
     if (command.disability) {
-      const disabilities = command.disability.hasDisability && command.disability.type
-        ? [command.disability.type]
-        : [];
+      const disabilities =
+        command.disability.hasDisability && command.disability.type
+          ? [command.disability.type]
+          : [];
       student.changeDisabilities(disabilities);
     }
 
     if (command.socialBenefits) {
-      const benefits = command.socialBenefits.map(
-        (benefit) => benefit.benefit,
-      );
+      const benefits = command.socialBenefits.map((benefit) => benefit.benefit);
       student.replaceSocialBenefits(benefits);
     }
 
@@ -281,7 +281,9 @@ export class StudentService {
 
     if (command.isPcd !== undefined || command.disabilityType !== undefined) {
       const isPcd = command.isPcd ?? false;
-      student.changeDisabilities(isPcd && command.disabilityType ? [command.disabilityType] : []);
+      student.changeDisabilities(
+        isPcd && command.disabilityType ? [command.disabilityType] : [],
+      );
     }
 
     if (command.socialBenefits !== undefined) {
@@ -353,7 +355,8 @@ export class StudentService {
 
     if (command.disability) {
       const isPcd = command.disability.hasDisability ?? false;
-      const disabilities = isPcd && command.disability.type ? [command.disability.type] : [];
+      const disabilities =
+        isPcd && command.disability.type ? [command.disability.type] : [];
       student.changeDisabilities(disabilities);
     }
 

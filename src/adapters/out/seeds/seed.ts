@@ -4,7 +4,6 @@ import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { buildDatabaseOptions } from '../../../config/database.config';
 
-import { SocialBenefitType } from '../../../core/domain/enums/social-benefit.enum';
 import {
   EducationLevel,
   FamilyIncome,
@@ -218,18 +217,24 @@ export async function seed(): Promise<void> {
       responsibleName: e.responsibleName,
     });
     await appDataSource.getRepository(CompanyOrmEntity).save(company);
-    const telephone = appDataSource.getRepository(TelephoneCompanyOrmEntity).create({
-      id: userId,
-      companyId: userId,
-      phone: e.phone,
-    });
-    await appDataSource.getRepository(TelephoneCompanyOrmEntity).save(telephone);
-    const address = appDataSource.getRepository(AddressCompanyOrmEntity).create({
-      id: userId,
-      companyId: userId,
-      city: e.city,
-      state: e.state,
-    });
+    const telephone = appDataSource
+      .getRepository(TelephoneCompanyOrmEntity)
+      .create({
+        id: userId,
+        companyId: userId,
+        phone: e.phone,
+      });
+    await appDataSource
+      .getRepository(TelephoneCompanyOrmEntity)
+      .save(telephone);
+    const address = appDataSource
+      .getRepository(AddressCompanyOrmEntity)
+      .create({
+        id: userId,
+        companyId: userId,
+        city: e.city,
+        state: e.state,
+      });
     await appDataSource.getRepository(AddressCompanyOrmEntity).save(address);
     empresas.push(company);
   }
@@ -283,7 +288,17 @@ export async function seed(): Promise<void> {
   logger.info('2 cursos criados.');
 
   // 3.5. DISABILITIES E BENEFITS
-  const disabilityTypes = ['VISUAL', 'AUDITIVA', 'FISICA', 'INTELECTUAL', 'PSICOSSOCIAL', 'MULTIPLA', 'TEA', 'OUTRA', 'NENHUMA'];
+  const disabilityTypes = [
+    'VISUAL',
+    'AUDITIVA',
+    'FISICA',
+    'INTELECTUAL',
+    'PSICOSSOCIAL',
+    'MULTIPLA',
+    'TEA',
+    'OUTRA',
+    'NENHUMA',
+  ];
   for (const type of disabilityTypes) {
     const disability = appDataSource.getRepository(DisabilityOrmEntity).create({
       id: uuidv4(),
@@ -517,27 +532,36 @@ export async function seed(): Promise<void> {
       howHeard: a.howHeard,
     });
     await appDataSource.getRepository(StudentOrmEntity).save(student);
-    const telephone = appDataSource.getRepository(TelephoneStudentOrmEntity).create({
-      id: userId,
-      studentId: userId,
-      phone: `(51) 90000-${numero}00`,
-    });
-    await appDataSource.getRepository(TelephoneStudentOrmEntity).save(telephone);
-    const address = appDataSource.getRepository(AddressStudentOrmEntity).create({
-      id: userId,
-      studentId: userId,
-      city: a.city,
-      state: a.state,
-    });
+    const telephone = appDataSource
+      .getRepository(TelephoneStudentOrmEntity)
+      .create({
+        id: userId,
+        studentId: userId,
+        phone: `(51) 90000-${numero}00`,
+      });
+    await appDataSource
+      .getRepository(TelephoneStudentOrmEntity)
+      .save(telephone);
+    const address = appDataSource
+      .getRepository(AddressStudentOrmEntity)
+      .create({
+        id: userId,
+        studentId: userId,
+        city: a.city,
+        state: a.state,
+      });
     await appDataSource.getRepository(AddressStudentOrmEntity).save(address);
 
     // Link disabilities via student_disability table
     if (a.hasDisability && a.disability) {
-      const normalizedDisabilityName = a.disability.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+      const normalizedDisabilityName = a.disability
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase();
       const disability = await appDataSource
         .getRepository(DisabilityOrmEntity)
         .findOne({ where: { name: normalizedDisabilityName } });
-      
+
       if (disability) {
         await appDataSource
           .getRepository(StudentOrmEntity)
@@ -550,17 +574,16 @@ export async function seed(): Promise<void> {
 
     // Link social benefits via student_social_benefit table
     if (i % 3 === 0) {
-      const benefitName = [
-        'Bolsa Família',
-        'BPC',
-        'Outros',
-      ][i % 3];
-      
-      const normalizedBenefitName = benefitName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+      const benefitName = ['Bolsa Família', 'BPC', 'Outros'][i % 3];
+
+      const normalizedBenefitName = benefitName
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase();
       const benefit = await appDataSource
         .getRepository(SocialBenefitOrmEntity)
         .findOne({ where: { name: normalizedBenefitName } });
-      
+
       if (benefit) {
         await appDataSource
           .getRepository(StudentOrmEntity)

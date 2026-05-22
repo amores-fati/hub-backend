@@ -4,7 +4,6 @@ export class AddMetadataColumns1778600000000 implements MigrationInterface {
   name = 'AddMetadataColumns1778600000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     const tablesWithBoth = [
       'admins',
       'students',

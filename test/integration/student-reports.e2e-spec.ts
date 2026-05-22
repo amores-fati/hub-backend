@@ -280,13 +280,18 @@ async function insertStudent(
     const disabilityId = randomUUID();
     await dataSource.query(
       `INSERT INTO "disability" (id, name, created_at, updated_at) VALUES ($1, $2, NOW(), NOW()) ON CONFLICT (name) DO NOTHING`,
-      [disabilityId, params.disabilityType]
+      [disabilityId, params.disabilityType],
     );
-    const res = await dataSource.query(`SELECT id FROM "disability" WHERE name = $1`, [params.disabilityType]);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const res = await dataSource.query(
+      `SELECT id FROM "disability" WHERE name = $1`,
+      [params.disabilityType],
+    );
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const actualDisabilityId = res[0].id;
     await dataSource.query(
       `INSERT INTO "student_disability" (student_id, disability_id) VALUES ($1, $2)`,
-      [params.id, actualDisabilityId]
+      [params.id, actualDisabilityId],
     );
   }
 }

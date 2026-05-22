@@ -1,12 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class UpdateEnumValuesToPtBR1779100000000
-  implements MigrationInterface
-{
+export class UpdateEnumValuesToPtBR1779100000000 implements MigrationInterface {
   name = 'UpdateEnumValuesToPtBR1779100000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(
       `ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "ck_users__role"`,
     );
@@ -52,7 +49,6 @@ export class UpdateEnumValuesToPtBR1779100000000
       ADD CONSTRAINT "ck_students__gender"
       CHECK ("gender" IN ('MASCULINO', 'FEMININO', 'NAO_BINARIO', 'PREFIRO_NAO_DIZER', 'OUTRO'))
     `);
-
 
     await queryRunner.query(
       `ALTER TABLE "students" DROP CONSTRAINT IF EXISTS "ck_students__race"`,
@@ -110,7 +106,6 @@ export class UpdateEnumValuesToPtBR1779100000000
       CHECK ("education" IS NULL OR "education" IN ('SEM_ESCOLARIDADE', 'FUNDAMENTAL', 'MEDIO', 'SUPERIOR', 'POS_GRADUACAO'))
     `);
 
-
     await queryRunner.query(
       `ALTER TABLE "students" DROP CONSTRAINT IF EXISTS "ck_students__how_heard"`,
     );
@@ -148,7 +143,6 @@ export class UpdateEnumValuesToPtBR1779100000000
       CHECK ("family_income" IS NULL OR "family_income" IN ('ATE_1_SALARIO', 'ENTRE_1_E_3', 'MAIS_DE_3'))
     `);
 
-    
     await queryRunner.query(
       `ALTER TABLE "enrollments" DROP CONSTRAINT IF EXISTS "ck_enrollments__type"`,
     );
@@ -168,7 +162,6 @@ export class UpdateEnumValuesToPtBR1779100000000
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
- 
     await queryRunner.query(
       `ALTER TABLE "enrollments" DROP CONSTRAINT IF EXISTS "ck_enrollments__type"`,
     );
@@ -185,7 +178,6 @@ export class UpdateEnumValuesToPtBR1779100000000
       ADD CONSTRAINT "ck_enrollments__type"
       CHECK ("type" IN ('ENROLLMENT', 'INTEREST'))
     `);
-
 
     await queryRunner.query(
       `ALTER TABLE "students" DROP CONSTRAINT IF EXISTS "ck_students__family_income"`,
@@ -207,7 +199,6 @@ export class UpdateEnumValuesToPtBR1779100000000
       CHECK ("family_income" IS NULL OR "family_income" IN ('TO1_SALARY', 'BETWEEN_1_3', 'MORE_THAN_3'))
     `);
 
-
     await queryRunner.query(
       `ALTER TABLE "students" DROP CONSTRAINT IF EXISTS "ck_students__how_heard"`,
     );
@@ -224,7 +215,6 @@ export class UpdateEnumValuesToPtBR1779100000000
       ADD CONSTRAINT "ck_students__how_heard"
       CHECK ("how_heard" IS NULL OR "how_heard" IN ('INSTAGRAM', 'REFEREE', 'LINKEDIN', 'OTHERS'))
     `);
-
 
     await queryRunner.query(
       `ALTER TABLE "students" DROP CONSTRAINT IF EXISTS "ck_students__education"`,
@@ -251,7 +241,6 @@ export class UpdateEnumValuesToPtBR1779100000000
       ADD CONSTRAINT "ck_students__education"
       CHECK ("education" IS NULL OR "education" IN ('NO_EDUCATION', 'PRIMARY', 'SECONDARY', 'HIGHER', 'POSTGRADUATE'))
     `);
-
 
     await queryRunner.query(
       `ALTER TABLE "students" DROP CONSTRAINT IF EXISTS "ck_students__race"`,
@@ -283,7 +272,6 @@ export class UpdateEnumValuesToPtBR1779100000000
       CHECK ("race" IN ('WHITE', 'BLACK', 'BROWN', 'INDIGENOUS', 'PREFER_NOT_TO_SAY'))
     `);
 
-
     await queryRunner.query(
       `ALTER TABLE "students" DROP CONSTRAINT IF EXISTS "ck_students__gender"`,
     );
@@ -309,7 +297,6 @@ export class UpdateEnumValuesToPtBR1779100000000
       ADD CONSTRAINT "ck_students__gender"
       CHECK ("gender" IN ('MALE', 'FEMALE', 'NON_BINARY', 'PREFER_NOT_TO_SAY', 'OTHER'))
     `);
-
 
     await queryRunner.query(
       `ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "ck_users__role"`,

@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class RefactorSocialBenefitsToNtoN1779000000000
-  implements MigrationInterface
-{
+export class RefactorSocialBenefitsToNtoN1779000000000 implements MigrationInterface {
   name = 'RefactorSocialBenefitsToNtoN1779000000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -65,7 +63,6 @@ export class RefactorSocialBenefitsToNtoN1779000000000
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       CREATE TABLE "social_benefits" (
         "id" SERIAL NOT NULL,
@@ -78,14 +75,12 @@ export class RefactorSocialBenefitsToNtoN1779000000000
       )
     `);
 
-
     await queryRunner.query(`
       INSERT INTO "social_benefits" ("student_id", "benefit")
       SELECT ssb.student_id, sb.name
       FROM "student_social_benefit" ssb
       JOIN "social_benefit" sb ON sb.id = ssb.social_benefit_id
     `);
-
 
     await queryRunner.query(`DROP TABLE "student_social_benefit"`);
     await queryRunner.query(`DROP TABLE "social_benefit"`);
