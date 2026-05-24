@@ -37,6 +37,12 @@ export class CourseService {
     return this.courseRepository.findAllWithLocation();
   }
 
+  async findCourseById(id: string): Promise<Course> {
+    const course = await this.courseRepository.findById(id);
+    if (!course) throw new CourseNotFoundException(id);
+    return course;
+  }
+
   async deleteCourse(id: string): Promise<void> {
     const course = await this.courseRepository.findById(id);
     if (!course) throw new CourseNotFoundException(id);
