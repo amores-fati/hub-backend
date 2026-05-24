@@ -11,6 +11,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -34,6 +35,8 @@ import type { AuthenticatedUser } from '../../../utils/decorators/current-user.d
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCourseDto } from '../dtos/course/create-course.dto';
 import { CourseResponseDto, toCourseResponse } from '../dtos/course/course-response.dto';
+import { FilterCoursesDto } from '../dtos/course/filter-courses.dto';
+import { PaginatedCoursesResponseDto } from '../dtos/course/paginated-courses-response.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @ApiTags('Courses')
@@ -138,6 +141,31 @@ export class CourseController {
     return courses.map(({ course, location }) =>
       toCourseResponse(course, location),
     );
+  }
+
+  @RequireAuth(UserRoleEnum.ADMIN)
+  @Get('filter')
+  @ApiOperation({
+    summary: 'Lista cursos com filtros e paginação',
+    description: 'Retorna cursos paginados, com filtros opcionais por nome, modalidade e período.',
+  })
+  @ApiOkResponse({ description: 'Cursos retornados com sucesso.', type: PaginatedCoursesResponseDto })
+  async filter(@Query() filters: FilterCoursesDto): Promise<PaginatedCoursesResponseDto> {
+    this.logger.info('Filtering courses', {
+      page: filters.page,
+      limit: filters.limit,
+      search: filters.search,
+      modality: filters.modality,
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+    });
+    const result = await this.courseService.filterCourses(filters);
+    return {
+      data: result.data.map(({ course, location }) => toCourseResponse(course, location)),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
   }
 
   @RequireAuth(UserRoleEnum.ADMIN)

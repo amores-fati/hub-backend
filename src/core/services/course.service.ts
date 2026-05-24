@@ -1,11 +1,19 @@
 import { randomUUID } from 'crypto';
 import { CreateCourseCommand } from '../command/course.command';
+import { FilterCourseCommand } from '../command/filter-course.command';
 import { Course } from '../domain/course.entity';
 import {
   CourseWithLocation,
   ICourseRepository,
 } from '../ports/course.repository.interface';
 import { CourseNotFoundException } from '../exceptions/course-not-found.exception';
+
+export interface PaginatedCoursesResponse {
+  data: CourseWithLocation[];
+  total: number;
+  page: number;
+  limit: number;
+}
 
 export class CourseService {
   constructor(private readonly courseRepository: ICourseRepository) {}
@@ -31,6 +39,27 @@ export class CourseService {
 
   async getAllCourses(): Promise<Course[]> {
     return this.courseRepository.findAll();
+  }
+
+  async filterCourses(command: FilterCourseCommand): Promise<PaginatedCoursesResponse> {
+    const page = command.page ?? 1;
+    const limit = command.limit ?? 10;
+
+    const result = await this.courseRepository.findWithFilter({
+      search: command.search,
+      modality: command.modality,
+      startDate: command.startDate ? new Date(command.startDate) : undefined,
+      endDate: command.endDate ? new Date(command.endDate) : undefined,
+      page,
+      limit,
+    });
+
+    return {
+      data: result.items,
+      total: result.total,
+      page,
+      limit,
+    };
   }
 
   async getAllCoursesWithLocation(): Promise<CourseWithLocation[]> {

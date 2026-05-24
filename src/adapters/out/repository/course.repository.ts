@@ -2,8 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
+  CourseFilterQuery,
   CourseWithLocation,
   ICourseRepository,
+  PaginatedCourseResult,
 } from '../../../core/ports/course.repository.interface';
 import { Course } from '../../../core/domain/course.entity';
 import { CourseOrmEntity } from '../orm/course.orm-entity';
@@ -48,6 +50,52 @@ export class CourseRepository implements ICourseRepository {
       course: this.mapToDomain(entity),
       location: addressByCourseId.get(entity.id) ?? null,
     }));
+  }
+
+  async findWithFilter(query: CourseFilterQuery): Promise<PaginatedCourseResult> {
+    const qb = this.ormRepository.createQueryBuilder('course');
+
+    if (query.search) {
+      qb.andWhere('course.name ILIKE :search', { search: `%${query.search}%` });
+    }
+
+    if (query.modality) {
+      qb.andWhere('course.modality ILIKE :modality', { modality: query.modality });
+    }
+
+    if (query.startDate) {
+      qb.andWhere('course.startDate >= :startDate', { startDate: query.startDate });
+    }
+
+    if (query.endDate) {
+      qb.andWhere('course.endDate <= :endDate', { endDate: query.endDate });
+    }
+
+    const total = await qb.getCount();
+
+    const ormEntities = await qb
+      .orderBy('course.createdAt', 'DESC')
+      .skip((query.page - 1) * query.limit)
+      .take(query.limit)
+      .getMany();
+
+    const details = await this.inPersonDetailRepository.find({
+      relations: { course: true },
+    });
+    const addressByCourseId = new Map<string, string>();
+    for (const detail of details) {
+      if (detail.course?.id) {
+        addressByCourseId.set(detail.course.id, detail.address);
+      }
+    }
+
+    return {
+      items: ormEntities.map((entity) => ({
+        course: this.mapToDomain(entity),
+        location: addressByCourseId.get(entity.id) ?? null,
+      })),
+      total,
+    };
   }
 
   async findById(id: string): Promise<Course | null> {
