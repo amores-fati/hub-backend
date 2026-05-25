@@ -2,6 +2,7 @@
 import { CreateCourseCommand } from '../../src/core/command/course.command';
 import { Course } from '../../src/core/domain/course.entity';
 import { DomainException } from '../../src/core/exceptions/domain.exception';
+import { CourseNotFoundException } from '../../src/core/exceptions/course-not-found.exception';
 import { ICourseRepository } from '../../src/core/ports/course.repository.interface';
 import { CourseService } from '../../src/core/services/course.service';
 
@@ -11,10 +12,9 @@ describe('CourseService', () => {
   const mockRepository: ICourseRepository = {
     create: jest.fn(),
     findAll: jest.fn(),
-    findAllWithLocation: jest.fn(),
     findById: jest.fn(),
-    findManyByIdsWithLocation: jest.fn(),
-    findManyWithLocationByFilters: jest.fn(),
+    findManyByIds: jest.fn(),
+    findManyByFilters: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
   };
@@ -31,6 +31,7 @@ describe('CourseService', () => {
     modality: 'ONLINE',
     linkAccess: 'https://fatilab.com/cursos/web',
     vacancyCount: 30,
+    shift: 'MANHA'
   };
 
   beforeEach(() => {
@@ -82,6 +83,42 @@ describe('CourseService', () => {
     });
   });
 
+  describe('findCourseById', () => {
+    it('should return the course when it exists', async () => {
+      const course = new Course(
+        '123e4567-e89b-12d3-a456-426614174000',
+        createCommand.name,
+        createCommand.banner,
+        createCommand.courseLoad,
+        new Date(createCommand.startDate),
+        new Date(createCommand.endDate),
+        new Date(createCommand.startRegistrations),
+        new Date(createCommand.endRegistrations),
+        createCommand.modality,
+        createCommand.linkAccess,
+        createCommand.vacancyCount,
+        createCommand.shift,
+        createCommand.address,
+        createCommand.description,
+      );
+
+      (mockRepository.findById as jest.Mock).mockResolvedValue(course);
+
+      const result = await service.findCourseById(course.id);
+
+      expect(result).toBe(course);
+      expect(mockRepository.findById).toHaveBeenCalledWith(course.id);
+    });
+
+    it('should throw CourseNotFoundException when course does not exist', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.findCourseById('non-existent-id')).rejects.toThrow(
+        CourseNotFoundException,
+      );
+    });
+  });
+
   describe('getAllCourses', () => {
     it('should return all courses', async () => {
       const course = new Course(
@@ -96,6 +133,8 @@ describe('CourseService', () => {
         createCommand.modality,
         createCommand.linkAccess,
         createCommand.vacancyCount,
+        createCommand.shift,
+        createCommand.address,
         createCommand.description,
       );
 

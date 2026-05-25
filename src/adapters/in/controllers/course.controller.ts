@@ -37,7 +37,7 @@ import { CurrentUser } from '../../../utils/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCourseDto } from '../dtos/course/create-course.dto';
-import { toCourseResponse } from '../dtos/course/course-response.dto';
+import { CourseResponseDto, toCourseResponse } from '../dtos/course/course-response.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @ApiTags('Courses')
@@ -183,11 +183,40 @@ export class CourseController {
   })
   async findAll() {
     this.logger.info('Listing courses');
-    const courses = await this.courseService.getAllCoursesWithLocation();
+    const courses = await this.courseService.getAllCourses();
     this.logger.info('Courses listed', { count: courses.length });
-    return courses.map(({ course, location }) =>
-      toCourseResponse(course, location),
-    );
+    return courses.map((course) => toCourseResponse(course));
+  }
+
+  @RequireAuth(UserRoleEnum.ADMIN)
+  @Get(':id')
+  @ApiOperation({ summary: 'Busca um curso por ID' })
+  @ApiParam({ name: 'id', description: 'UUID do curso', type: String })
+  @ApiOkResponse({
+    description: 'Curso retornado com sucesso.',
+    type: CourseResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Curso não encontrado.',
+    schema: {
+      example: { statusCode: 404, message: 'Curso não encontrado', errorKind: 'NOT_FOUND' },
+    },
+  })
+  async findById(@Param('id', ParseUUIDPipe) id: string) {
+    this.logger.info('Finding course by id', { id });
+    try {
+      const course = await this.courseService.findCourseById(id);
+      return toCourseResponse(course);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CourseNotFoundException') {
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Curso não encontrado',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+      throw error;
+    }
   }
 
   @RequireAuth(UserRoleEnum.ADMIN)

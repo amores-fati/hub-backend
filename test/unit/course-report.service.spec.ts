@@ -28,6 +28,8 @@ describe('CourseReportService', () => {
     'ONLINE',
     'https://fatilab.com/cursos/online',
     20,
+    'MANHA',
+    'Porto Alegre - RS',
     'Descricao',
     CourseStatus.ATIVO,
   );
@@ -36,12 +38,11 @@ describe('CourseReportService', () => {
     repository = {
       create: jest.fn(),
       findAll: jest.fn(),
-      findAllWithLocation: jest.fn(),
       findById: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
-      findManyByIdsWithLocation: jest.fn(),
-      findManyWithLocationByFilters: jest.fn(),
+      findManyByIds: jest.fn(),
+      findManyByFilters: jest.fn(),
     };
     pdfGenerator = {
       generate: jest.fn().mockResolvedValue(Buffer.from('%PDF-1.3')),
@@ -54,8 +55,8 @@ describe('CourseReportService', () => {
 
   it('should export selected courses and log before PDF generation', async () => {
     const events: string[] = [];
-    (repository.findManyByIdsWithLocation as jest.Mock).mockResolvedValue([
-      { course, location: null },
+    (repository.findManyByIds as jest.Mock).mockResolvedValue([
+      course,
     ]);
     (logger.info as jest.Mock).mockImplementation(() => events.push('log'));
     (pdfGenerator.generate as jest.Mock).mockImplementation(() => {
@@ -73,7 +74,7 @@ describe('CourseReportService', () => {
     expect(result.filename).toMatch(
       /^relatorio_cursos_\d{4}-\d{2}-\d{2}_\d{6}\.pdf$/,
     );
-    expect(repository.findManyByIdsWithLocation).toHaveBeenCalledWith([
+    expect(repository.findManyByIds).toHaveBeenCalledWith([
       course.id,
     ]);
     expect(logger.info).toHaveBeenCalledWith('Generating courses report', {
@@ -93,13 +94,13 @@ describe('CourseReportService', () => {
       }),
     ).rejects.toThrow(DomainException);
 
-    expect(repository.findManyByIdsWithLocation).not.toHaveBeenCalled();
+    expect(repository.findManyByIds).not.toHaveBeenCalled();
     expect(pdfGenerator.generate).not.toHaveBeenCalled();
   });
 
   it('should export all courses with filters', async () => {
-    (repository.findManyWithLocationByFilters as jest.Mock).mockResolvedValue([
-      { course, location: 'Porto Alegre - RS' },
+    (repository.findManyByFilters as jest.Mock).mockResolvedValue([
+      course,
     ]);
 
     await service.generateReport({
@@ -108,17 +109,14 @@ describe('CourseReportService', () => {
       generatedBy: { id: 'admin-id', name: 'admin@test.com' },
     });
 
-    expect(repository.findManyWithLocationByFilters).toHaveBeenCalledWith({
+    expect(repository.findManyByFilters).toHaveBeenCalledWith({
       status: CourseStatus.ATIVO,
     });
   });
 
   it('should reject exports above the 1000 course limit', async () => {
-    (repository.findManyWithLocationByFilters as jest.Mock).mockResolvedValue(
-      Array.from({ length: COURSE_REPORT_MAX_ROWS + 1 }, () => ({
-        course,
-        location: null,
-      })),
+    (repository.findManyByFilters as jest.Mock).mockResolvedValue(
+      Array.from({ length: COURSE_REPORT_MAX_ROWS + 1 }, () => course),
     );
 
     await expect(
@@ -132,8 +130,25 @@ describe('CourseReportService', () => {
   });
 
   it('should format empty address and dates for PDF rows', async () => {
-    (repository.findManyByIdsWithLocation as jest.Mock).mockResolvedValue([
-      { course, location: '' },
+    const courseEmptyAddress = new Course(
+      course.id,
+      course.name,
+      course.banner,
+      course.courseLoad,
+      course.startDate,
+      course.endDate,
+      course.startRegistrations,
+      course.endRegistrations,
+      course.modality,
+      course.linkAccess,
+      course.vacancyCount,
+      course.shift,
+      '', // empty address
+      course.description,
+      course.status,
+    );
+    (repository.findManyByIds as jest.Mock).mockResolvedValue([
+      courseEmptyAddress,
     ]);
 
     await service.generateReport({

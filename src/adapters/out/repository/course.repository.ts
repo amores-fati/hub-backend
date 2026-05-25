@@ -10,7 +10,6 @@ import {
 } from 'typeorm';
 import {
   CourseReportFilters,
-  CourseWithLocation,
   ICourseRepository,
 } from '../../../core/ports/course.repository.interface';
 import { Course } from '../../../core/domain/course.entity';
@@ -37,15 +36,7 @@ export class CourseRepository implements ICourseRepository {
     return ormEntities.map((entity) => this.mapToDomain(entity));
   }
 
-  async findAllWithLocation(): Promise<CourseWithLocation[]> {
-    const ormEntities = await this.ormRepository.find({
-      order: { createdAt: 'DESC' },
-    });
-    return ormEntities.map((entity) => ({
-      course: this.mapToDomain(entity),
-      location: entity.address ?? null,
-    }));
-  }
+
 
   async findById(id: string): Promise<Course | null> {
     const ormEntity = await this.ormRepository.findOne({ where: { id } });
@@ -74,9 +65,7 @@ export class CourseRepository implements ICourseRepository {
     return this.mapToDomain(updated!);
   }
 
-  async findManyByIdsWithLocation(
-    ids: string[],
-  ): Promise<CourseWithLocation[]> {
+  async findManyByIds(ids: string[]): Promise<Course[]> {
     if (ids.length === 0) {
       return [];
     }
@@ -92,25 +81,19 @@ export class CourseRepository implements ICourseRepository {
       .map((id) => entitiesById.get(id))
       .filter((entity): entity is CourseOrmEntity => Boolean(entity));
 
-    return orderedEntities.map((entity) => ({
-      course: this.mapToDomain(entity),
-      location: entity.address ?? null,
-    }));
+    return orderedEntities.map((entity) => this.mapToDomain(entity));
   }
 
-  async findManyWithLocationByFilters(
+  async findManyByFilters(
     filters: CourseReportFilters = {},
-  ): Promise<CourseWithLocation[]> {
+  ): Promise<Course[]> {
     const where = this.buildFilterWhere(filters);
     const ormEntities = await this.ormRepository.find({
       where,
       order: { createdAt: 'DESC' },
     });
 
-    return ormEntities.map((entity) => ({
-      course: this.mapToDomain(entity),
-      location: entity.address ?? null,
-    }));
+    return ormEntities.map((entity) => this.mapToDomain(entity));
   }
 
   async delete(id: string): Promise<void> {

@@ -5,7 +5,6 @@ import {
 } from '../command/course.command';
 import { Course } from '../domain/course.entity';
 import {
-  CourseWithLocation,
   ICourseRepository,
 } from '../ports/course.repository.interface';
 import { CourseNotFoundException } from '../exceptions/course-not-found.exception';
@@ -70,8 +69,10 @@ export class CourseService {
     return this.courseRepository.findAll();
   }
 
-  async getAllCoursesWithLocation(): Promise<CourseWithLocation[]> {
-    return this.courseRepository.findAllWithLocation();
+  async findCourseById(id: string): Promise<Course> {
+    const course = await this.courseRepository.findById(id);
+    if (!course) throw new CourseNotFoundException(id);
+    return course;
   }
 
   async deleteCourse(id: string): Promise<void> {
