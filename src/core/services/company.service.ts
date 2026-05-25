@@ -17,6 +17,10 @@ import {
   PaginatedVacanciesResult,
 } from '../ports/vacancy-report.repository.interface';
 import { UserAlreadyExistsException } from '../exceptions/user-already-exists.exception';
+import {
+  IVacancyReportRepository,
+} from '../ports/vacancy-report.repository.interface';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 
 export class CompanyService {
   constructor(
@@ -159,6 +163,28 @@ export class CompanyService {
   async deleteCompany(id: string): Promise<void> {
     const company = await this.getCompanyById(id);
     await this.companyRepository.delete(company.id);
+  }
+
+  async deleteVacancy(vacancyId: string, companyId: string): Promise<void> {
+    if (!this.vacancyRepository) {
+      throw new Error('Vacancy repository not available');
+    }
+
+    const vacancyCompanyId = await this.vacancyRepository.findCompanyIdById(
+      vacancyId,
+    );
+
+    if (!vacancyCompanyId) {
+      throw new NotFoundException('Vaga não encontrada');
+    }
+
+    if (vacancyCompanyId !== companyId) {
+      throw new ForbiddenException(
+        'Você não tem permissão para excluir esta vaga',
+      );
+    }
+
+    await this.vacancyRepository.deleteById(vacancyId);
   }
 
   async listMyVacancies(

@@ -4,6 +4,7 @@ import {
   ConflictException,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -14,6 +15,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -293,6 +295,33 @@ export class CompanyController {
       if (error instanceof Error && error.name === 'DomainException') {
         this.logger.error('Company deletion domain error');
         throw new BadRequestException(error.message);
+      }
+
+      throw error;
+    }
+  }
+
+  @RequireAuth(UserRoleEnum.COMPANY)
+  @Delete('me/vacancies/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Deleta uma vaga da empresa autenticada' })
+  @ApiNoContentResponse({ description: 'Vaga deletada com sucesso.' })
+  @ApiNotFoundResponse({ description: 'Vaga nao encontrada.' })
+  async deleteVacancy(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
+    try {
+      this.logger.log(`Iniciando exclusão da vaga ${id}`);
+      const companyId = (req.user as any)?.companyId;
+      await this.companyService.deleteVacancy(id, companyId);
+      this.logger.info('Vacancy deleted', { id });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        this.logger.warn('Vacancy not found', { id });
+        throw new NotFoundException(error.message);
+      }
+
+      if (error instanceof ForbiddenException) {
+        this.logger.warn('Forbidden deleting vacancy', { id });
+        throw new ForbiddenException(error.message);
       }
 
       throw error;

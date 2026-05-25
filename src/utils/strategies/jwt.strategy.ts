@@ -22,7 +22,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; email: string; role: UserRoleEnum }) {
+  async validate(payload: {
+    sub: string;
+    email: string;
+    role: UserRoleEnum;
+    companyId?: string | null;
+  }) {
     const user = await this.userRepository.findById(payload.sub);
 
     if (!user) {
@@ -33,6 +38,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       id: payload.sub,
       email: payload.email,
       role: payload.role,
+      companyId: payload.companyId ?? null,
     };
   }
 }

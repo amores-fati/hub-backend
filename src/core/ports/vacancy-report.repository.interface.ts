@@ -39,4 +39,6 @@ export interface IVacancyReportRepository {
   findMyVacancies(
     filters: MyVacanciesFilters,
   ): Promise<PaginatedVacanciesResult>;
+  findCompanyIdById(id: string): Promise<string | null>;
+  deleteById(id: string): Promise<void>;
 }
