@@ -1,7 +1,7 @@
 import { DomainException } from '../exceptions/domain.exception';
+import { Course } from '../domain/course.entity';
 import {
   CourseReportFilters,
-  CourseWithLocation,
   ICourseRepository,
 } from '../ports/course.repository.interface';
 import {
@@ -75,7 +75,7 @@ export class CourseReportService {
 
   private async findCourses(
     command: GenerateCourseReportCommand,
-  ): Promise<CourseWithLocation[]> {
+  ): Promise<Course[]> {
     if (command.mode === 'selected') {
       if (!command.ids || command.ids.length === 0) {
         throw new DomainException(
@@ -83,11 +83,11 @@ export class CourseReportService {
         );
       }
 
-      return this.courseRepository.findManyByIdsWithLocation(command.ids);
+      return this.courseRepository.findManyByIds(command.ids);
     }
 
     if (command.mode === 'all') {
-      return this.courseRepository.findManyWithLocationByFilters(
+      return this.courseRepository.findManyByFilters(
         command.filters,
       );
     }
@@ -95,14 +95,11 @@ export class CourseReportService {
     throw new DomainException('Modo de exportacao de cursos invalido.');
   }
 
-  private toPdfRow({
-    course,
-    location,
-  }: CourseWithLocation): CourseReportPdfRow {
+  private toPdfRow(course: Course): CourseReportPdfRow {
     return {
       name: course.name,
       modality: course.modality,
-      address: location?.trim() ? location : '-',
+      address: course.address?.trim() ? course.address : '-',
       status: course.status,
       startDate: this.formatDate(course.startDate),
       endDate: this.formatDate(course.endDate),

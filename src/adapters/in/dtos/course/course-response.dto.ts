@@ -74,10 +74,7 @@ function toIsoString(value: Date | string): string {
   return date.toISOString();
 }
 
-export function toCourseResponse(
-  course: Course,
-  location: string | null = null,
-): CourseResponseDto {
+export function toCourseResponse(course: Course): CourseResponseDto {
   return {
     id: course.id,
     title: course.name,
@@ -90,7 +87,7 @@ export function toCourseResponse(
     endDate: toIsoString(course.endDate),
     enrollmentStart: toIsoString(course.startRegistrations),
     enrollmentEnd: toIsoString(course.endRegistrations),
-    location,
+    location: course.address ?? null,
     shift: course.shift ?? null,
     imageUrl: course.banner?.trim() ? course.banner : null,
     externalLink: course.linkAccess?.trim() ? course.linkAccess : null,

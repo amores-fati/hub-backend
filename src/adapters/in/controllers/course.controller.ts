@@ -183,11 +183,9 @@ export class CourseController {
   })
   async findAll() {
     this.logger.info('Listing courses');
-    const courses = await this.courseService.getAllCoursesWithLocation();
+    const courses = await this.courseService.getAllCourses();
     this.logger.info('Courses listed', { count: courses.length });
-    return courses.map(({ course, location }) =>
-      toCourseResponse(course, location),
-    );
+    return courses.map((course) => toCourseResponse(course));
   }
 
   @RequireAuth(UserRoleEnum.ADMIN)

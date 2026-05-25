@@ -5,7 +5,6 @@ import {
 } from '../command/course.command';
 import { Course } from '../domain/course.entity';
 import {
-  CourseWithLocation,
   ICourseRepository,
 } from '../ports/course.repository.interface';
 import { CourseNotFoundException } from '../exceptions/course-not-found.exception';
@@ -68,10 +67,6 @@ export class CourseService {
 
   async getAllCourses(): Promise<Course[]> {
     return this.courseRepository.findAll();
-  }
-
-  async getAllCoursesWithLocation(): Promise<CourseWithLocation[]> {
-    return this.courseRepository.findAllWithLocation();
   }
 
   async findCourseById(id: string): Promise<Course> {
