@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Course } from '../../../../core/domain/course.entity';
+import { CourseStatus } from '../../../../core/domain/course-status.enum';
 
 export type CourseModalityResponse = 'presencial' | 'online' | 'hibrido';
 
@@ -25,6 +26,9 @@ export class CourseResponseDto {
   @ApiProperty({ example: 30 })
   vacancyCount: number;
 
+  @ApiProperty({ enum: CourseStatus, example: CourseStatus.ATIVO })
+  status: CourseStatus;
+
   @ApiProperty({ example: '2025-02-01T00:00:00.000Z' })
   startDate: string;
 
@@ -39,6 +43,9 @@ export class CourseResponseDto {
 
   @ApiProperty({ example: 'Porto Alegre - RS', nullable: true })
   location: string | null;
+
+  @ApiProperty({ example: 'morning', nullable: true })
+  shift: string | null;
 
   @ApiProperty({
     example: 'https://fatilab.com/banners/web.jpg',
@@ -78,11 +85,13 @@ export function toCourseResponse(
     modality: normalizeModality(course.modality),
     workloadHours: parseWorkloadHours(course.courseLoad),
     vacancyCount: course.vacancyCount,
+    status: course.status,
     startDate: toIsoString(course.startDate),
     endDate: toIsoString(course.endDate),
     enrollmentStart: toIsoString(course.startRegistrations),
     enrollmentEnd: toIsoString(course.endRegistrations),
     location,
+    shift: course.shift ?? null,
     imageUrl: course.banner?.trim() ? course.banner : null,
     externalLink: course.linkAccess?.trim() ? course.linkAccess : null,
   };

@@ -1,6 +1,6 @@
 export enum EnrollmentType {
-  ENROLLMENT = 'ENROLLMENT',
-  INTEREST = 'INTEREST',
+  ENROLLMENT = 'INSCRICAO',
+  INTEREST = 'INTERESSE',
 }
 
 export class Enrollment {

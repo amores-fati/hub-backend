@@ -52,6 +52,7 @@ export class AdminService {
       about: curriculum.about,
       linkedinUrl: curriculum.linkedinUrl || '',
       githubUrl: curriculum.githubUrl || '',
+      videoPresentationUrl: curriculum.videoPresentationUrl || '',
       photoUrl: curriculum.photoUrl,
       skills: curriculum.skills.map((s) => ({
         id: s.id,

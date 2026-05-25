@@ -1,5 +1,13 @@
-import { Column, CreateDateColumn, Entity, PrimaryColumn } from 'typeorm';
+import {
+  Check,
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryColumn,
+} from 'typeorm';
+import { CourseStatus } from '../../../core/domain/course-status.enum';
 
+@Check('ck_courses__status', `"status" IN ('ATIVO', 'INATIVO')`)
 @Entity('courses')
 export class CourseOrmEntity {
   @PrimaryColumn('uuid')
@@ -32,11 +40,20 @@ export class CourseOrmEntity {
   @Column({ name: 'modality', type: 'varchar', default: 'ONLINE' })
   modality: string;
 
-  @Column({ name: 'link_access' })
-  linkAccess: string;
+  @Column({ name: 'link_access', type: 'varchar', nullable: true })
+  linkAccess: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  address: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  shift: string | null;
 
   @Column({ name: 'vacancy_count', type: 'int', default: 0 })
   vacancyCount: number;
+
+  @Column({ name: 'status', type: 'varchar', length: 20, default: 'ATIVO' })
+  status: CourseStatus;
 
   @CreateDateColumn({
     name: 'created_at',

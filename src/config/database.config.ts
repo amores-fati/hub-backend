@@ -10,12 +10,14 @@ import { CurriculumOrmEntity } from '../adapters/out/orm/curriculum.orm-entity';
 import { SocialBenefitOrmEntity } from '../adapters/out/orm/social-benefit.orm-entity';
 import { JobSkillOrmEntity } from '../adapters/out/orm/job-skill.orm-entity';
 import { CurriculumSkillOrmEntity } from '../adapters/out/orm/curriculum-skill.orm-entity';
-import { ContactOrmEntity } from '../adapters/out/orm/contact.orm-entity';
 import { JobOpeningOrmEntity } from '../adapters/out/orm/job-opening.orm-entity';
 import { AdminOrmEntity } from '../adapters/out/orm/admin.orm-entity';
 import { SkillOrmEntity } from '../adapters/out/orm/skill.orm-entity';
 import { CompanyOrmEntity } from '../adapters/out/orm/company.orm-entity';
-import { InPersonCourseDetailOrmEntity } from '../adapters/out/orm/in-person-course-detail.orm-entity';
+import { TelephoneCompanyOrmEntity } from '../adapters/out/orm/telephone-company.orm-entity';
+import { AddressCompanyOrmEntity } from '../adapters/out/orm/address-company.orm-entity';
+import { TelephoneStudentOrmEntity } from '../adapters/out/orm/telephone-student.orm-entity';
+import { AddressStudentOrmEntity } from '../adapters/out/orm/address-student.orm-entity';
 import { SettingOrmEntity } from '../adapters/out/orm/setting.orm-entity';
 import { EnrollmentOrmEntity } from '../adapters/out/orm/enrollment.orm-entity';
 import { SnakeNamingStrategy } from './snake-naming.strategy';
@@ -29,12 +31,14 @@ export const ORM_ENTITIES = [
   SocialBenefitOrmEntity,
   JobSkillOrmEntity,
   CurriculumSkillOrmEntity,
-  ContactOrmEntity,
   JobOpeningOrmEntity,
   AdminOrmEntity,
   CompanyOrmEntity,
+  TelephoneCompanyOrmEntity,
+  AddressCompanyOrmEntity,
+  TelephoneStudentOrmEntity,
+  AddressStudentOrmEntity,
   SkillOrmEntity,
-  InPersonCourseDetailOrmEntity,
   SettingOrmEntity,
   EnrollmentOrmEntity,
 ] as const;

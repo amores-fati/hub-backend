@@ -26,6 +26,30 @@ export interface PaginatedStudentListResult {
   total: number;
 }
 
+export type StudentReportStatus = 'INSCRICAO' | 'INTERESSE' | 'NAO_INSCRITO';
+
+export interface StudentReportFilters {
+  search?: string;
+  course?: string;
+  location?: string;
+  pcdType?: string;
+  status?: StudentReportStatus;
+}
+
+export interface StudentReportProjection {
+  id: string;
+  email: string;
+  cpf: string;
+  fullName: string;
+  socialName?: string;
+  phoneNumber: string;
+  city?: string;
+  state?: string;
+  courseNames: string[];
+  hasDisability?: boolean;
+  disabilityType?: string;
+}
+
 export interface StudentFilterQuery {
   search?: string;
   city?: string[];
@@ -40,6 +64,10 @@ export interface IStudentRepository {
   findAllWithFilter(
     query: StudentFilterQuery,
   ): Promise<PaginatedStudentListResult>;
+  findManyForReportByIds(ids: string[]): Promise<StudentReportProjection[]>;
+  findManyForReportByFilters(
+    filters?: StudentReportFilters,
+  ): Promise<StudentReportProjection[]>;
   findById(id: string): Promise<Student | null>;
   existsById(id: string): Promise<boolean>;
   findByCpf(cpf: string, includeDeleted?: boolean): Promise<Student | null>;
