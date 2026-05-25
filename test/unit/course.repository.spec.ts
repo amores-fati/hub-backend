@@ -42,7 +42,7 @@ describe('CourseRepository', () => {
     expect(courses[0].vacancyCount).toBe(30);
   });
 
-  it('should attach in-person addresses as location when listing with location', async () => {
+  it('should attach in-person addresses as location when listing', async () => {
     const ormEntity = new CourseOrmEntity();
     ormEntity.id = 'course-id';
     ormEntity.name = 'Curso Presencial';
@@ -60,10 +60,10 @@ describe('CourseRepository', () => {
 
     (ormRepository.find as jest.Mock).mockResolvedValue([ormEntity]);
 
-    const result = await repository.findAllWithLocation();
+    const result = await repository.findAll();
 
     expect(result).toHaveLength(1);
-    expect(result[0].course.id).toBe('course-id');
-    expect(result[0].location).toBe('Porto Alegre - RS');
+    expect(result[0].id).toBe('course-id');
+    expect(result[0].address).toBe('Porto Alegre - RS');
   });
 });

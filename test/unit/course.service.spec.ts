@@ -12,10 +12,9 @@ describe('CourseService', () => {
   const mockRepository: ICourseRepository = {
     create: jest.fn(),
     findAll: jest.fn(),
-    findAllWithLocation: jest.fn(),
     findById: jest.fn(),
-    findManyByIdsWithLocation: jest.fn(),
-    findManyWithLocationByFilters: jest.fn(),
+    findManyByIds: jest.fn(),
+    findManyByFilters: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
   };
@@ -98,6 +97,8 @@ describe('CourseService', () => {
         createCommand.modality,
         createCommand.linkAccess,
         createCommand.vacancyCount,
+        createCommand.shift,
+        createCommand.address,
         createCommand.description,
       );
 
@@ -132,6 +133,8 @@ describe('CourseService', () => {
         createCommand.modality,
         createCommand.linkAccess,
         createCommand.vacancyCount,
+        createCommand.shift,
+        createCommand.address,
         createCommand.description,
       );
 
