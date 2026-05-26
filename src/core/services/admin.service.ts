@@ -86,6 +86,9 @@ export class AdminService {
 
     const filterQuery: ResumeFilterQuery = {
       search: query.search,
+      interestArea: query.interestArea,
+      preference: query.preference,
+      status: query.status,
       page: normalizedPage,
       limit: normalizedLimit,
     };
