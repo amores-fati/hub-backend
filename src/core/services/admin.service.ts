@@ -21,6 +21,7 @@ import {
 import {
   ResumeFilterQuery,
   PaginatedResumeListResult,
+  ResumeListProjection,
 } from '../ports/curriculum.repository.interface';
 
 export class AdminService {
@@ -107,7 +108,7 @@ export class AdminService {
   }
 
   private mapToResumeListItem(
-    item: any,
+    item: ResumeListProjection,
   ): ResumeListItemDto {
     return {
       id: item.id,
