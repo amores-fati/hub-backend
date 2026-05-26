@@ -73,6 +73,25 @@ export class CurriculumRepository implements ICurriculumRepository {
       );
     }
 
+    if (query.interestArea) {
+      queryBuilder.andWhere('student.activityArea ILIKE :interestArea', {
+        interestArea: this.buildLikeFilter(query.interestArea),
+      });
+    }
+
+    if (query.status) {
+      const statusLower = query.status.toLowerCase();
+      if (statusLower === 'available') {
+        queryBuilder.andWhere('curriculum.isAvailable = :isAvailable', {
+          isAvailable: true,
+        });
+      } else if (statusLower === 'unavailable') {
+        queryBuilder.andWhere('curriculum.isAvailable = :isAvailable', {
+          isAvailable: false,
+        });
+      }
+    }
+
     const [ormEntities, total] = await queryBuilder
       .skip((normalizedPage - 1) * normalizedLimit)
       .take(normalizedLimit)
