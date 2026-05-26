@@ -118,7 +118,7 @@ export class AdminController {
   @ApiOperation({
     summary: 'Lista currículos com paginação e filtros',
     description:
-      'Retorna lista paginada de currículos com suporte a busca por nome, email e CPF.',
+      'Retorna lista paginada de currículos com suporte a busca por nome, email, CPF, área de interesse e status.',
   })
   @ApiOkResponse({ type: PaginatedResumesResponseDto })
   async getResumes(

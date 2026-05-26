@@ -33,4 +33,28 @@ export class GetResumesQueryDto {
   @IsString()
   @IsOptional()
   search?: string;
+
+  @ApiPropertyOptional({
+    example: 'Desenvolvimento',
+    description: 'Filtro por área de interesse do aluno',
+  })
+  @IsString()
+  @IsOptional()
+  interestArea?: string;
+
+  @ApiPropertyOptional({
+    example: 'Remoto',
+    description: 'Filtro por preferência de trabalho',
+  })
+  @IsString()
+  @IsOptional()
+  preference?: string;
+
+  @ApiPropertyOptional({
+    example: 'available',
+    description: 'Filtro por status de disponibilidade',
+  })
+  @IsString()
+  @IsOptional()
+  status?: string;
 }
