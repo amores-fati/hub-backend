@@ -31,6 +31,10 @@ import {
   GetLocationsQueryDto,
   LocationResponseDto,
 } from '../dtos/admin/get-locations.dto';
+import { GetResumesQueryDto } from '../dtos/admin/get-resumes.dto';
+import {
+  PaginatedResumesResponseDto,
+} from '../dtos/admin/paginated-resumes-response.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @ApiTags('Admins')
@@ -107,5 +111,19 @@ export class AdminController {
     @Query() query: GetLocationsQueryDto,
   ): Promise<LocationResponseDto[]> {
     return this.adminService.getLocations(query.scope);
+  }
+
+  @Get('resumes')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Lista currículos com paginação e filtros',
+    description:
+      'Retorna lista paginada de currículos com suporte a busca por nome, email, CPF, área de interesse e status.',
+  })
+  @ApiOkResponse({ type: PaginatedResumesResponseDto })
+  async getResumes(
+    @Query() query: GetResumesQueryDto,
+  ): Promise<PaginatedResumesResponseDto> {
+    return this.adminService.getResumes(query);
   }
 }

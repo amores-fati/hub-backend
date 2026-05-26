@@ -1,17 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
 
 import {
   Curriculum,
   CurriculumSkill,
 } from '../../../core/domain/curriculum.entity';
-import { ICurriculumRepository } from '../../../core/ports/curriculum.repository.interface';
+import {
+  ICurriculumRepository,
+  ResumeFilterQuery,
+  ResumeListProjection,
+  PaginatedResumeListResult,
+} from '../../../core/ports/curriculum.repository.interface';
 import { CurriculumSkillOrmEntity } from '../orm/curriculum-skill.orm-entity';
 import { CurriculumOrmEntity } from '../orm/curriculum.orm-entity';
 import { SkillOrmEntity } from '../orm/skill.orm-entity';
 import { StudentOrmEntity } from '../orm/student.orm-entity';
+import { UserOrmEntity } from '../orm/user.orm-entity';
+
+type CurriculumWithStudent = CurriculumOrmEntity & {
+  student: StudentOrmEntity & {
+    user: UserOrmEntity;
+  };
+};
 
 @Injectable()
 export class CurriculumRepository implements ICurriculumRepository {
@@ -27,6 +39,75 @@ export class CurriculumRepository implements ICurriculumRepository {
     });
 
     return ormEntity ? this.mapToDomain(ormEntity, studentId) : null;
+  }
+
+  async findAllWithFilter(
+    query: ResumeFilterQuery,
+  ): Promise<PaginatedResumeListResult> {
+    const normalizedPage = Math.max(1, query.page);
+    const normalizedLimit = Math.max(1, Math.min(50, query.limit));
+
+    const queryBuilder = this.ormRepository
+      .createQueryBuilder('curriculum')
+      .innerJoinAndSelect('curriculum.student', 'student')
+      .innerJoinAndSelect('student.user', 'user');
+
+    if (query.search) {
+      const search = this.buildLikeFilter(query.search);
+      const normalizedCpf = this.normalizeCpf(query.search);
+
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb.where('student.fullName ILIKE :search', { search })
+            .orWhere('student.socialName ILIKE :search', { search })
+            .orWhere('user.email ILIKE :search', { search });
+
+          if (normalizedCpf) {
+            qb.orWhere(
+              "regexp_replace(student.cpf, '\\D', '', 'g') ILIKE :cpf",
+              { cpf: this.buildLikeFilter(normalizedCpf) },
+            );
+          }
+        }),
+      );
+    }
+
+    if (query.interestArea) {
+      queryBuilder.andWhere('student.activityArea ILIKE :interestArea', {
+        interestArea: this.buildLikeFilter(query.interestArea),
+      });
+    }
+
+    if (query.preference) {
+      queryBuilder.andWhere('curriculum.preference ILIKE :preference', {
+        preference: this.buildLikeFilter(query.preference),
+      });
+    }
+
+    if (query.status) {
+      const statusLower = query.status.toLowerCase();
+      if (statusLower === 'available') {
+        queryBuilder.andWhere('curriculum.isAvailable = :isAvailable', {
+          isAvailable: true,
+        });
+      } else if (statusLower === 'unavailable') {
+        queryBuilder.andWhere('curriculum.isAvailable = :isAvailable', {
+          isAvailable: false,
+        });
+      }
+    }
+
+    const [ormEntities, total] = await queryBuilder
+      .skip((normalizedPage - 1) * normalizedLimit)
+      .take(normalizedLimit)
+      .getManyAndCount();
+
+    return {
+      items: ormEntities.map((entity) =>
+        this.mapToListProjection(entity as CurriculumWithStudent),
+      ),
+      total,
+    };
   }
 
   async save(curriculum: Curriculum): Promise<Curriculum> {
@@ -87,6 +168,37 @@ export class CurriculumRepository implements ICurriculumRepository {
         curriculumId,
         skillId,
       });
+  }
+
+  private buildLikeFilter(value: string): string {
+    return `%${value}%`;
+  }
+
+  private normalizeCpf(cpf: string): string {
+    return cpf.replace(/\D/g, '');
+  }
+
+  private mapToListProjection(
+    ormEntity: CurriculumWithStudent,
+  ): ResumeListProjection {
+    return {
+      id: ormEntity.id,
+      cpf: this.formatCpf(ormEntity.student.cpf),
+      fullName: ormEntity.student.fullName,
+      socialName: ormEntity.student.socialName || undefined,
+      email: ormEntity.student.user.email,
+      isAvailable: ormEntity.isAvailable,
+      about: ormEntity.about || undefined,
+      linkedin: ormEntity.linkedin || undefined,
+      github: ormEntity.github || undefined,
+      preference: ormEntity.preference || undefined,
+    };
+  }
+
+  private formatCpf(cpf: string): string {
+    const cleaned = cpf.replace(/\D/g, '');
+    if (cleaned.length !== 11) return cpf;
+    return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
   }
 
   private mapToOrm(curriculum: Curriculum): CurriculumOrmEntity {
