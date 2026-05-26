@@ -329,7 +329,7 @@ describe('AdminController (e2e) - Resumes', () => {
             `INSERT INTO "curriculum" (id, student_id, is_available, about) VALUES ($1, $2, $3, $4)`,
             [curriculumId, studentId, true, 'About'],
           );
-        } catch (e) {
+        } catch {
           // Ignore duplicate errors for this test
         }
       }
