@@ -50,8 +50,7 @@ export class CurriculumRepository implements ICurriculumRepository {
     const queryBuilder = this.ormRepository
       .createQueryBuilder('curriculum')
       .innerJoinAndSelect('curriculum.student', 'student')
-      .innerJoinAndSelect('student.user', 'user')
-      .innerJoinAndSelect('student.contact', 'contact');
+      .innerJoinAndSelect('student.user', 'user');
 
     if (query.search) {
       const search = this.buildLikeFilter(query.search);
@@ -76,6 +75,12 @@ export class CurriculumRepository implements ICurriculumRepository {
     if (query.interestArea) {
       queryBuilder.andWhere('student.activityArea ILIKE :interestArea', {
         interestArea: this.buildLikeFilter(query.interestArea),
+      });
+    }
+
+    if (query.preference) {
+      queryBuilder.andWhere('curriculum.preference ILIKE :preference', {
+        preference: this.buildLikeFilter(query.preference),
       });
     }
 
@@ -186,6 +191,7 @@ export class CurriculumRepository implements ICurriculumRepository {
       about: ormEntity.about || undefined,
       linkedin: ormEntity.linkedin || undefined,
       github: ormEntity.github || undefined,
+      preference: ormEntity.preference || undefined,
     };
   }
 

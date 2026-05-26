@@ -121,6 +121,7 @@ export class AdminService {
       about: item.about,
       linkedin: item.linkedin,
       github: item.github,
+      preference: item.preference,
     };
   }
 }
