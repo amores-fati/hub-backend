@@ -5,6 +5,7 @@ import { createIntegrationApp } from './bootstrap';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { DataSource } from 'typeorm';
+import { PaginatedResumesResponseDto } from '../../src/adapters/in/dtos/admin/paginated-resumes-response.dto';
 
 describe('AdminController (e2e) - Resumes', () => {
   let app: INestApplication;
@@ -175,9 +176,10 @@ describe('AdminController (e2e) - Resumes', () => {
         .set('Authorization', `Bearer ${adminAccessToken}`)
         .expect(200)
         .expect((res) => {
-          expect(res.body.data).toHaveLength(3);
-          expect(res.body.meta.total).toBe(3);
-          expect(res.body.data[0]).toHaveProperty('cpf');
+          const body = res.body as PaginatedResumesResponseDto;
+          expect(body.data).toHaveLength(3);
+          expect(body.meta.total).toBe(3);
+          expect(body.data[0]).toHaveProperty('cpf');
         });
     });
 
@@ -188,9 +190,10 @@ describe('AdminController (e2e) - Resumes', () => {
         .query({ search: 'ana' })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data).toHaveLength(1);
-          expect(res.body.data[0].fullName).toBe('Ana Júlia Silva');
-          expect(res.body.meta.total).toBe(1);
+          const body = res.body as PaginatedResumesResponseDto;
+          expect(body.data).toHaveLength(1);
+          expect(body.data[0].fullName).toBe('Ana Júlia Silva');
+          expect(body.meta.total).toBe(1);
         });
     });
 
@@ -201,10 +204,11 @@ describe('AdminController (e2e) - Resumes', () => {
         .query({ search: '12345678900' })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data).toHaveLength(1);
-          expect(res.body.data[0].cpf).toBe('123.456.789-00');
-          expect(res.body.data[0].fullName).toBe('Ana Júlia Silva');
-          expect(res.body.meta.total).toBe(1);
+          const body = res.body as PaginatedResumesResponseDto;
+          expect(body.data).toHaveLength(1);
+          expect(body.data[0].cpf).toBe('123.456.789-00');
+          expect(body.data[0].fullName).toBe('Ana Júlia Silva');
+          expect(body.meta.total).toBe(1);
         });
     });
 
@@ -215,9 +219,10 @@ describe('AdminController (e2e) - Resumes', () => {
         .query({ search: '123.456.789-00' })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data).toHaveLength(1);
-          expect(res.body.data[0].fullName).toBe('Ana Júlia Silva');
-          expect(res.body.meta.total).toBe(1);
+          const body = res.body as PaginatedResumesResponseDto;
+          expect(body.data).toHaveLength(1);
+          expect(body.data[0].fullName).toBe('Ana Júlia Silva');
+          expect(body.meta.total).toBe(1);
         });
     });
 
@@ -228,10 +233,11 @@ describe('AdminController (e2e) - Resumes', () => {
         .query({ search: 'ana@test.com' })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data).toHaveLength(1);
-          expect(res.body.data[0].email).toBe('ana@test.com');
-          expect(res.body.data[0].fullName).toBe('Ana Júlia Silva');
-          expect(res.body.meta.total).toBe(1);
+          const body = res.body as PaginatedResumesResponseDto;
+          expect(body.data).toHaveLength(1);
+          expect(body.data[0].email).toBe('ana@test.com');
+          expect(body.data[0].fullName).toBe('Ana Júlia Silva');
+          expect(body.meta.total).toBe(1);
         });
     });
 
@@ -242,9 +248,10 @@ describe('AdminController (e2e) - Resumes', () => {
         .query({ search: 'ana@' })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data).toHaveLength(1);
-          expect(res.body.data[0].email).toBe('ana@test.com');
-          expect(res.body.meta.total).toBe(1);
+          const body = res.body as PaginatedResumesResponseDto;
+          expect(body.data).toHaveLength(1);
+          expect(body.data[0].email).toBe('ana@test.com');
+          expect(body.meta.total).toBe(1);
         });
     });
 
@@ -284,11 +291,12 @@ describe('AdminController (e2e) - Resumes', () => {
         .query({ page: 2, limit: 5 })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data).toHaveLength(5);
-          expect(res.body.meta.total).toBe(12);
-          expect(res.body.meta.page).toBe(2);
-          expect(res.body.meta.limit).toBe(5);
-          expect(res.body.meta.totalPages).toBe(3);
+          const body = res.body as PaginatedResumesResponseDto;
+          expect(body.data).toHaveLength(5);
+          expect(body.meta.total).toBe(12);
+          expect(body.meta.page).toBe(2);
+          expect(body.meta.limit).toBe(5);
+          expect(body.meta.totalPages).toBe(3);
         });
     });
 
@@ -332,8 +340,9 @@ describe('AdminController (e2e) - Resumes', () => {
         .query({ limit: 200 })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data.length).toBeLessThanOrEqual(50);
-          expect(res.body.meta.limit).toBe(50);
+          const body = res.body as PaginatedResumesResponseDto;
+          expect(body.data.length).toBeLessThanOrEqual(50);
+          expect(body.meta.limit).toBe(50);
         });
     });
 
@@ -343,9 +352,10 @@ describe('AdminController (e2e) - Resumes', () => {
         .set('Authorization', `Bearer ${adminAccessToken}`)
         .expect(200)
         .expect((res) => {
-          expect(res.body.data.length).toBeGreaterThan(0);
+          const body = res.body as PaginatedResumesResponseDto;
+          expect(body.data.length).toBeGreaterThan(0);
           // Verify that students without curriculum are not included
-          const emails = res.body.data.map((item: any) => item.email);
+          const emails = body.data.map((item) => item.email);
           expect(emails).not.toContain('noresume1@test.com');
           expect(emails).not.toContain('noresume2@test.com');
         });
@@ -358,7 +368,8 @@ describe('AdminController (e2e) - Resumes', () => {
         .query({ page: -5 })
         .expect(200)
         .expect((res) => {
-          expect(res.body.meta.page).toBe(1);
+          const body = res.body as PaginatedResumesResponseDto;
+          expect(body.meta.page).toBe(1);
         });
     });
 
@@ -374,11 +385,12 @@ describe('AdminController (e2e) - Resumes', () => {
         .set('Authorization', `Bearer ${adminAccessToken}`)
         .expect(200)
         .expect((res) => {
-          expect(res.body.meta.page).toBe(1);
-          expect(res.body.meta.limit).toBe(20);
-          expect(res.body.data).toBeInstanceOf(Array);
-          expect(res.body.meta).toHaveProperty('total');
-          expect(res.body.meta).toHaveProperty('totalPages');
+          const body = res.body as PaginatedResumesResponseDto;
+          expect(body.meta.page).toBe(1);
+          expect(body.meta.limit).toBe(20);
+          expect(body.data).toBeInstanceOf(Array);
+          expect(body.meta).toHaveProperty('total');
+          expect(body.meta).toHaveProperty('totalPages');
         });
     });
   });
