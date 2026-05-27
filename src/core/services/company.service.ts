@@ -166,10 +166,6 @@ export class CompanyService {
   }
 
   async deleteVacancy(vacancyId: string, companyId: string): Promise<void> {
-    if (!this.vacancyRepository) {
-      throw new Error('Vacancy repository not available');
-    }
-
     const vacancyCompanyId = await this.vacancyRepository.findCompanyIdById(
       vacancyId,
     );

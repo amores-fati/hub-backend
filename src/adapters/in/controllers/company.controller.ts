@@ -17,6 +17,7 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -43,6 +44,13 @@ import { PatchCompanyDto } from '../dtos/company/patch-company.dto';
 import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
 import { ListMyVacanciesQueryDto } from '../dtos/vacancy/list-my-vacancies-query.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
+
+interface AuthenticatedUser {
+  id: string;
+  email: string;
+  role: UserRoleEnum;
+  companyId: string | null;
+}
 
 @ApiTags('Companies')
 @Controller('companies')
@@ -307,10 +315,16 @@ export class CompanyController {
   @ApiOperation({ summary: 'Deleta uma vaga da empresa autenticada' })
   @ApiNoContentResponse({ description: 'Vaga deletada com sucesso.' })
   @ApiNotFoundResponse({ description: 'Vaga nao encontrada.' })
-  async deleteVacancy(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
+  async deleteVacancy(
+    @Req() req: Request & { user: AuthenticatedUser },
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     try {
       this.logger.log(`Iniciando exclusão da vaga ${id}`);
-      const companyId = (req.user as any)?.companyId;
+      const companyId = req.user.companyId;
+      if (!companyId) {
+        throw new ForbiddenException('Token inválido: companyId ausente');
+      }
       await this.companyService.deleteVacancy(id, companyId);
       this.logger.info('Vacancy deleted', { id });
     } catch (error) {
