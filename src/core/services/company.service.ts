@@ -11,6 +11,11 @@ import {
 import { Contact } from '../domain/contact.entity';
 import { IHashService } from '../ports/hash.service.interface';
 import { IUserRepository } from '../ports/user.repository.interface';
+import {
+  IVacancyReportRepository,
+  MyVacanciesFilters,
+  PaginatedVacanciesResult,
+} from '../ports/vacancy-report.repository.interface';
 import { UserAlreadyExistsException } from '../exceptions/user-already-exists.exception';
 
 export class CompanyService {
@@ -18,6 +23,7 @@ export class CompanyService {
     private readonly companyRepository: ICompanyRepository,
     private readonly userRepository: IUserRepository,
     private readonly hashService: IHashService,
+    private readonly vacancyRepository: IVacancyReportRepository,
   ) {}
 
   async createCompany(command: CreateCompanyCommand): Promise<Company> {
@@ -153,6 +159,13 @@ export class CompanyService {
   async deleteCompany(id: string): Promise<void> {
     const company = await this.getCompanyById(id);
     await this.companyRepository.delete(company.id);
+  }
+
+  async listMyVacancies(
+    companyId: string,
+    filters: Omit<MyVacanciesFilters, 'companyId'>,
+  ): Promise<PaginatedVacanciesResult> {
+    return this.vacancyRepository.findMyVacancies({ companyId, ...filters });
   }
 
   private async assertEmailAvailable(

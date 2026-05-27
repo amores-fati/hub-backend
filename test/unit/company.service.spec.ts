@@ -12,6 +12,9 @@ import {
 } from '../../src/core/command/company.command';
 import { IUserRepository } from '../../src/core/ports/user.repository.interface';
 import { IHashService } from '../../src/core/ports/hash.service.interface';
+import {
+  IVacancyReportRepository,
+} from '../../src/core/ports/vacancy-report.repository.interface';
 import { UserAlreadyExistsException } from '../../src/core/exceptions/user-already-exists.exception';
 
 describe('CompanyService', () => {
@@ -36,6 +39,12 @@ describe('CompanyService', () => {
   const mockHashService: IHashService = {
     hash: jest.fn(),
     compare: jest.fn(),
+  };
+
+  const mockVacancyRepository: IVacancyReportRepository = {
+    findManyByIds: jest.fn(),
+    findManyByFilters: jest.fn(),
+    findMyVacancies: jest.fn(),
   };
 
   let mockContact: Contact;
@@ -69,6 +78,7 @@ describe('CompanyService', () => {
       mockRepository,
       mockUserRepository,
       mockHashService,
+      mockVacancyRepository,
     );
   });
 
@@ -306,6 +316,68 @@ describe('CompanyService', () => {
       await service.deleteCompany(mockCompany.id);
 
       expect(mockRepository.delete).toHaveBeenCalledWith(mockCompany.id);
+    });
+  });
+
+  describe('listMyVacancies', () => {
+    it('should return paginated vacancies for the company', async () => {
+      const filters = { page: 1, limit: 10 };
+      const expectedResult = {
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+      };
+
+      (mockVacancyRepository.findMyVacancies as jest.Mock).mockResolvedValue(
+        expectedResult,
+      );
+
+      const result = await service.listMyVacancies('company-id', filters);
+
+      expect(result).toEqual(expectedResult);
+      expect(mockVacancyRepository.findMyVacancies).toHaveBeenCalledWith({
+        companyId: 'company-id',
+        ...filters,
+      });
+    });
+
+    it('should pass search filter to repository', async () => {
+      const filters = { page: 1, limit: 10, search: 'desenvolvedor' };
+      (mockVacancyRepository.findMyVacancies as jest.Mock).mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+      });
+
+      await service.listMyVacancies('company-id', filters);
+
+      expect(mockVacancyRepository.findMyVacancies).toHaveBeenCalledWith({
+        companyId: 'company-id',
+        page: 1,
+        limit: 10,
+        search: 'desenvolvedor',
+      });
+    });
+
+    it('should pass isPcd filter to repository', async () => {
+      const filters = { page: 1, limit: 10, isPcd: true };
+      (mockVacancyRepository.findMyVacancies as jest.Mock).mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+      });
+
+      await service.listMyVacancies('company-id', filters);
+
+      expect(mockVacancyRepository.findMyVacancies).toHaveBeenCalledWith({
+        companyId: 'company-id',
+        page: 1,
+        limit: 10,
+        isPcd: true,
+      });
     });
   });
 });

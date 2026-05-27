@@ -4,6 +4,7 @@ import {
   ConflictException,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -13,6 +14,8 @@ import {
   Patch,
   Post,
   Put,
+  Query,
+  Req,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -25,6 +28,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import type { Request } from 'express';
 
 import {
   CreateCompanyCommand,
@@ -36,7 +40,15 @@ import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCompanyDto } from '../dtos/company/create-company.dto';
 import { PatchCompanyDto } from '../dtos/company/patch-company.dto';
 import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
+import { ListMyVacanciesQueryDto } from '../dtos/vacancy/list-my-vacancies-query.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
+
+interface AuthenticatedUser {
+  id: string;
+  email: string;
+  role: UserRoleEnum;
+  companyId: string | null;
+}
 
 @ApiTags('Companies')
 @Controller('companies')
@@ -234,6 +246,31 @@ export class CompanyController {
 
       throw error;
     }
+  }
+
+  @RequireAuth(UserRoleEnum.COMPANY)
+  @Get('me/vacancies')
+  @ApiOperation({ summary: 'Lista as vagas da empresa autenticada com filtros e paginacao' })
+  @ApiOkResponse({ description: 'Vagas listadas com sucesso.' })
+  async listMyVacancies(
+    @Req() req: Request & { user: AuthenticatedUser },
+    @Query() query: ListMyVacanciesQueryDto,
+  ) {
+    this.logger.info('Listando vagas da empresa autenticada', {
+      companyId: req.user.id,
+    });
+    const companyId = req.user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException('Token invalido: companyId ausente');
+    }
+
+    return this.companyService.listMyVacancies(companyId, {
+      page: query.page ?? 1,
+      limit: query.limit ?? 10,
+      search: query.search,
+      vacancyCount: query.vacancyCount,
+      isPcd: query.isPcd,
+    });
   }
 
   @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)

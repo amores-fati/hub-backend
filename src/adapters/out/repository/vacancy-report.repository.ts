@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm';
 import {
   IVacancyReportRepository,
+  MyVacanciesFilters,
+  PaginatedVacanciesResult,
   VacancyReportFilters,
   VacancyReportProjection,
 } from '../../../core/ports/vacancy-report.repository.interface';
@@ -46,6 +48,44 @@ export class VacancyReportRepository implements IVacancyReportRepository {
       .getMany();
 
     return ormEntities.map((entity) => this.mapToProjection(entity));
+  }
+
+  async findMyVacancies(
+    filters: MyVacanciesFilters,
+  ): Promise<PaginatedVacanciesResult> {
+    const { companyId, search, vacancyCount, isPcd, page, limit } = filters;
+    const qb = this.ormRepository
+      .createQueryBuilder('vacancy')
+      .innerJoin('vacancy.company', 'company')
+      .where('company.id = :companyId', { companyId });
+
+    if (search) {
+      qb.andWhere('vacancy.name ILIKE :search', { search: `%${search}%` });
+    }
+
+    if (vacancyCount !== undefined) {
+      qb.andWhere('vacancy.openingsCount = :vacancyCount', {
+        vacancyCount,
+      });
+    }
+
+    if (isPcd !== undefined) {
+      qb.andWhere('vacancy.isPcd = :isPcd', { isPcd });
+    }
+
+    const total = await qb.getCount();
+    const ormEntities = await qb
+      .orderBy('vacancy.announcementDate', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
+
+    return {
+      data: ormEntities.map((e) => this.mapToProjection(e)),
+      total,
+      page,
+      limit,
+    };
   }
 
   private applyFilters(
