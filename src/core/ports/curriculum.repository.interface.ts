@@ -4,6 +4,7 @@ export const ICurriculumRepository = Symbol('ICurriculumRepository');
 
 export interface ResumeListProjection {
   id: string;
+  studentId: string;
   cpf: string;
   fullName: string;
   socialName?: string;

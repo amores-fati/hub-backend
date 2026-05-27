@@ -183,6 +183,7 @@ export class CurriculumRepository implements ICurriculumRepository {
   ): ResumeListProjection {
     return {
       id: ormEntity.id,
+      studentId: ormEntity.student.id,
       cpf: this.formatCpf(ormEntity.student.cpf),
       fullName: ormEntity.student.fullName,
       socialName: ormEntity.student.socialName || undefined,

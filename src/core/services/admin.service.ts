@@ -136,6 +136,7 @@ export class AdminService {
   ): ResumeListItemDto {
     return {
       id: item.id,
+      studentId: item.studentId,
       cpf: item.cpf,
       fullName: item.fullName,
       socialName: item.socialName,
