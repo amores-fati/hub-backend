@@ -12,9 +12,7 @@ import {
 } from '../../src/core/command/company.command';
 import { IUserRepository } from '../../src/core/ports/user.repository.interface';
 import { IHashService } from '../../src/core/ports/hash.service.interface';
-import {
-  IVacancyReportRepository,
-} from '../../src/core/ports/vacancy-report.repository.interface';
+import { IVacancyReportRepository } from '../../src/core/ports/vacancy-report.repository.interface';
 import { UserAlreadyExistsException } from '../../src/core/exceptions/user-already-exists.exception';
 
 describe('CompanyService', () => {
@@ -329,21 +327,24 @@ describe('CompanyService', () => {
         limit: 10,
       };
 
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockCompany);
       (mockVacancyRepository.findMyVacancies as jest.Mock).mockResolvedValue(
         expectedResult,
       );
 
-      const result = await service.listMyVacancies('company-id', filters);
+      const result = await service.listMyVacancies(mockCompany.id, filters);
 
       expect(result).toEqual(expectedResult);
+      expect(mockRepository.findById).toHaveBeenCalledWith(mockCompany.id);
       expect(mockVacancyRepository.findMyVacancies).toHaveBeenCalledWith({
-        companyId: 'company-id',
+        companyId: mockCompany.id,
         ...filters,
       });
     });
 
     it('should pass search filter to repository', async () => {
       const filters = { page: 1, limit: 10, search: 'desenvolvedor' };
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockCompany);
       (mockVacancyRepository.findMyVacancies as jest.Mock).mockResolvedValue({
         data: [],
         total: 0,
@@ -351,10 +352,10 @@ describe('CompanyService', () => {
         limit: 10,
       });
 
-      await service.listMyVacancies('company-id', filters);
+      await service.listMyVacancies(mockCompany.id, filters);
 
       expect(mockVacancyRepository.findMyVacancies).toHaveBeenCalledWith({
-        companyId: 'company-id',
+        companyId: mockCompany.id,
         page: 1,
         limit: 10,
         search: 'desenvolvedor',
@@ -363,6 +364,7 @@ describe('CompanyService', () => {
 
     it('should pass isPcd filter to repository', async () => {
       const filters = { page: 1, limit: 10, isPcd: true };
+      (mockRepository.findById as jest.Mock).mockResolvedValue(mockCompany);
       (mockVacancyRepository.findMyVacancies as jest.Mock).mockResolvedValue({
         data: [],
         total: 0,
@@ -370,14 +372,22 @@ describe('CompanyService', () => {
         limit: 10,
       });
 
-      await service.listMyVacancies('company-id', filters);
+      await service.listMyVacancies(mockCompany.id, filters);
 
       expect(mockVacancyRepository.findMyVacancies).toHaveBeenCalledWith({
-        companyId: 'company-id',
+        companyId: mockCompany.id,
         page: 1,
         limit: 10,
         isPcd: true,
       });
+    });
+
+    it('should throw CompanyNotFoundException if authenticated user is not a company', async () => {
+      (mockRepository.findById as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.listMyVacancies('missing-company-id', { page: 1, limit: 10 }),
+      ).rejects.toThrow(CompanyNotFoundException);
     });
   });
 });

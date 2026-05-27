@@ -162,10 +162,14 @@ export class CompanyService {
   }
 
   async listMyVacancies(
-    companyId: string,
+    userId: string,
     filters: Omit<MyVacanciesFilters, 'companyId'>,
   ): Promise<PaginatedVacanciesResult> {
-    return this.vacancyRepository.findMyVacancies({ companyId, ...filters });
+    const company = await this.getCompanyById(userId);
+    return this.vacancyRepository.findMyVacancies({
+      companyId: company.id,
+      ...filters,
+    });
   }
 
   private async assertEmailAvailable(

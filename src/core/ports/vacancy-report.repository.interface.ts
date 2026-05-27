@@ -36,5 +36,7 @@ export interface IVacancyReportRepository {
   findManyByFilters(
     filters?: VacancyReportFilters,
   ): Promise<VacancyReportProjection[]>;
-  findMyVacancies(filters: MyVacanciesFilters): Promise<PaginatedVacanciesResult>;
+  findMyVacancies(
+    filters: MyVacanciesFilters,
+  ): Promise<PaginatedVacanciesResult>;
 }
