@@ -62,6 +62,11 @@ export interface DisabilityCount {
   disabilityType: string;
   count: number;
 }
+export interface StudentCityCount {
+  cityName: string;
+  uf: string;
+  studentsCount: number;
+}
 export interface IStudentRepository {
   create(student: Student): Promise<Student>;
   findAll(): Promise<Student[]>;
@@ -80,4 +85,6 @@ export interface IStudentRepository {
   softDeleteMany(ids: string[]): Promise<void>;
   findLocations(): Promise<{ city: string; uf: string }[]>;
   countByDisabilityType(): Promise<DisabilityCount[]>;
+  countByCity(): Promise<StudentCityCount[]>;
+
 }
