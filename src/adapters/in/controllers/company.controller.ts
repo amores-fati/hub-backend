@@ -37,7 +37,7 @@ import {
 import { CompanyService } from '../../../core/services/company.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import { CurrentUser } from '../../../utils/decorators/current-user.decorator';
-import type { AuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
+import type { AuthenticatedUser as BaseAuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCompanyDto } from '../dtos/company/create-company.dto';
 import { PatchCompanyDto } from '../dtos/company/patch-company.dto';
@@ -45,10 +45,7 @@ import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
 import { ListMyVacanciesQueryDto } from '../dtos/vacancy/list-my-vacancies-query.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
-interface AuthenticatedUser {
-  id: string;
-  email: string;
-  role: UserRoleEnum;
+interface AuthenticatedUser extends BaseAuthenticatedUser {
   companyId: string | null;
 }
 

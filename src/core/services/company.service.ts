@@ -17,9 +17,6 @@ import {
   PaginatedVacanciesResult,
 } from '../ports/vacancy-report.repository.interface';
 import { UserAlreadyExistsException } from '../exceptions/user-already-exists.exception';
-import {
-  IVacancyReportRepository,
-} from '../ports/vacancy-report.repository.interface';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 
 export class CompanyService {
@@ -166,9 +163,8 @@ export class CompanyService {
   }
 
   async deleteVacancy(vacancyId: string, companyId: string): Promise<void> {
-    const vacancyCompanyId = await this.vacancyRepository.findCompanyIdById(
-      vacancyId,
-    );
+    const vacancyCompanyId =
+      await this.vacancyRepository.findCompanyIdById(vacancyId);
 
     if (!vacancyCompanyId) {
       throw new NotFoundException('Vaga não encontrada');
