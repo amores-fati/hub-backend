@@ -14,6 +14,7 @@ export interface ResumeListProjection {
   linkedin?: string;
   github?: string;
   preference?: string;
+  phone?: string;
 }
 
 export interface PaginatedResumeListResult {

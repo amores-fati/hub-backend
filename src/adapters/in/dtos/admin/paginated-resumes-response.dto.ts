@@ -33,6 +33,15 @@ export class ResumeListItemDto {
 
   @ApiProperty({ example: 'Remoto', required: false })
   preference?: string;
+
+  @ApiProperty({ example: '(51) 99999-9999', required: false })
+  phone?: string;
+
+  @ApiProperty({ example: 'Porto Alegre', required: false })
+  city?: string;
+
+  @ApiProperty({ example: 'RS', required: false })
+  state?: string;
 }
 
 export class PaginatedResumesMetaDto {

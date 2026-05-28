@@ -57,4 +57,20 @@ export class GetResumesQueryDto {
   @IsString()
   @IsOptional()
   status?: string;
+
+  @ApiPropertyOptional({
+    example: 'Porto Alegre',
+    description: 'Filtro por cidade do aluno',
+  })
+  @IsString()
+  @IsOptional()
+  city?: string;
+
+  @ApiPropertyOptional({
+    example: 'RS',
+    description: 'Filtro por estado do aluno',
+  })
+  @IsString()
+  @IsOptional()
+  state?: string;
 }
