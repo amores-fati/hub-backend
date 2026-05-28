@@ -10,6 +10,7 @@ import {
 import { randomUUID } from 'crypto';
 
 import {
+  DisabilityCount,
   IStudentRepository,
   PaginatedStudentListResult,
   StudentFilterQuery,
@@ -863,5 +864,18 @@ export class StudentRepository implements IStudentRepository {
 
   private coerceRequiredDate(value: Date | string): Date {
     return value instanceof Date ? value : new Date(value);
+  }
+
+  async countByDisabilityType(): Promise<DisabilityCount[]> {
+    const rows = await this.ormRepository
+      .createQueryBuilder('student')
+      .innerJoin('student.disabilities', 'disability')    
+      .select('disability.name', 'disabilityType')
+      .addSelect('CAST(COUNT(*) AS int)', 'count')   
+      .groupBy('disability.name')
+      .orderBy('count', 'DESC')
+      .getRawMany<{ disabilityType: string; count: number }>();
+
+    return rows;
   }
 }

@@ -13,7 +13,6 @@ export class AddMetadataColumns1778600000000 implements MigrationInterface {
       'curriculum_skills',
       'job_openings',
       'job_skills',
-      'in_person_course_details',
       'settings',
     ];
 
@@ -50,7 +49,6 @@ export class AddMetadataColumns1778600000000 implements MigrationInterface {
       'curriculum_skills',
       'job_openings',
       'job_skills',
-      'in_person_course_details',
       'settings',
     ];
 
