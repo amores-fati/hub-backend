@@ -58,6 +58,8 @@ import { CompanyController } from './adapters/in/controllers/company.controller'
 import { CompanyService } from './core/services/company.service';
 import { ICompanyRepository } from './core/ports/company.repository.interface';
 import { CompanyRepository } from './adapters/out/repository/company.repository';
+import { IJobOpeningRepository } from './core/ports/job-open.company.repository.interface';
+import { JobOpeningRepository } from './adapters/out/repository/job.opening.repository';
 
 import { DisabilityOrmEntity } from './adapters/out/orm/disability.orm-entity';
 import { SocialBenefitOrmEntity } from './adapters/out/orm/social-benefit.orm-entity';
@@ -156,6 +158,7 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         hashService: IHashService,
         curriculumRepository: ICurriculumRepository,
         studentRepository: IStudentRepository,
+        jobOpeningRepository: IJobOpeningRepository,
         companyRepository: ICompanyRepository,
       ) => {
         return new AdminService(
@@ -164,6 +167,7 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
           hashService,
           curriculumRepository,
           studentRepository,
+          jobOpeningRepository,
           companyRepository,
         );
       },
@@ -173,8 +177,13 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         IHashService,
         ICurriculumRepository,
         IStudentRepository,
+        IJobOpeningRepository,
         ICompanyRepository,
       ],
+    },
+    {
+      provide: IJobOpeningRepository,
+      useClass: JobOpeningRepository,
     },
     {
       provide: IAdminRepository,

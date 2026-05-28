@@ -58,6 +58,15 @@ export interface StudentFilterQuery {
   page: number;
   pageSize: 20 | 50;
 }
+export interface DisabilityCount {
+  disabilityType: string;
+  count: number;
+}
+export interface StudentCityCount {
+  cityName: string;
+  uf: string;
+  studentsCount: number;
+}
 export interface IStudentRepository {
   create(student: Student): Promise<Student>;
   findAll(): Promise<Student[]>;
@@ -75,4 +84,8 @@ export interface IStudentRepository {
   delete(id: string): Promise<void>;
   softDeleteMany(ids: string[]): Promise<void>;
   findLocations(): Promise<{ city: string; uf: string }[]>;
+  countByDisabilityType(): Promise<DisabilityCount[]>;
+  countByCity(): Promise<StudentCityCount[]>;
+  countTotal(): Promise<number>;
+  countPCD(): Promise<number>;
 }

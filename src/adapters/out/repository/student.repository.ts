@@ -10,6 +10,8 @@ import {
 import { randomUUID } from 'crypto';
 
 import {
+  StudentCityCount,
+  DisabilityCount,
   IStudentRepository,
   PaginatedStudentListResult,
   StudentFilterQuery,
@@ -864,4 +866,49 @@ export class StudentRepository implements IStudentRepository {
   private coerceRequiredDate(value: Date | string): Date {
     return value instanceof Date ? value : new Date(value);
   }
+
+  async countByDisabilityType(): Promise<DisabilityCount[]> {
+    const rows = await this.ormRepository
+      .createQueryBuilder('student')
+      .innerJoin('student.disabilities', 'disability')    
+      .select('disability.name', 'disabilityType')
+      .addSelect('CAST(COUNT(*) AS int)', 'count')   
+      .groupBy('disability.name')
+      .orderBy('count', 'DESC')
+      .getRawMany<{ disabilityType: string; count: number }>();
+
+    return rows;
+  }
+
+ async countByCity(): Promise<StudentCityCount[]> {
+    const rows = await this.ormRepository
+      .createQueryBuilder('student')
+      .innerJoin('student.address', 'address')
+      .select('address.city', 'cityName')
+      .addSelect('address.state', 'uf')
+      .addSelect('CAST(COUNT(student.id) AS int)', 'studentsCount')
+      .where('address.city IS NOT NULL')
+      .andWhere('address.state IS NOT NULL')
+      .groupBy('address.city')
+      .addGroupBy('address.state')
+      .orderBy('"studentsCount"', 'DESC')
+      .getRawMany<StudentCityCount>();
+
+    return rows;
+  }
+async countTotal(): Promise<number> {
+      return this.ormRepository.count();
+  }
+
+ async countPCD(): Promise<number> {
+  return this.ormRepository
+    .createQueryBuilder('student')
+    .innerJoin('student.disabilities', 'disability')
+    .select('student.id')
+    .distinct(true)
+    .getCount();
 }
+
+}
+
+

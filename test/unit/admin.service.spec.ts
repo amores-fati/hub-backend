@@ -40,6 +40,11 @@ describe('AdminService', () => {
     findManyForReportByIds: jest.fn(),
     findManyForReportByFilters: jest.fn(),
   };
+
+   const mockJobOpeningRepository = {
+    countActive: jest.fn(),
+  };
+  
   const mockCompanyRepository = {
     findLocations: jest.fn(),
   };
@@ -52,6 +57,7 @@ describe('AdminService', () => {
       mockHashService,
       mockCurriculumRepository as unknown as ICurriculumRepository,
       mockStudentRepository as unknown as IStudentRepository,
+      mockJobOpeningRepository as any,  
       mockCompanyRepository as unknown as ICompanyRepository,
     );
   });
