@@ -86,5 +86,6 @@ export interface IStudentRepository {
   findLocations(): Promise<{ city: string; uf: string }[]>;
   countByDisabilityType(): Promise<DisabilityCount[]>;
   countByCity(): Promise<StudentCityCount[]>;
-
+  countTotal(): Promise<number>;
+  countPCD(): Promise<number>;
 }

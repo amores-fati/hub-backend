@@ -4,12 +4,13 @@ import { Admin } from '../domain/admin.entity';
 import { IAdminRepository } from '../ports/admin.repository.interface';
 import { ICurriculumRepository } from '../ports/curriculum.repository.interface';
 import { IHashService } from '../ports/hash.service.interface';
-import {  DisabilityCount , IStudentRepository, } from '../ports/student.repository.interface';
+import { StudentCityCount, DisabilityCount , IStudentRepository, } from '../ports/student.repository.interface';
 import { IUserRepository } from '../ports/user.repository.interface';
 import { ICompanyRepository } from '../ports/company.repository.interface';
 import { CreateAdminCommand } from '../command/admin.command';
 import { UserAlreadyExistsException } from '../exceptions/user-already-exists.exception';
 import { StudentResumeResponseDto } from '../../adapters/in/dtos/admin/student-resume-response.dto';
+import { IJobOpeningRepository } from '../ports/job-open.company.repository.interface';
 import {
   LocationResponseDto,
   LocationScope,
@@ -31,6 +32,7 @@ export class AdminService {
     private readonly hashService: IHashService,
     private readonly curriculumRepository: ICurriculumRepository,
     private readonly studentRepository: IStudentRepository,
+    private readonly jobOpeningRepository: IJobOpeningRepository,
     private readonly companyRepository: ICompanyRepository,
   ) {}
 
@@ -111,6 +113,23 @@ export class AdminService {
   async getDisabilityStats(): Promise<DisabilityCount[]> {
     return this.studentRepository.countByDisabilityType();
   }
+
+    async getStudentCountByCity(): Promise<StudentCityCount[]> {
+    return this.studentRepository.countByCity();
+  }
+
+  async getDashboardStats(): Promise<{
+  totalStudents: number;
+  totalPcdStudents: number;
+  totalOpenedJobs: number;
+}> {
+  const [totalStudents, totalPcdStudents, totalOpenedJobs] = await Promise.all([
+    this.studentRepository.countTotal(),
+   this.studentRepository.countPCD(),
+    this.jobOpeningRepository.countActive(),
+  ]);
+  return { totalStudents, totalPcdStudents, totalOpenedJobs };
+}
 
   private mapToResumeListItem(
     item: ResumeListProjection,

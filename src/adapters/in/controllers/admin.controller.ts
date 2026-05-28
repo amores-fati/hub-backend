@@ -26,7 +26,7 @@ import { AdminService } from '../../../core/services/admin.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateAdminDto } from '../dtos/admin/create-admin.dto';
-import { DisabilityCount } from '../../../core/ports/student.repository.interface';
+import {DisabilityCount, StudentCityCount} from '../../../core/ports/student.repository.interface';
 import { StudentResumeResponseDto } from '../dtos/admin/student-resume-response.dto';
 import {
   GetLocationsQueryDto,
@@ -145,4 +145,46 @@ export class AdminController {
   async getDisabilityStats(): Promise<DisabilityCount[]> {
     return this.adminService.getDisabilityStats();
   }
+
+    @Get('students/count-by-city')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Retorna quantidade de alunos por cidade/UF',
+  })
+  @ApiOkResponse({
+    description: 'Contagem por cidade retornada com sucesso.',
+    schema: {
+      example: [
+        { cityName: 'Porto Alegre', uf: 'RS', studentsCount: 45 },
+        { cityName: 'São Paulo', uf: 'SP', studentsCount: 38 },
+      ],
+    },
+  })
+  
+  async getStudentCountByCity(): Promise<StudentCityCount[]> {
+    return this.adminService.getStudentCountByCity();
+  }
+    @Get('dashboard')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Retorna estatísticas gerais do dashboard administrativo',
+  })
+  @ApiOkResponse({
+    description: 'Estatísticas retornadas com sucesso.',
+    schema: {
+      example: {
+        totalStudents: 152,
+        totalPcdStudents: 128,
+        totalOpenedJobs: 23,
+      },
+    },
+  })
+  async getDashboardStats(): Promise<{
+    totalStudents: number;
+    totalPcdStudents: number;
+    totalOpenedJobs: number;
+  }> {
+    return this.adminService.getDashboardStats();
+  }
+
 }
