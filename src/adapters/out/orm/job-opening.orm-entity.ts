@@ -4,9 +4,11 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { CompanyOrmEntity } from './company.orm-entity';
+import { JobSkillOrmEntity } from './job-skill.orm-entity';
 
 const dateOnlyTransformer = {
   to(value: Date | string | null | undefined): string | null | undefined {
@@ -36,6 +38,12 @@ export class JobOpeningOrmEntity {
     foreignKeyConstraintName: 'fk_job_openings__company_id__companies',
   })
   company: CompanyOrmEntity;
+
+  @OneToMany(() => JobSkillOrmEntity, (jobSkill) => jobSkill.job, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
+  skills: JobSkillOrmEntity[];
 
   @Column()
   name: string;

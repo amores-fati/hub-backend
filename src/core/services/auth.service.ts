@@ -51,11 +51,17 @@ export class AuthService {
     else if (isAdmin) role = UserRoleEnum.ADMIN;
     else throw new InvalidCredentialsException();
 
-    const accessToken = this.tokenService.generate({
+    const tokenPayload: Record<string, unknown> = {
       sub: user.id,
       email: user.email,
       role: role,
-    });
+    };
+
+    if (role === UserRoleEnum.COMPANY) {
+      tokenPayload.companyId = user.id;
+    }
+
+    const accessToken = this.tokenService.generate(tokenPayload);
 
     return { accessToken };
   }

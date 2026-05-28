@@ -4,6 +4,7 @@ import {
   ConflictException,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -14,7 +15,9 @@ import {
   Post,
   Put,
   Query,
+  Req,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -34,13 +37,17 @@ import {
 import { CompanyService } from '../../../core/services/company.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import { CurrentUser } from '../../../utils/decorators/current-user.decorator';
-import type { AuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
+import type { AuthenticatedUser as BaseAuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCompanyDto } from '../dtos/company/create-company.dto';
 import { PatchCompanyDto } from '../dtos/company/patch-company.dto';
 import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
 import { ListMyVacanciesQueryDto } from '../dtos/vacancy/list-my-vacancies-query.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
+
+interface AuthenticatedUser extends BaseAuthenticatedUser {
+  companyId: string | null;
+}
 
 @ApiTags('Companies')
 @Controller('companies')
@@ -293,6 +300,39 @@ export class CompanyController {
       if (error instanceof Error && error.name === 'DomainException') {
         this.logger.error('Company deletion domain error');
         throw new BadRequestException(error.message);
+      }
+
+      throw error;
+    }
+  }
+
+  @RequireAuth(UserRoleEnum.COMPANY)
+  @Delete('me/vacancies/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Deleta uma vaga da empresa autenticada' })
+  @ApiNoContentResponse({ description: 'Vaga deletada com sucesso.' })
+  @ApiNotFoundResponse({ description: 'Vaga nao encontrada.' })
+  async deleteVacancy(
+    @Req() req: Request & { user: AuthenticatedUser },
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    try {
+      this.logger.log(`Iniciando exclusão da vaga ${id}`);
+      const companyId = req.user.companyId;
+      if (!companyId) {
+        throw new ForbiddenException('Token inválido: companyId ausente');
+      }
+      await this.companyService.deleteVacancy(id, companyId);
+      this.logger.info('Vacancy deleted', { id });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        this.logger.warn('Vacancy not found', { id });
+        throw new NotFoundException(error.message);
+      }
+
+      if (error instanceof ForbiddenException) {
+        this.logger.warn('Forbidden deleting vacancy', { id });
+        throw new ForbiddenException(error.message);
       }
 
       throw error;

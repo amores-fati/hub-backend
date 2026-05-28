@@ -17,6 +17,19 @@ export class VacancyReportRepository implements IVacancyReportRepository {
     private readonly ormRepository: Repository<JobOpeningOrmEntity>,
   ) {}
 
+  async findCompanyIdById(id: string): Promise<string | null> {
+    const ormEntity = await this.ormRepository.findOne({
+      where: { id },
+      relations: ['company'],
+    });
+
+    return ormEntity ? ormEntity.company?.id ?? null : null;
+  }
+
+  async deleteById(id: string): Promise<void> {
+    await this.ormRepository.delete(id);
+  }
+
   async findManyByIds(ids: string[]): Promise<VacancyReportProjection[]> {
     if (ids.length === 0) {
       return [];
