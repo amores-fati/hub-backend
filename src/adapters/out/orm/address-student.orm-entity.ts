@@ -21,8 +21,8 @@ export class AddressStudentOrmEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   address: string | null;
 
-  @Column({ type: 'varchar', length: 9, nullable: true })
-  cep: string | null;
+  @Column({ type: 'varchar', length: 9, nullable: false })
+  cep: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   complement: string | null;

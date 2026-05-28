@@ -36,11 +36,11 @@ export class CreateContactDto {
   @IsOptional()
   address?: string;
 
-  @ApiPropertyOptional({ example: '89900000' })
+  @ApiProperty({ example: '89900000' })
   @IsCep()
-  @IsOptional()
+  @IsNotEmpty()
   @MaxLength(9)
-  cep?: string;
+  cep: string;
 
   @ApiPropertyOptional({ example: 'Sala 42' })
   @IsString()

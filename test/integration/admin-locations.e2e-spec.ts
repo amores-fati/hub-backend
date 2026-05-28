@@ -44,8 +44,8 @@ describe('AdminController (e2e) - Locations', () => {
         ],
       );
       await dataSource.query(
-        `INSERT INTO "address_student" (id, student_id, city, state) VALUES ($1, $2, $3, $4)`,
-        [randomUUID(), studentId, 'Porto Alegre', 'RS'],
+        `INSERT INTO "address_student" (id, student_id, city, state, cep) VALUES ($1, $2, $3, $4, $5)`,
+        [randomUUID(), studentId, 'Porto Alegre', 'RS', '90010030'],
       );
       await dataSource.query(
         `INSERT INTO "telephone_student" (id, student_id, phone) VALUES ($1, $2, $3)`,
@@ -63,8 +63,8 @@ describe('AdminController (e2e) - Locations', () => {
         [companyId, '12345678901234', 'Company Loc', 'Resp Loc'],
       );
       await dataSource.query(
-        `INSERT INTO "address_company" (id, company_id, city, state) VALUES ($1, $2, $3, $4)`,
-        [randomUUID(), companyId, 'São Paulo', 'SP'],
+        `INSERT INTO "address_company" (id, company_id, city, state, cep) VALUES ($1, $2, $3, $4, $5)`,
+        [randomUUID(), companyId, 'São Paulo', 'SP', '01001000'],
       );
       await dataSource.query(
         `INSERT INTO "telephone_company" (id, company_id, phone) VALUES ($1, $2, $3)`,

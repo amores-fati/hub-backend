@@ -538,7 +538,7 @@ export class StudentRepository implements IStudentRepository {
     ormEntity.address.state = student.contact.state || null;
     ormEntity.address.city = student.contact.city || null;
     ormEntity.address.address = student.contact.address || null;
-    ormEntity.address.cep = student.contact.cep || null;
+    ormEntity.address.cep = student.contact.cep!;
     ormEntity.address.complement = student.contact.complement || null;
 
     return ormEntity;
@@ -834,7 +834,7 @@ export class StudentRepository implements IStudentRepository {
       ormEntity.address.state || undefined,
       ormEntity.address.city || undefined,
       ormEntity.address.address || undefined,
-      ormEntity.address.cep || undefined,
+      ormEntity.address.cep,
       ormEntity.address.complement || undefined,
     );
 

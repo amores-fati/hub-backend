@@ -103,6 +103,29 @@ export class CurriculumRepository implements ICurriculumRepository {
       }
     }
 
+    if (query.city && query.city.length > 0) {
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          query.city!.forEach((location, index) => {
+            const [city, state] = location.split('/').map((v) => v.trim());
+            if (city && state) {
+              qb.orWhere(
+                `(address.city ILIKE :city${index} AND address.state ILIKE :state${index})`,
+                {
+                  [`city${index}`]: `%${city}%`,
+                  [`state${index}`]: state,
+                },
+              );
+            } else {
+              qb.orWhere(`address.city ILIKE :loc${index}`, {
+                [`loc${index}`]: `%${location}%`,
+              });
+            }
+          });
+        }),
+      );
+    }
+
     const [ormEntities, total] = await queryBuilder
       .skip((normalizedPage - 1) * normalizedLimit)
       .take(normalizedLimit)

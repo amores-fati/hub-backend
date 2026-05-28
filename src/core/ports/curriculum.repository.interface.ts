@@ -27,6 +27,7 @@ export interface ResumeFilterQuery {
   interestArea?: string;
   preference?: string;
   status?: string;
+  city?: string[];
   page: number;
   limit: number;
 }

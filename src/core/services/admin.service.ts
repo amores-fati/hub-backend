@@ -92,6 +92,7 @@ export class AdminService {
       interestArea: query.interestArea,
       preference: query.preference,
       status: query.status,
+      city: query.city,
       page: normalizedPage,
       limit: normalizedLimit,
     };

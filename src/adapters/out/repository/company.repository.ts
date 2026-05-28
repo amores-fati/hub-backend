@@ -122,7 +122,7 @@ export class CompanyRepository implements ICompanyRepository {
     ormEntity.address.state = company.contact.state || null;
     ormEntity.address.neighbourhood = company.contact.neighbourhood || null;
     ormEntity.address.address = company.contact.address || null;
-    ormEntity.address.cep = company.contact.cep || null;
+    ormEntity.address.cep = company.contact.cep!;
     ormEntity.address.complement = company.contact.complement || null;
 
     return ormEntity;
@@ -136,7 +136,7 @@ export class CompanyRepository implements ICompanyRepository {
       ormEntity.address.state || undefined,
       ormEntity.address.city || undefined,
       ormEntity.address.address || undefined,
-      ormEntity.address.cep || undefined,
+      ormEntity.address.cep,
       ormEntity.address.complement || undefined,
     );
 
