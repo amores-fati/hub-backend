@@ -4,7 +4,7 @@ import { Admin } from '../domain/admin.entity';
 import { IAdminRepository } from '../ports/admin.repository.interface';
 import { ICurriculumRepository } from '../ports/curriculum.repository.interface';
 import { IHashService } from '../ports/hash.service.interface';
-import { IStudentRepository } from '../ports/student.repository.interface';
+import {  DisabilityCount , IStudentRepository, } from '../ports/student.repository.interface';
 import { IUserRepository } from '../ports/user.repository.interface';
 import { ICompanyRepository } from '../ports/company.repository.interface';
 import { CreateAdminCommand } from '../command/admin.command';
@@ -106,6 +106,10 @@ export class AdminService {
         totalPages: Math.ceil(result.total / normalizedLimit),
       },
     };
+  }
+
+  async getDisabilityStats(): Promise<DisabilityCount[]> {
+    return this.studentRepository.countByDisabilityType();
   }
 
   private mapToResumeListItem(

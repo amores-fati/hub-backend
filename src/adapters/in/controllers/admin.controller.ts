@@ -26,6 +26,7 @@ import { AdminService } from '../../../core/services/admin.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateAdminDto } from '../dtos/admin/create-admin.dto';
+import { DisabilityCount } from '../../../core/ports/student.repository.interface';
 import { StudentResumeResponseDto } from '../dtos/admin/student-resume-response.dto';
 import {
   GetLocationsQueryDto,
@@ -125,5 +126,23 @@ export class AdminController {
     @Query() query: GetResumesQueryDto,
   ): Promise<PaginatedResumesResponseDto> {
     return this.adminService.getResumes(query);
+  }
+
+    @Get('students/disability-stats')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Retorna contagem de alunos por tipo de deficiência',
+  })
+  @ApiOkResponse({
+    description: 'Contagem retornada com sucesso.',
+    schema: {
+      example: [
+        { disabilityType: 'Visual', count: 45 },
+        { disabilityType: 'Auditiva', count: 30 },
+      ],
+    },
+  })
+  async getDisabilityStats(): Promise<DisabilityCount[]> {
+    return this.adminService.getDisabilityStats();
   }
 }
