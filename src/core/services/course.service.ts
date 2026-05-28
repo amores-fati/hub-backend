@@ -5,9 +5,22 @@ import {
 } from '../command/course.command';
 import { Course } from '../domain/course.entity';
 import {
+  CourseReportFilters,
   ICourseRepository,
 } from '../ports/course.repository.interface';
 import { CourseNotFoundException } from '../exceptions/course-not-found.exception';
+
+export interface FilterCoursesCommand extends CourseReportFilters {
+  page: number;
+  limit: number;
+}
+
+export interface PaginatedCoursesResponse {
+  data: Course[];
+  total: number;
+  page: number;
+  limit: number;
+}
 
 export class CourseService {
   constructor(private readonly courseRepository: ICourseRepository) {}
@@ -63,6 +76,14 @@ export class CourseService {
     );
 
     return this.courseRepository.update(updated);
+  }
+
+  async filterCourses(command: FilterCoursesCommand): Promise<PaginatedCoursesResponse> {
+    const { page, limit, ...filters } = command;
+    const all = await this.courseRepository.findManyByFilters(filters);
+    const total = all.length;
+    const data = all.slice((page - 1) * limit, page * limit);
+    return { data, total, page, limit };
   }
 
   async getAllCourses(): Promise<Course[]> {
