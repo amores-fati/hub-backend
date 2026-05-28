@@ -357,14 +357,21 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         companyRepository: ICompanyRepository,
         userRepository: IUserRepository,
         hashService: IHashService,
+        vacancyRepository: IVacancyReportRepository,
       ) => {
         return new CompanyService(
           companyRepository,
           userRepository,
           hashService,
+          vacancyRepository,
         );
       },
-      inject: [ICompanyRepository, IUserRepository, IHashService],
+      inject: [
+        ICompanyRepository,
+        IUserRepository,
+        IHashService,
+        IVacancyReportRepository,
+      ],
     },
     {
       provide: ICompanyRepository,

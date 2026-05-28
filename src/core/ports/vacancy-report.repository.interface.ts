@@ -15,9 +15,28 @@ export interface VacancyReportProjection {
   announcementDate: Date;
 }
 
+export interface MyVacanciesFilters {
+  companyId: string;
+  search?: string;
+  vacancyCount?: number;
+  isPcd?: boolean;
+  page: number;
+  limit: number;
+}
+
+export interface PaginatedVacanciesResult {
+  data: VacancyReportProjection[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface IVacancyReportRepository {
   findManyByIds(ids: string[]): Promise<VacancyReportProjection[]>;
   findManyByFilters(
     filters?: VacancyReportFilters,
   ): Promise<VacancyReportProjection[]>;
+  findMyVacancies(
+    filters: MyVacanciesFilters,
+  ): Promise<PaginatedVacanciesResult>;
 }

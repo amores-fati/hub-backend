@@ -13,6 +13,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -32,10 +33,13 @@ import {
 } from '../../../core/command/company.command';
 import { CompanyService } from '../../../core/services/company.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
+import { CurrentUser } from '../../../utils/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCompanyDto } from '../dtos/company/create-company.dto';
 import { PatchCompanyDto } from '../dtos/company/patch-company.dto';
 import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
+import { ListMyVacanciesQueryDto } from '../dtos/vacancy/list-my-vacancies-query.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @ApiTags('Companies')
@@ -232,6 +236,39 @@ export class CompanyController {
         throw new BadRequestException(error.message);
       }
 
+      throw error;
+    }
+  }
+
+  @RequireAuth(UserRoleEnum.COMPANY)
+  @Get('me/vacancies')
+  @ApiOperation({
+    summary: 'Lista as vagas da empresa autenticada com filtros e paginacao',
+  })
+  @ApiOkResponse({ description: 'Vagas listadas com sucesso.' })
+  async listMyVacancies(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ListMyVacanciesQueryDto,
+  ) {
+    this.logger.info('Listando vagas da empresa autenticada', {
+      userId: user.id,
+    });
+
+    try {
+      return await this.companyService.listMyVacancies(user.id, {
+        page: query.page ?? 1,
+        limit: query.limit ?? 10,
+        search: query.search,
+        vacancyCount: query.vacancyCount,
+        isPcd: query.isPcd,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CompanyNotFoundException') {
+        this.logger.warn('Company not found for authenticated user', {
+          userId: user.id,
+        });
+        throw new NotFoundException(error.message);
+      }
       throw error;
     }
   }
