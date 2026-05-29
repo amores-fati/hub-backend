@@ -149,7 +149,11 @@ export class CourseController {
   @ApiNotFoundResponse({
     description: 'Curso não encontrado.',
     schema: {
-      example: { statusCode: 404, message: 'Curso não encontrado', errorKind: 'NOT_FOUND' },
+      example: {
+        statusCode: 404,
+        message: 'Curso não encontrado',
+        errorKind: 'NOT_FOUND',
+      },
     },
   })
   async remove(@Param('id', ParseUUIDPipe) id: string) {

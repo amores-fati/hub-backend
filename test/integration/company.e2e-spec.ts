@@ -19,10 +19,10 @@ const runE2e = (() => {
   try {
     execSync('docker info', { stdio: 'ignore', timeout: 2000 });
     return true;
-  } catch (e) {
+  } catch {
     // If Docker is not available locally, skip heavy e2e tests to allow local dev and PRs.
     // CI environments that provide Docker will still run these tests.
-    // eslint-disable-next-line no-console
+
     console.warn('Skipping e2e tests: Docker daemon not available.');
     return false;
   }
@@ -204,7 +204,8 @@ describeOrSkip('CompanyController (e2e)', () => {
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
           title: 'Desenvolvedor Fullstack',
-          description: 'Vaga de desenvolvedor para atuar com backend e frontend.',
+          description:
+            'Vaga de desenvolvedor para atuar com backend e frontend.',
           link: 'https://company.jobs/apply/fullstack',
           vacancyCount: 2,
           isPcd: false,
@@ -213,7 +214,14 @@ describeOrSkip('CompanyController (e2e)', () => {
         })
         .expect(201);
 
-      const body = response.body as { id: string; name: string; openingsCount: number; applicationLink: string; isPcd: boolean; workplaceType: string };
+      const body = response.body as {
+        id: string;
+        name: string;
+        openingsCount: number;
+        applicationLink: string;
+        isPcd: boolean;
+        workplaceType: string;
+      };
       expect(body.id).toBeDefined();
       expect(body.name).toBe('Desenvolvedor Fullstack');
       expect(body.openingsCount).toBe(2);
@@ -238,11 +246,20 @@ describeOrSkip('CompanyController (e2e)', () => {
         })
         .expect(200);
 
-      const body = response.body as { id: string; name: string; openingsCount: number; applicationLink: string; isPcd: boolean; workplaceType: string };
+      const body = response.body as {
+        id: string;
+        name: string;
+        openingsCount: number;
+        applicationLink: string;
+        isPcd: boolean;
+        workplaceType: string;
+      };
       expect(body.id).toBe(vacancyId);
       expect(body.name).toBe('Desenvolvedor Fullstack Senior');
       expect(body.openingsCount).toBe(1);
-      expect(body.applicationLink).toBe('https://company.jobs/apply/fullstack-senior');
+      expect(body.applicationLink).toBe(
+        'https://company.jobs/apply/fullstack-senior',
+      );
       expect(body.isPcd).toBe(true);
       expect(body.workplaceType).toBe('online');
     });

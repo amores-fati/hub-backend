@@ -15,17 +15,26 @@ import {
 export const WORKPLACE_TYPES = ['presential', 'online', 'hybrid'] as const;
 
 export class CreateUpdateJobOpeningDto {
-  @ApiProperty({ example: 'Desenvolvedor Frontend', description: 'Título da vaga' })
+  @ApiProperty({
+    example: 'Desenvolvedor Frontend',
+    description: 'Título da vaga',
+  })
   @IsString()
   @IsNotEmpty()
   title: string;
 
-  @ApiProperty({ example: 'Vaga para trabalhar com React...', description: 'Descrição da vaga' })
+  @ApiProperty({
+    example: 'Vaga para trabalhar com React...',
+    description: 'Descrição da vaga',
+  })
   @IsString()
   @IsNotEmpty()
   description: string;
 
-  @ApiProperty({ example: 'https://company.jobs/apply/123', description: 'Link de candidatura' })
+  @ApiProperty({
+    example: 'https://company.jobs/apply/123',
+    description: 'Link de candidatura',
+  })
   @IsString()
   @IsNotEmpty()
   link: string;
@@ -39,7 +48,11 @@ export class CreateUpdateJobOpeningDto {
   @IsBoolean()
   isPcd: boolean;
 
-  @ApiProperty({ example: 'presential', enum: WORKPLACE_TYPES, description: 'Tipo de local de trabalho' })
+  @ApiProperty({
+    example: 'presential',
+    enum: WORKPLACE_TYPES,
+    description: 'Tipo de local de trabalho',
+  })
   @IsString()
   @IsIn(WORKPLACE_TYPES as unknown as string[])
   workplaceType: string;
@@ -48,7 +61,7 @@ export class CreateUpdateJobOpeningDto {
   @IsOptional()
   @IsArray()
   @ArrayUnique()
-  @ValidateIf((o) => o.skills !== undefined)
+  @ValidateIf((o: CreateUpdateJobOpeningDto) => o.skills !== undefined)
   @IsString({ each: true })
   skills?: string[];
 }
