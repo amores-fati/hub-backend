@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryColumn, OneToOne, JoinColumn } from 'typeorm';
 import { UserOrmEntity } from './user.orm-entity';
-import { ContactOrmEntity } from './contact.orm-entity';
+import { TelephoneCompanyOrmEntity } from './telephone-company.orm-entity';
+import { AddressCompanyOrmEntity } from './address-company.orm-entity';
 
 @Entity('companies')
 export class CompanyOrmEntity {
@@ -26,14 +27,15 @@ export class CompanyOrmEntity {
   })
   user: UserOrmEntity;
 
-  @OneToOne(() => ContactOrmEntity, {
-    eager: true,
-    onDelete: 'NO ACTION',
-    nullable: false,
+  @OneToOne(() => TelephoneCompanyOrmEntity, (telephone) => telephone.company, {
+    cascade: true,
+    eager: false,
   })
-  @JoinColumn({
-    name: 'contact_id',
-    foreignKeyConstraintName: 'fk_companies__contact_id__contacts',
+  telephone: TelephoneCompanyOrmEntity;
+
+  @OneToOne(() => AddressCompanyOrmEntity, (address) => address.company, {
+    cascade: true,
+    eager: false,
   })
-  contact: ContactOrmEntity;
+  address: AddressCompanyOrmEntity;
 }

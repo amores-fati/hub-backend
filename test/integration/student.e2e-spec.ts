@@ -53,7 +53,7 @@ describe('StudentController (e2e)', () => {
       const adminId = randomUUID();
       await dataSource.query(
         `INSERT INTO "users" (id, email, password_hash, role) VALUES ($1, $2, $3, $4)`,
-        [adminId, adminEmail, hashedPassword, 'ADMIN'],
+        [adminId, adminEmail, hashedPassword, 'ADMINISTRADOR'],
       );
       await dataSource.query(`INSERT INTO "admins" (id) VALUES ($1)`, [
         adminId,
@@ -80,11 +80,11 @@ describe('StudentController (e2e)', () => {
           fullName: 'Student Full Name',
           cpf: dynamicCpf,
           birthDate: '1995-05-20',
-          gender: 'MALE',
-          race: 'BROWN',
+          gender: 'MASCULINO',
+          race: 'PARDO',
           socialName: 'Student Social Name',
           courseName: 'Computer Science',
-          familyIncome: 'BETWEEN_1_3',
+          familyIncome: 'ENTRE_1_E_3',
           contact: {
             city: 'São Paulo',
             state: 'SP',
@@ -150,11 +150,11 @@ describe('StudentController (e2e)', () => {
           fullName: 'Another Full Name',
           cpf: dynamicCpf,
           birthDate: '1995-05-20',
-          gender: 'FEMALE',
-          race: 'WHITE',
+          gender: 'FEMININO',
+          race: 'BRANCO',
           socialName: 'Another Social',
           courseName: 'Engineering',
-          familyIncome: 'MORE_THAN_3',
+          familyIncome: 'MAIS_DE_3',
           contact: {
             phone: '11988888888',
           },
@@ -227,8 +227,8 @@ describe('StudentController (e2e)', () => {
           fullName: 'Deleted Student Full Name',
           cpf: cpfToDelete,
           birthDate: '1995-05-20',
-          gender: 'MALE',
-          race: 'BROWN',
+          gender: 'MASCULINO',
+          race: 'PARDO',
           contact: {
             city: 'Sao Paulo',
             state: 'SP',
@@ -316,10 +316,10 @@ describe('StudentController (e2e)', () => {
           password: 'newpassword123',
           fullName: 'Updated Full Name',
           birthDate: '1995-05-20',
-          gender: 'MALE',
-          race: 'BROWN',
+          gender: 'MASCULINO',
+          race: 'PARDO',
           courseName: 'New Course',
-          familyIncome: 'TO1_SALARY',
+          familyIncome: 'ATE_1_SALARIO',
           contact: {
             city: 'Rio de Janeiro',
             state: 'RJ',

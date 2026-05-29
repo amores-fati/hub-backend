@@ -3,14 +3,16 @@ import {
   Column,
   Entity,
   JoinColumn,
-  OneToMany,
+  JoinTable,
+  ManyToMany,
   OneToOne,
   PrimaryColumn,
 } from 'typeorm';
-import { ContactOrmEntity } from './contact.orm-entity';
 import { SocialBenefitOrmEntity } from './social-benefit.orm-entity';
 import { UserOrmEntity } from './user.orm-entity';
 import { DisabilityOrmEntity } from './disability.orm-entity';
+import { TelephoneStudentOrmEntity } from './telephone-student.orm-entity';
+import { AddressStudentOrmEntity } from './address-student.orm-entity';
 import {
   EducationLevel,
   Gender,
@@ -68,15 +70,17 @@ export class StudentOrmEntity {
   })
   user: UserOrmEntity;
 
-  @OneToOne(() => ContactOrmEntity, {
-    onDelete: 'NO ACTION',
-    nullable: false,
+  @OneToOne(() => TelephoneStudentOrmEntity, (t) => t.student, {
+    cascade: true,
+    eager: false,
   })
-  @JoinColumn({
-    name: 'contact_id',
-    foreignKeyConstraintName: 'fk_students__contact_id__contacts',
+  telephone: TelephoneStudentOrmEntity;
+
+  @OneToOne(() => AddressStudentOrmEntity, (a) => a.student, {
+    cascade: true,
+    eager: false,
   })
-  contact: ContactOrmEntity;
+  address: AddressStudentOrmEntity;
 
   @Column({ unique: true })
   cpf: string;
@@ -144,9 +148,31 @@ export class StudentOrmEntity {
   @Column({ name: 'household_size', type: 'int', nullable: true })
   householdSize: number | null;
 
-  @OneToOne(() => DisabilityOrmEntity, (disability) => disability.student)
-  disability: DisabilityOrmEntity | null;
+  @ManyToMany(() => DisabilityOrmEntity, (disability) => disability.students)
+  @JoinTable({
+    name: 'student_disability',
+    joinColumn: {
+      name: 'student_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'disability_id',
+      referencedColumnName: 'id',
+    },
+  })
+  disabilities: DisabilityOrmEntity[];
 
-  @OneToMany(() => SocialBenefitOrmEntity, (benefit) => benefit.student)
+  @ManyToMany(() => SocialBenefitOrmEntity, (benefit) => benefit.students)
+  @JoinTable({
+    name: 'student_social_benefit',
+    joinColumn: {
+      name: 'student_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'social_benefit_id',
+      referencedColumnName: 'id',
+    },
+  })
   socialBenefits: SocialBenefitOrmEntity[];
 }
