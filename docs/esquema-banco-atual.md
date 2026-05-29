@@ -67,13 +67,17 @@ As colunas abaixo nao existem mais no schema atual:
 users
 |- admins
 |- students
-|  |- contacts
-|  |- disabilities
+|  |- address_student
+|  |- telephone_student
+|  |- student_disability
+|  |  `- disability
 |  |- accessibility_resources
-|  |- social_benefits
+|  |- student_social_benefit
+|  |  `- social_benefit
 |  `- curriculum
 `- companies
-   |- contacts
+   |- address_company
+   |- telephone_company
    `- job_openings
       `- job_skills
          `- skills
@@ -126,14 +130,14 @@ Constraints:
 - `pk_admins`
 - `fk_admins__id__users`
 
-### `contacts`
+### `address_student` / `address_company`
 
-Responsabilidade: telefone e endereco reutilizados por aluno e empresa.
+Responsabilidade: endereco do aluno ou empresa.
 
-Colunas:
+Colunas principais:
 
 - `id uuid not null`
-- `phone varchar(20) not null`
+- `student_id` ou `company_id uuid not null`
 - `neighbourhood varchar null`
 - `state char(2) null`
 - `city varchar(100) null`
@@ -141,13 +145,15 @@ Colunas:
 - `cep varchar(9) null`
 - `complement varchar(255) null`
 
-Constraints:
+### `telephone_student` / `telephone_company`
 
-- `pk_contacts`
+Responsabilidade: telefone do aluno ou empresa.
 
-Observacoes:
+Colunas principais:
 
-- `name` e `country` nao fazem mais parte do schema atual
+- `id uuid not null`
+- `student_id` ou `company_id uuid not null`
+- `phone varchar(20) not null`
 
 ### `students`
 
@@ -214,22 +220,15 @@ Observacoes:
 
 - `companies.contact_id` tambem e obrigatorio e exclusivo
 
-### `disabilities`
+### `disability` e `student_disability`
 
-Responsabilidade: complemento `1:1` do aluno para informacoes de deficiencia.
+Responsabilidade: catalogo de deficiencias e associacao `N:N` com alunos.
 
-Colunas:
+A tabela `disability` armazena o catalogo com:
+- `id uuid`
+- `name varchar unique`
 
-- `student_id uuid not null`
-- `has_disability boolean not null default false`
-- `description text null`
-- `has_report varchar null`
-- `type varchar null`
-
-Constraints:
-
-- `pk_disabilities`
-- `fk_disabilities__student_id__students`
+A tabela `student_disability` faz o join entre aluno e deficiencia.
 
 ### `accessibility_resources`
 
@@ -260,33 +259,15 @@ Valores aceitos em `resource`:
 - `Interprete`
 - `Outro`
 
-### `social_benefits`
+### `social_benefit` e `student_social_benefit`
 
-Responsabilidade: beneficios sociais por aluno.
+Responsabilidade: catalogo de beneficios sociais e associacao `N:N` com alunos.
 
-Colunas:
+A tabela `social_benefit` armazena o catalogo com:
+- `id uuid`
+- `name varchar unique`
 
-- `id serial not null`
-- `student_id uuid not null`
-- `benefit varchar not null`
-
-Constraints:
-
-- `pk_social_benefits`
-- `fk_social_benefits__student_id__students`
-- `ck_social_benefits__benefit`
-
-Indices:
-
-- `ix_social_benefits__student_id`
-
-Valores aceitos em `benefit`:
-
-- `BPC`
-- `Bolsa Familia`
-- `Auxilio-doenca`
-- `Nao recebo`
-- `Outro`
+A tabela `student_social_benefit` faz o join entre aluno e beneficio.
 
 ### `curriculum`
 

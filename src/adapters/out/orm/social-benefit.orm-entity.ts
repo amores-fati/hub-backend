@@ -1,38 +1,20 @@
-import {
-  Check,
-  Column,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, PrimaryColumn, ManyToMany } from 'typeorm';
 import { StudentOrmEntity } from './student.orm-entity';
-import { SocialBenefitType } from '../../../core/domain/enums/social-benefit.enum';
 
-const SOCIAL_BENEFIT_SQL = Object.values(SocialBenefitType)
-  .map((value) => `'${value.replace(/'/g, "''")}'`)
-  .join(', ');
-
-@Check('ck_social_benefits__benefit', `"benefit" IN (${SOCIAL_BENEFIT_SQL})`)
-@Entity('social_benefits')
+@Entity('social_benefit')
 export class SocialBenefitOrmEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryColumn({ type: 'uuid' })
+  id: string;
 
-  @Index('ix_social_benefits__student_id')
-  @Column({ name: 'student_id', type: 'uuid' })
-  studentId: string;
+  @Column({ length: 100, unique: true })
+  name: string;
 
-  @Column({ type: 'varchar' })
-  benefit: SocialBenefitType;
+  @Column({ name: 'created_at', type: 'timestamp' })
+  createdAt: Date;
 
-  @ManyToOne(() => StudentOrmEntity, (student) => student.socialBenefits, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({
-    name: 'student_id',
-    foreignKeyConstraintName: 'fk_social_benefits__student_id__students',
-  })
-  student: StudentOrmEntity;
+  @Column({ name: 'updated_at', type: 'timestamp' })
+  updatedAt: Date;
+
+  @ManyToMany(() => StudentOrmEntity, (student) => student.socialBenefits)
+  students: StudentOrmEntity[];
 }

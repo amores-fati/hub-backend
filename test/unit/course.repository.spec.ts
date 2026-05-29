@@ -2,11 +2,9 @@ import { Repository } from 'typeorm';
 
 import { CourseRepository } from '../../src/adapters/out/repository/course.repository';
 import { CourseOrmEntity } from '../../src/adapters/out/orm/course.orm-entity';
-import { InPersonCourseDetailOrmEntity } from '../../src/adapters/out/orm/in-person-course-detail.orm-entity';
 
 describe('CourseRepository', () => {
   let ormRepository: Repository<CourseOrmEntity>;
-  let inPersonDetailRepository: Repository<InPersonCourseDetailOrmEntity>;
   let repository: CourseRepository;
 
   beforeEach(() => {
@@ -14,11 +12,7 @@ describe('CourseRepository', () => {
       find: jest.fn(),
     } as unknown as Repository<CourseOrmEntity>;
 
-    inPersonDetailRepository = {
-      find: jest.fn().mockResolvedValue([]),
-    } as unknown as Repository<InPersonCourseDetailOrmEntity>;
-
-    repository = new CourseRepository(ormRepository, inPersonDetailRepository);
+    repository = new CourseRepository(ormRepository);
   });
 
   it('should coerce database date strings when listing courses', async () => {
@@ -48,7 +42,7 @@ describe('CourseRepository', () => {
     expect(courses[0].vacancyCount).toBe(30);
   });
 
-  it('should attach in-person addresses as location when listing with location', async () => {
+  it('should attach in-person addresses as location when listing', async () => {
     const ormEntity = new CourseOrmEntity();
     ormEntity.id = 'course-id';
     ormEntity.name = 'Curso Presencial';
@@ -62,16 +56,14 @@ describe('CourseRepository', () => {
     ormEntity.modality = 'PRESENCIAL';
     ormEntity.linkAccess = 'https://fatilab.com/cursos/teste';
     ormEntity.vacancyCount = 20;
+    ormEntity.address = 'Porto Alegre - RS';
 
     (ormRepository.find as jest.Mock).mockResolvedValue([ormEntity]);
-    (inPersonDetailRepository.find as jest.Mock).mockResolvedValue([
-      { id: 'detail-id', address: 'Porto Alegre - RS', course: ormEntity },
-    ]);
 
-    const result = await repository.findAllWithLocation();
+    const result = await repository.findAll();
 
     expect(result).toHaveLength(1);
-    expect(result[0].course.id).toBe('course-id');
-    expect(result[0].location).toBe('Porto Alegre - RS');
+    expect(result[0].id).toBe('course-id');
+    expect(result[0].address).toBe('Porto Alegre - RS');
   });
 });

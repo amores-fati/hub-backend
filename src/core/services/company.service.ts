@@ -11,13 +11,20 @@ import {
 import { Contact } from '../domain/contact.entity';
 import { IHashService } from '../ports/hash.service.interface';
 import { IUserRepository } from '../ports/user.repository.interface';
+import {
+  IVacancyReportRepository,
+  MyVacanciesFilters,
+  PaginatedVacanciesResult,
+} from '../ports/vacancy-report.repository.interface';
 import { UserAlreadyExistsException } from '../exceptions/user-already-exists.exception';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 
 export class CompanyService {
   constructor(
     private readonly companyRepository: ICompanyRepository,
     private readonly userRepository: IUserRepository,
     private readonly hashService: IHashService,
+    private readonly vacancyRepository: IVacancyReportRepository,
   ) {}
 
   async createCompany(command: CreateCompanyCommand): Promise<Company> {
@@ -153,6 +160,34 @@ export class CompanyService {
   async deleteCompany(id: string): Promise<void> {
     const company = await this.getCompanyById(id);
     await this.companyRepository.delete(company.id);
+  }
+
+  async deleteVacancy(vacancyId: string, companyId: string): Promise<void> {
+    const vacancyCompanyId =
+      await this.vacancyRepository.findCompanyIdById(vacancyId);
+
+    if (!vacancyCompanyId) {
+      throw new NotFoundException('Vaga não encontrada');
+    }
+
+    if (vacancyCompanyId !== companyId) {
+      throw new ForbiddenException(
+        'Você não tem permissão para excluir esta vaga',
+      );
+    }
+
+    await this.vacancyRepository.deleteById(vacancyId);
+  }
+
+  async listMyVacancies(
+    userId: string,
+    filters: Omit<MyVacanciesFilters, 'companyId'>,
+  ): Promise<PaginatedVacanciesResult> {
+    const company = await this.getCompanyById(userId);
+    return this.vacancyRepository.findMyVacancies({
+      companyId: company.id,
+      ...filters,
+    });
   }
 
   private async assertEmailAvailable(

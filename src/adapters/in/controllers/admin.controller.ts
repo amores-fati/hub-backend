@@ -26,11 +26,16 @@ import { AdminService } from '../../../core/services/admin.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateAdminDto } from '../dtos/admin/create-admin.dto';
+import {DisabilityCount, StudentCityCount} from '../../../core/ports/student.repository.interface';
 import { StudentResumeResponseDto } from '../dtos/admin/student-resume-response.dto';
 import {
   GetLocationsQueryDto,
   LocationResponseDto,
 } from '../dtos/admin/get-locations.dto';
+import { GetResumesQueryDto } from '../dtos/admin/get-resumes.dto';
+import {
+  PaginatedResumesResponseDto,
+} from '../dtos/admin/paginated-resumes-response.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @ApiTags('Admins')
@@ -108,4 +113,78 @@ export class AdminController {
   ): Promise<LocationResponseDto[]> {
     return this.adminService.getLocations(query.scope);
   }
+
+  @Get('resumes')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Lista currículos com paginação e filtros',
+    description:
+      'Retorna lista paginada de currículos com suporte a busca por nome, email, CPF, área de interesse e status.',
+  })
+  @ApiOkResponse({ type: PaginatedResumesResponseDto })
+  async getResumes(
+    @Query() query: GetResumesQueryDto,
+  ): Promise<PaginatedResumesResponseDto> {
+    return this.adminService.getResumes(query);
+  }
+
+    @Get('students/disability-stats')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Retorna contagem de alunos por tipo de deficiência',
+  })
+  @ApiOkResponse({
+    description: 'Contagem retornada com sucesso.',
+    schema: {
+      example: [
+        { disabilityType: 'Visual', count: 45 },
+        { disabilityType: 'Auditiva', count: 30 },
+      ],
+    },
+  })
+  async getDisabilityStats(): Promise<DisabilityCount[]> {
+    return this.adminService.getDisabilityStats();
+  }
+
+    @Get('students/count-by-city')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Retorna quantidade de alunos por cidade/UF',
+  })
+  @ApiOkResponse({
+    description: 'Contagem por cidade retornada com sucesso.',
+    schema: {
+      example: [
+        { cityName: 'Porto Alegre', uf: 'RS', studentsCount: 45 },
+        { cityName: 'São Paulo', uf: 'SP', studentsCount: 38 },
+      ],
+    },
+  })
+  
+  async getStudentCountByCity(): Promise<StudentCityCount[]> {
+    return this.adminService.getStudentCountByCity();
+  }
+    @Get('dashboard')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Retorna estatísticas gerais do dashboard administrativo',
+  })
+  @ApiOkResponse({
+    description: 'Estatísticas retornadas com sucesso.',
+    schema: {
+      example: {
+        totalStudents: 152,
+        totalPcdStudents: 128,
+        totalOpenedJobs: 23,
+      },
+    },
+  })
+  async getDashboardStats(): Promise<{
+    totalStudents: number;
+    totalPcdStudents: number;
+    totalOpenedJobs: number;
+  }> {
+    return this.adminService.getDashboardStats();
+  }
+
 }

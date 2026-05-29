@@ -11,4 +11,5 @@ export interface ICompanyRepository {
   update(company: Company): Promise<Company>;
   delete(id: string): Promise<void>;
   findLocations(): Promise<{ city: string; uf: string }[]>;
+  
 }

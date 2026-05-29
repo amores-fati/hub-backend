@@ -39,6 +39,9 @@ export class CurriculumOrmEntity {
   @Column({ name: 'profile_photo', type: 'varchar', nullable: true })
   profilePhoto: string | null;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  preference: string | null;
+
   @Column({ name: 'video_presentation', type: 'varchar', nullable: true })
   videoPresentation: string | null;
 
