@@ -42,13 +42,13 @@ import {
   CurrentUser,
   type AuthenticatedUser,
 } from '../../../utils/decorators/current-user.decorator';
-import appDataSource from '../../../config/typeorm.datasource';
 import { JobOpeningOrmEntity } from '../../out/orm/job-opening.orm-entity';
 import { JobSkillOrmEntity } from '../../out/orm/job-skill.orm-entity';
 import { SkillOrmEntity } from '../../out/orm/skill.orm-entity';
 import { CompanyOrmEntity } from '../../out/orm/company.orm-entity';
 import { CreateUpdateJobOpeningDto } from '../dtos/job-opening/create-update-job-opening.dto';
 import { randomUUID } from 'crypto';
+import { DataSource } from 'typeorm';
 
 @ApiTags('Companies')
 @Controller('companies')
@@ -56,6 +56,7 @@ export class CompanyController {
   constructor(
     private readonly companyService: CompanyService,
     private readonly logger: AmoresFatiLogger,
+    private readonly dataSource: DataSource,
   ) {
     this.logger.setContext(CompanyController.name);
   }
@@ -75,10 +76,10 @@ export class CompanyController {
       userId: user.id,
     });
 
-    const companyRepo = appDataSource.getRepository(CompanyOrmEntity);
-    const jobRepo = appDataSource.getRepository(JobOpeningOrmEntity);
-    const skillRepo = appDataSource.getRepository(SkillOrmEntity);
-    const jobSkillRepo = appDataSource.getRepository(JobSkillOrmEntity);
+    const companyRepo = this.dataSource.getRepository(CompanyOrmEntity);
+    const jobRepo = this.dataSource.getRepository(JobOpeningOrmEntity);
+    const skillRepo = this.dataSource.getRepository(SkillOrmEntity);
+    const jobSkillRepo = this.dataSource.getRepository(JobSkillOrmEntity);
 
     const company = await companyRepo.findOne({ where: { id: user.id } });
     if (!company) {
@@ -138,9 +139,9 @@ export class CompanyController {
       jobId: id,
     });
 
-    const jobRepo = appDataSource.getRepository(JobOpeningOrmEntity);
-    const skillRepo = appDataSource.getRepository(SkillOrmEntity);
-    const jobSkillRepo = appDataSource.getRepository(JobSkillOrmEntity);
+    const jobRepo = this.dataSource.getRepository(JobOpeningOrmEntity);
+    const skillRepo = this.dataSource.getRepository(SkillOrmEntity);
+    const jobSkillRepo = this.dataSource.getRepository(JobSkillOrmEntity);
 
     const job = await jobRepo.findOne({
       where: { id },
