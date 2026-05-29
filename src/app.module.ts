@@ -358,12 +358,14 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         userRepository: IUserRepository,
         hashService: IHashService,
         vacancyRepository: IVacancyReportRepository,
+        jobOpeningRepository: IJobOpeningRepository,
       ) => {
         return new CompanyService(
           companyRepository,
           userRepository,
           hashService,
           vacancyRepository,
+          jobOpeningRepository,
         );
       },
       inject: [
@@ -371,6 +373,7 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         IUserRepository,
         IHashService,
         IVacancyReportRepository,
+        IJobOpeningRepository,
       ],
     },
     {

@@ -195,9 +195,7 @@ describeOrSkip('CompanyController (e2e)', () => {
     });
   });
 
-  describe('/companies/me/vacancies (POST) and /companies/me/vacancies/:id (PUT)', () => {
-    let vacancyId: string;
-
+  describe('/companies/me/vacancies (POST)', () => {
     it('should create a new vacancy for the authenticated company (201)', async () => {
       const response = await request(app.getHttpServer() as Server)
         .post('/companies/me/vacancies')
@@ -228,7 +226,72 @@ describeOrSkip('CompanyController (e2e)', () => {
       expect(body.applicationLink).toBe('https://company.jobs/apply/fullstack');
       expect(body.isPcd).toBe(false);
       expect(body.workplaceType).toBe('hybrid');
-      vacancyId = body.id;
+    });
+
+    it('should return 400 for invalid workplaceType', () => {
+      return request(app.getHttpServer() as Server)
+        .post('/companies/me/vacancies')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          title: 'Vaga inválida',
+          description: 'Teste',
+          link: 'https://company.jobs/apply/test',
+          vacancyCount: 1,
+          isPcd: false,
+          workplaceType: 'invalid-type',
+        })
+        .expect(400);
+    });
+  });
+
+  describe('/companies/me/vacancies/:id (PUT)', () => {
+    let vacancyId: string;
+    let otherCompanyToken: string;
+
+    beforeAll(async () => {
+      const res = await request(app.getHttpServer() as Server)
+        .post('/companies/me/vacancies')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          title: 'Vaga para atualizar',
+          description: 'Descrição inicial.',
+          link: 'https://company.jobs/apply/setup',
+          vacancyCount: 1,
+          isPcd: false,
+          workplaceType: 'presential',
+        })
+        .expect(201);
+
+      vacancyId = (res.body as { id: string }).id;
+
+      const otherCnpj = cnpj.generate();
+      const otherEmail = `other-${Date.now()}@company.com`;
+
+      await request(app.getHttpServer() as Server)
+        .post('/companies')
+        .send({
+          name: 'Other E2E Company',
+          cnpj: otherCnpj,
+          email: otherEmail,
+          password: companyPassword,
+          responsibleName: 'Other Admin',
+          contact: {
+            city: 'Brasília',
+            state: 'DF',
+            address: 'SQN',
+            neighbourhood: 'Asa Norte',
+            cep: '70000000',
+            phone: '61988888888',
+          },
+        })
+        .expect(201);
+
+      const loginRes = await request(app.getHttpServer() as Server)
+        .post('/auth/login')
+        .send({ email: otherEmail, password: companyPassword })
+        .expect(200);
+
+      otherCompanyToken = (loginRes.body as { accessToken: string }).accessToken;
     });
 
     it('should update an existing vacancy for the authenticated company (200)', async () => {
@@ -278,6 +341,21 @@ describeOrSkip('CompanyController (e2e)', () => {
           workplaceType: 'presential',
         })
         .expect(404);
+    });
+
+    it('should return 403 when updating a vacancy belonging to another company', () => {
+      return request(app.getHttpServer() as Server)
+        .put(`/companies/me/vacancies/${vacancyId}`)
+        .set('Authorization', `Bearer ${otherCompanyToken}`)
+        .send({
+          title: 'Tentativa indevida',
+          description: 'Outra empresa tentando atualizar.',
+          link: 'https://company.jobs/apply/forbidden',
+          vacancyCount: 1,
+          isPcd: false,
+          workplaceType: 'presential',
+        })
+        .expect(403);
     });
   });
 

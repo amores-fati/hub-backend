@@ -6,13 +6,12 @@ import {
   IsInt,
   Min,
   IsBoolean,
-  IsIn,
+  IsEnum,
   IsArray,
   ArrayUnique,
-  ValidateIf,
+  IsUrl,
 } from 'class-validator';
-
-export const WORKPLACE_TYPES = ['presential', 'online', 'hybrid'] as const;
+import { WorkplaceTypeEnum } from '../../../../core/domain/enums/workplace-type.enum';
 
 export class CreateUpdateJobOpeningDto {
   @ApiProperty({
@@ -35,8 +34,7 @@ export class CreateUpdateJobOpeningDto {
     example: 'https://company.jobs/apply/123',
     description: 'Link de candidatura',
   })
-  @IsString()
-  @IsNotEmpty()
+  @IsUrl()
   link: string;
 
   @ApiProperty({ example: 3, description: 'Quantidade de vagas' })
@@ -50,18 +48,16 @@ export class CreateUpdateJobOpeningDto {
 
   @ApiProperty({
     example: 'presential',
-    enum: WORKPLACE_TYPES,
+    enum: WorkplaceTypeEnum,
     description: 'Tipo de local de trabalho',
   })
-  @IsString()
-  @IsIn(WORKPLACE_TYPES as unknown as string[])
-  workplaceType: string;
+  @IsEnum(WorkplaceTypeEnum)
+  workplaceType: WorkplaceTypeEnum;
 
   @ApiProperty({ example: ['react', 'typescript'], required: false })
   @IsOptional()
   @IsArray()
   @ArrayUnique()
-  @ValidateIf((o: CreateUpdateJobOpeningDto) => o.skills !== undefined)
   @IsString({ each: true })
   skills?: string[];
 }

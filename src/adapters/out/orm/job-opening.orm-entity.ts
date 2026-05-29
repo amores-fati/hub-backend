@@ -72,11 +72,9 @@ export class JobOpeningOrmEntity {
     default: 'presential',
   })
   workplaceType: string;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
-
-  @Column({ name: 'workplace_type', default: 'presencial' })
-  workplaceType: string;
 
   @Column({
     name: 'announcement_date',
