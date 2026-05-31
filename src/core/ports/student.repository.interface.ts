@@ -2,6 +2,11 @@ import { Student } from '../domain/student.entity';
 
 export const IStudentRepository = Symbol('IStudentRepository');
 
+export interface StudentWithCurriculumAvailability {
+  student: Student;
+  curriculumIsAvailable: boolean;
+}
+
 export interface StudentEnrollmentListProjection {
   courseId: string;
   courseModality: string;
@@ -19,6 +24,7 @@ export interface StudentListProjection {
   hasDisability?: boolean;
   disabilityType?: string;
   enrollments: StudentEnrollmentListProjection[];
+  curriculumIsAvailable: boolean;
 }
 
 export interface PaginatedStudentListResult {
@@ -69,7 +75,7 @@ export interface StudentCityCount {
 }
 export interface IStudentRepository {
   create(student: Student): Promise<Student>;
-  findAll(): Promise<Student[]>;
+  findAll(): Promise<StudentWithCurriculumAvailability[]>;
   findAllWithFilter(
     query: StudentFilterQuery,
   ): Promise<PaginatedStudentListResult>;

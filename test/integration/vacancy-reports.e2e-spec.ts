@@ -187,8 +187,8 @@ async function insertCompany(
     [params.id, '12.345.678/9001-10', 'Empresa de Vagas', 'Pessoa Responsavel'],
   );
   await dataSource.query(
-    `INSERT INTO "address_company" (id, company_id, city, state) VALUES ($1, $2, $3, $4)`,
-    [randomUUID(), params.id, 'Porto Alegre', 'RS'],
+    `INSERT INTO "address_company" (id, company_id, city, state, cep) VALUES ($1, $2, $3, $4, $5)`,
+    [randomUUID(), params.id, 'Porto Alegre', 'RS', '90010-030'],
   );
   await dataSource.query(
     `INSERT INTO "telephone_company" (id, company_id, phone) VALUES ($1, $2, $3)`,

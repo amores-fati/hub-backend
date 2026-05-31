@@ -4,7 +4,7 @@ export interface CreateContactCommand {
   state?: string;
   city?: string;
   address?: string;
-  cep?: string;
+  cep: string;
   complement?: string;
 }
 

@@ -4,6 +4,9 @@ export class ResumeListItemDto {
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   id: string;
 
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174001' })
+  studentId: string;
+
   @ApiProperty({ example: '123.456.789-00' })
   cpf: string;
 
@@ -30,6 +33,15 @@ export class ResumeListItemDto {
 
   @ApiProperty({ example: 'Remoto', required: false })
   preference?: string;
+
+  @ApiProperty({ example: '(51) 99999-9999', required: false })
+  phone?: string;
+
+  @ApiProperty({ example: 'Porto Alegre', required: false })
+  city?: string;
+
+  @ApiProperty({ example: 'RS', required: false })
+  state?: string;
 }
 
 export class PaginatedResumesMetaDto {

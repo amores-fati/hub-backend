@@ -40,6 +40,7 @@ export interface StudentListItem {
   hasDisability?: boolean;
   disabilityType?: string;
   enrollmentStatus: 'ONLINE' | 'PRESENCIAL' | 'NAO_INSCRITO';
+  curriculumIsAvailable: boolean;
 }
 
 export interface PaginatedStudentsResponse {
@@ -128,8 +129,12 @@ export class StudentService {
     return this.studentRepository.create(student);
   }
 
-  async findAllStudents(): Promise<Student[]> {
-    return this.studentRepository.findAll();
+  async findAllStudents() {
+    const result = await this.studentRepository.findAll();
+    return result.map(({ student, curriculumIsAvailable }) => ({
+      ...student.toJSON(),
+      curriculumIsAvailable,
+    }));
   }
 
   async findAllStudentsWithFilter(
@@ -498,6 +503,7 @@ export class StudentService {
       hasDisability: student.hasDisability,
       disabilityType: student.disabilityType,
       enrollmentStatus: this.deriveEnrollmentStatus(student, modality),
+      curriculumIsAvailable: student.curriculumIsAvailable,
     };
   }
 

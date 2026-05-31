@@ -16,12 +16,16 @@ import {
 import { CurriculumSkillOrmEntity } from '../orm/curriculum-skill.orm-entity';
 import { CurriculumOrmEntity } from '../orm/curriculum.orm-entity';
 import { SkillOrmEntity } from '../orm/skill.orm-entity';
+import { AddressStudentOrmEntity } from '../orm/address-student.orm-entity';
 import { StudentOrmEntity } from '../orm/student.orm-entity';
+import { TelephoneStudentOrmEntity } from '../orm/telephone-student.orm-entity';
 import { UserOrmEntity } from '../orm/user.orm-entity';
 
 type CurriculumWithStudent = CurriculumOrmEntity & {
   student: StudentOrmEntity & {
     user: UserOrmEntity;
+    phone: TelephoneStudentOrmEntity | null;
+    address: AddressStudentOrmEntity | null;
   };
 };
 
@@ -50,7 +54,9 @@ export class CurriculumRepository implements ICurriculumRepository {
     const queryBuilder = this.ormRepository
       .createQueryBuilder('curriculum')
       .innerJoinAndSelect('curriculum.student', 'student')
-      .innerJoinAndSelect('student.user', 'user');
+      .innerJoinAndSelect('student.user', 'user')
+      .leftJoinAndSelect('student.telephone', 'phone')
+      .leftJoinAndSelect('student.address', 'address');
 
     if (query.search) {
       const search = this.buildLikeFilter(query.search);
@@ -95,6 +101,29 @@ export class CurriculumRepository implements ICurriculumRepository {
           isAvailable: false,
         });
       }
+    }
+
+    if (query.city && query.city.length > 0) {
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          query.city!.forEach((location, index) => {
+            const [city, state] = location.split('/').map((v) => v.trim());
+            if (city && state) {
+              qb.orWhere(
+                `(address.city ILIKE :city${index} AND address.state ILIKE :state${index})`,
+                {
+                  [`city${index}`]: `%${city}%`,
+                  [`state${index}`]: state,
+                },
+              );
+            } else {
+              qb.orWhere(`address.city ILIKE :loc${index}`, {
+                [`loc${index}`]: `%${location}%`,
+              });
+            }
+          });
+        }),
+      );
     }
 
     const [ormEntities, total] = await queryBuilder
@@ -183,6 +212,7 @@ export class CurriculumRepository implements ICurriculumRepository {
   ): ResumeListProjection {
     return {
       id: ormEntity.id,
+      studentId: ormEntity.student.id,
       cpf: this.formatCpf(ormEntity.student.cpf),
       fullName: ormEntity.student.fullName,
       socialName: ormEntity.student.socialName || undefined,
@@ -192,6 +222,7 @@ export class CurriculumRepository implements ICurriculumRepository {
       linkedin: ormEntity.linkedin || undefined,
       github: ormEntity.github || undefined,
       preference: ormEntity.preference || undefined,
+      phone: ormEntity.student.telephone?.phone || undefined,
     };
   }
 

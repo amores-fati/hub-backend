@@ -92,6 +92,7 @@ export class AdminService {
       interestArea: query.interestArea,
       preference: query.preference,
       status: query.status,
+      city: query.city,
       page: normalizedPage,
       limit: normalizedLimit,
     };
@@ -136,6 +137,7 @@ export class AdminService {
   ): ResumeListItemDto {
     return {
       id: item.id,
+      studentId: item.studentId,
       cpf: item.cpf,
       fullName: item.fullName,
       socialName: item.socialName,
@@ -145,6 +147,7 @@ export class AdminService {
       linkedin: item.linkedin,
       github: item.github,
       preference: item.preference,
+      phone: item.phone,
     };
   }
 }
