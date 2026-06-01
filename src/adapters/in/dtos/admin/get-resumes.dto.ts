@@ -42,12 +42,19 @@ export class GetResumesQueryDto {
   search?: string;
 
   @ApiPropertyOptional({
-    example: 'Desenvolvimento',
-    description: 'Filtro por área de interesse do aluno',
+    example: ['design', 'desenvolvimento'],
+    type: [String],
+    description:
+      'Filtro por área de atuação do aluno. Aceita múltiplos valores.',
   })
-  @IsString()
+  @Transform(
+    ({ value }) =>
+      (Array.isArray(value) ? value : value ? [value] : []) as string[],
+  )
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  interestArea?: string;
+  activityArea?: string[];
 
   @ApiPropertyOptional({
     example: 'Remoto',

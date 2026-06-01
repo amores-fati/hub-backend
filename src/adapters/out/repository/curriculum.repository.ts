@@ -78,10 +78,15 @@ export class CurriculumRepository implements ICurriculumRepository {
       );
     }
 
-    if (query.interestArea) {
-      queryBuilder.andWhere('student.activityArea ILIKE :interestArea', {
-        interestArea: this.buildLikeFilter(query.interestArea),
-      });
+    if (query.activityArea && query.activityArea.length > 0) {
+      queryBuilder.andWhere(
+        'LOWER(student.activityArea) IN (:...activityAreas)',
+        {
+          activityAreas: query.activityArea.map((area) =>
+            area.toLowerCase(),
+          ),
+        },
+      );
     }
 
     if (query.preference) {

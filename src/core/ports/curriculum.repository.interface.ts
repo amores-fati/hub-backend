@@ -24,7 +24,7 @@ export interface PaginatedResumeListResult {
 
 export interface ResumeFilterQuery {
   search?: string;
-  interestArea?: string;
+  activityArea?: string[];
   preference?: string;
   status?: string;
   city?: string[];

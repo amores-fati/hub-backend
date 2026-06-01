@@ -5,6 +5,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   NotFoundException,
@@ -13,7 +14,9 @@ import {
   Post,
   Put,
   Query,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -94,7 +97,7 @@ export class CourseController {
   async create(@Body() createCourseDto: CreateCourseDto) {
     try {
       this.logger.info('Creating course', { name: createCourseDto.name });
-      const command: CreateCourseCommand = { ...createCourseDto };
+      const command: CreateCourseCommand = this.toCreateCommand(createCourseDto);
       const course = await this.courseService.createCourse(command);
       this.logger.info('Course created', {
         id: (course as { id?: string })?.id,
@@ -108,6 +111,24 @@ export class CourseController {
       }
 
       throw error;
+    }
+  }
+
+  private toCreateCommand(dto: CreateCourseDto): CreateCourseCommand {
+    const { bannerImage, bannerImageMimeType, ...rest } = dto;
+    return {
+      ...rest,
+      bannerImage: bannerImage ? this.decodeBase64Image(bannerImage) : undefined,
+      bannerImageMimeType: bannerImage ? bannerImageMimeType : undefined,
+    };
+  }
+
+  private decodeBase64Image(value: string): Buffer {
+    const stripped = value.replace(/^data:[^;]+;base64,/, '').trim();
+    try {
+      return Buffer.from(stripped, 'base64');
+    } catch {
+      throw new BadRequestException('bannerImage deve estar em base64 valido.');
     }
   }
 
@@ -137,7 +158,7 @@ export class CourseController {
   ) {
     this.logger.info('Updating course', { id });
     try {
-      const command: UpdateCourseCommand = { ...dto };
+      const command: UpdateCourseCommand = this.toCreateCommand(dto);
       const course = await this.courseService.updateCourse(id, command);
       this.logger.info('Course updated', { id });
       return course;
@@ -224,6 +245,50 @@ export class CourseController {
       page: result.page,
       limit: result.limit,
     };
+  }
+
+  @Get(':id/banner-image')
+  @ApiOperation({
+    summary: 'Retorna os bytes da imagem do banner armazenada em BYTEA',
+  })
+  @ApiParam({ name: 'id', description: 'UUID do curso', type: String })
+  @ApiOkResponse({
+    description: 'Imagem retornada com sucesso.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Curso ou imagem nao encontrada.',
+  })
+  @Header('Cache-Control', 'public, max-age=3600')
+  async getBannerImage(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    try {
+      const course = await this.courseService.findCourseById(id);
+      if (!course.bannerImage || course.bannerImage.length === 0) {
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Imagem do banner nao encontrada',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+
+      res.setHeader(
+        'Content-Type',
+        course.bannerImageMimeType ?? 'application/octet-stream',
+      );
+      res.setHeader('Content-Length', course.bannerImage.length);
+      res.end(course.bannerImage);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CourseNotFoundException') {
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Curso não encontrado',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+      throw error;
+    }
   }
 
   @RequireAuth(UserRoleEnum.ADMIN)

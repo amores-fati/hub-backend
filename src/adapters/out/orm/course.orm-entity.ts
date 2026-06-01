@@ -16,8 +16,19 @@ export class CourseOrmEntity {
   @Column()
   name: string;
 
-  @Column()
-  banner: string;
+  @Column({ type: 'varchar', nullable: true })
+  banner: string | null;
+
+  @Column({ name: 'banner_image', type: 'bytea', nullable: true })
+  bannerImage: Buffer | null;
+
+  @Column({
+    name: 'banner_image_mime_type',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
+  bannerImageMimeType: string | null;
 
   @Column({ type: 'text', nullable: true })
   description: string | null;

@@ -75,6 +75,9 @@ function toIsoString(value: Date | string): string {
 }
 
 export function toCourseResponse(course: Course): CourseResponseDto {
+  const bannerUrl = course.banner?.trim() ? course.banner : null;
+  const hasStoredImage =
+    !!course.bannerImage && course.bannerImage.length > 0;
   return {
     id: course.id,
     title: course.name,
@@ -89,7 +92,9 @@ export function toCourseResponse(course: Course): CourseResponseDto {
     enrollmentEnd: toIsoString(course.endRegistrations),
     location: course.address ?? null,
     shift: course.shift ?? null,
-    imageUrl: course.banner?.trim() ? course.banner : null,
+    imageUrl:
+      bannerUrl ??
+      (hasStoredImage ? `/api/courses/${course.id}/banner-image` : null),
     externalLink: course.linkAccess?.trim() ? course.linkAccess : null,
   };
 }

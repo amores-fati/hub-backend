@@ -95,7 +95,7 @@ export class AdminService {
 
     const filterQuery: ResumeFilterQuery = {
       search: query.search,
-      interestArea: query.interestArea,
+      activityArea: query.activityArea,
       preference: query.preference,
       status: query.status,
       city: query.city,

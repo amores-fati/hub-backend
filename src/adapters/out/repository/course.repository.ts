@@ -44,7 +44,9 @@ export class CourseRepository implements ICourseRepository {
   async update(course: Course): Promise<Course> {
     await this.ormRepository.update(course.id, {
       name: course.name,
-      banner: course.banner,
+      banner: course.banner ?? null,
+      bannerImage: course.bannerImage ?? null,
+      bannerImageMimeType: course.bannerImageMimeType ?? null,
       description: course.description ?? null,
       courseLoad: course.courseLoad,
       startDate: course.startDate,
@@ -102,7 +104,7 @@ export class CourseRepository implements ICourseRepository {
     return new Course(
       ormEntity.id,
       ormEntity.name,
-      ormEntity.banner,
+      ormEntity.banner ?? undefined,
       ormEntity.courseLoad,
       this.coerceDate(ormEntity.startDate),
       this.coerceDate(ormEntity.endDate),
@@ -115,6 +117,8 @@ export class CourseRepository implements ICourseRepository {
       ormEntity.address ?? undefined,
       ormEntity.description ?? undefined,
       this.normalizeStatus(ormEntity.status),
+      ormEntity.bannerImage ?? undefined,
+      ormEntity.bannerImageMimeType ?? undefined,
     );
   }
 
@@ -122,7 +126,9 @@ export class CourseRepository implements ICourseRepository {
     return {
       id: course.id,
       name: course.name,
-      banner: course.banner,
+      banner: course.banner ?? null,
+      bannerImage: course.bannerImage ?? null,
+      bannerImageMimeType: course.bannerImageMimeType ?? null,
       description: course.description ?? null,
       courseLoad: course.courseLoad,
       startDate: course.startDate,
