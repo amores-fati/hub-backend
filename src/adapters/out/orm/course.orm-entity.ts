@@ -1,5 +1,13 @@
-import { Column, CreateDateColumn, Entity, PrimaryColumn } from 'typeorm';
+import {
+  Check,
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryColumn,
+} from 'typeorm';
+import { CourseStatus } from '../../../core/domain/course-status.enum';
 
+@Check('ck_courses__status', `"status" IN ('ATIVO', 'INATIVO')`)
 @Entity('courses')
 export class CourseOrmEntity {
   @PrimaryColumn('uuid')
@@ -8,8 +16,19 @@ export class CourseOrmEntity {
   @Column()
   name: string;
 
-  @Column()
-  banner: string;
+  @Column({ type: 'varchar', nullable: true })
+  banner: string | null;
+
+  @Column({ name: 'banner_image', type: 'bytea', nullable: true })
+  bannerImage: Buffer | null;
+
+  @Column({
+    name: 'banner_image_mime_type',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
+  bannerImageMimeType: string | null;
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
@@ -32,11 +51,20 @@ export class CourseOrmEntity {
   @Column({ name: 'modality', type: 'varchar', default: 'ONLINE' })
   modality: string;
 
-  @Column({ name: 'link_access' })
-  linkAccess: string;
+  @Column({ name: 'link_access', type: 'varchar', nullable: true })
+  linkAccess: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  address: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  shift: string | null;
 
   @Column({ name: 'vacancy_count', type: 'int', default: 0 })
   vacancyCount: number;
+
+  @Column({ name: 'status', type: 'varchar', length: 20, default: 'ATIVO' })
+  status: CourseStatus;
 
   @CreateDateColumn({
     name: 'created_at',

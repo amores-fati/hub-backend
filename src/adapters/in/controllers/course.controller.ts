@@ -3,26 +3,36 @@ import {
   Body,
   ConflictException,
   Controller,
+  Delete,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
+  Query,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import {
   ApiBadRequestResponse,
   ApiBody,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateCourseCommand } from '../../../core/command/course.command';
+import {
+  CreateCourseCommand,
+  UpdateCourseCommand,
+} from '../../../core/command/course.command';
 import { CourseService } from '../../../core/services/course.service';
 import { EnrollmentService } from '../../../core/services/enrollment.service';
 import { EnrollmentType } from '../../../core/domain/enrollment.entity';
@@ -31,7 +41,12 @@ import { CurrentUser } from '../../../utils/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCourseDto } from '../dtos/course/create-course.dto';
-import { toCourseResponse } from '../dtos/course/course-response.dto';
+import {
+  CourseResponseDto,
+  toCourseResponse,
+} from '../dtos/course/course-response.dto';
+import { FilterCoursesDto } from '../dtos/course/filter-courses.dto';
+import { PaginatedCoursesResponseDto } from '../dtos/course/paginated-courses-response.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @ApiTags('Courses')
@@ -55,8 +70,7 @@ export class CourseController {
   })
   @ApiBody({
     type: CreateCourseDto,
-    description:
-      'Payload contendo os campos obrigatorios persistidos em courses.',
+    description: 'Payload contendo os campos estruturais do curso.',
   })
   @ApiCreatedResponse({
     description:
@@ -83,7 +97,7 @@ export class CourseController {
   async create(@Body() createCourseDto: CreateCourseDto) {
     try {
       this.logger.info('Creating course', { name: createCourseDto.name });
-      const command: CreateCourseCommand = { ...createCourseDto };
+      const command: CreateCourseCommand = this.toCreateCommand(createCourseDto);
       const course = await this.courseService.createCourse(command);
       this.logger.info('Course created', {
         id: (course as { id?: string })?.id,
@@ -96,6 +110,71 @@ export class CourseController {
         throw new BadRequestException(error.message);
       }
 
+      throw error;
+    }
+  }
+
+  private toCreateCommand(dto: CreateCourseDto): CreateCourseCommand {
+    const { bannerImage, bannerImageMimeType, ...rest } = dto;
+    return {
+      ...rest,
+      bannerImage: bannerImage ? this.decodeBase64Image(bannerImage) : undefined,
+      bannerImageMimeType: bannerImage ? bannerImageMimeType : undefined,
+    };
+  }
+
+  private decodeBase64Image(value: string): Buffer {
+    const stripped = value.replace(/^data:[^;]+;base64,/, '').trim();
+    try {
+      return Buffer.from(stripped, 'base64');
+    } catch {
+      throw new BadRequestException('bannerImage deve estar em base64 valido.');
+    }
+  }
+
+  @RequireAuth(UserRoleEnum.ADMIN)
+  @Put(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Atualiza um curso existente (admin)' })
+  @ApiParam({ name: 'id', description: 'UUID do curso', type: String })
+  @ApiBody({ type: CreateCourseDto })
+  @ApiOkResponse({ description: 'Curso atualizado com sucesso.' })
+  @ApiNotFoundResponse({
+    description: 'Curso não encontrado.',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'Curso não encontrado',
+        errorKind: 'NOT_FOUND',
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Erro de validação ou inconsistência de domínio.',
+  })
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateCourseDto,
+  ) {
+    this.logger.info('Updating course', { id });
+    try {
+      const command: UpdateCourseCommand = this.toCreateCommand(dto);
+      const course = await this.courseService.updateCourse(id, command);
+      this.logger.info('Course updated', { id });
+      return course;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CourseNotFoundException') {
+        this.logger.warn('Course not found', { id });
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Curso não encontrado',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+      if (error instanceof Error && error.name === 'DomainException') {
+        this.logger.error('Course update domain error', { id });
+        throw new BadRequestException(error.message);
+      }
       throw error;
     }
   }
@@ -131,11 +210,152 @@ export class CourseController {
   })
   async findAll() {
     this.logger.info('Listing courses');
-    const courses = await this.courseService.getAllCoursesWithLocation();
+    const courses = await this.courseService.getAllCourses();
     this.logger.info('Courses listed', { count: courses.length });
-    return courses.map(({ course, location }) =>
-      toCourseResponse(course, location),
-    );
+    return courses.map((course) => toCourseResponse(course));
+  }
+
+  @RequireAuth(UserRoleEnum.ADMIN)
+  @Get('filter')
+  @ApiOperation({
+    summary: 'Lista cursos com filtros e paginação',
+    description:
+      'Retorna cursos paginados com filtros opcionais por nome, modalidade, status e período.',
+  })
+  @ApiOkResponse({
+    description: 'Cursos retornados com sucesso.',
+    type: PaginatedCoursesResponseDto,
+  })
+  async filter(
+    @Query() filters: FilterCoursesDto,
+  ): Promise<PaginatedCoursesResponseDto> {
+    this.logger.info('Filtering courses', {
+      page: filters.page,
+      limit: filters.limit,
+      search: filters.search,
+      modality: filters.modality,
+      status: filters.status,
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+    });
+    const result = await this.courseService.filterCourses(filters);
+    return {
+      data: result.data.map((course) => toCourseResponse(course)),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
+  }
+
+  @Get(':id/banner-image')
+  @ApiOperation({
+    summary: 'Retorna os bytes da imagem do banner armazenada em BYTEA',
+  })
+  @ApiParam({ name: 'id', description: 'UUID do curso', type: String })
+  @ApiOkResponse({
+    description: 'Imagem retornada com sucesso.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Curso ou imagem nao encontrada.',
+  })
+  @Header('Cache-Control', 'public, max-age=3600')
+  async getBannerImage(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    try {
+      const course = await this.courseService.findCourseById(id);
+      if (!course.bannerImage || course.bannerImage.length === 0) {
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Imagem do banner nao encontrada',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+
+      res.setHeader(
+        'Content-Type',
+        course.bannerImageMimeType ?? 'application/octet-stream',
+      );
+      res.setHeader('Content-Length', course.bannerImage.length);
+      res.end(course.bannerImage);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CourseNotFoundException') {
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Curso não encontrado',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+      throw error;
+    }
+  }
+
+  @RequireAuth(UserRoleEnum.ADMIN)
+  @Get(':id')
+  @ApiOperation({ summary: 'Busca um curso por ID' })
+  @ApiParam({ name: 'id', description: 'UUID do curso', type: String })
+  @ApiOkResponse({
+    description: 'Curso retornado com sucesso.',
+    type: CourseResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Curso não encontrado.',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'Curso não encontrado',
+        errorKind: 'NOT_FOUND',
+      },
+    },
+  })
+  async findById(@Param('id', ParseUUIDPipe) id: string) {
+    this.logger.info('Finding course by id', { id });
+    try {
+      const course = await this.courseService.findCourseById(id);
+      return toCourseResponse(course);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CourseNotFoundException') {
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Curso não encontrado',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+      throw error;
+    }
+  }
+
+  @RequireAuth(UserRoleEnum.ADMIN)
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Exclui um curso' })
+  @ApiParam({ name: 'id', description: 'UUID do curso', type: String })
+  @ApiNoContentResponse({ description: 'Curso excluído com sucesso.' })
+  @ApiNotFoundResponse({
+    description: 'Curso não encontrado.',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'Curso não encontrado',
+        errorKind: 'NOT_FOUND',
+      },
+    },
+  })
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    this.logger.info('Deleting course', { id });
+    try {
+      await this.courseService.deleteCourse(id);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CourseNotFoundException') {
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Curso não encontrado',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+      throw error;
+    }
   }
 
   @RequireAuth(UserRoleEnum.STUDENT)

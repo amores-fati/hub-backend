@@ -1,6 +1,5 @@
 import { DomainException } from '../exceptions/domain.exception';
 import { Contact } from './contact.entity';
-import { Disability } from './disability.entity';
 import {
   EducationLevel,
   EDUCATION_LEVEL_VALUES,
@@ -13,7 +12,6 @@ import {
   FamilyIncome,
   FAMILY_INCOME_VALUES,
 } from './enums/student-profile.enum';
-import { SocialBenefit } from './social-benefit.entity';
 import { User } from './user.entity';
 
 export class Student extends User {
@@ -35,8 +33,8 @@ export class Student extends User {
   #hasComputer?: boolean;
   #hasInternet?: boolean;
   #committedToParticipate?: boolean;
-  #disability?: Disability;
-  #socialBenefits: SocialBenefit[];
+  #disabilities: string[];
+  #socialBenefitNames: string[];
   #householdSize?: number;
 
   constructor(
@@ -58,12 +56,12 @@ export class Student extends User {
     hasComputer?: boolean,
     hasInternet?: boolean,
     committedToParticipate?: boolean,
-    disability?: Disability,
-    socialBenefits: SocialBenefit[] = [],
     socialName?: string,
     courseName?: string,
     familyIncome?: FamilyIncome,
     householdSize?: number,
+    disabilities: string[] = [],
+    socialBenefitNames: string[] = [],
   ) {
     super(id, email, password);
     this.#cpf = cpf;
@@ -81,13 +79,13 @@ export class Student extends User {
     this.#hasComputer = hasComputer;
     this.#hasInternet = hasInternet;
     this.#committedToParticipate = committedToParticipate;
-    this.#disability = disability;
-    this.#socialBenefits = socialBenefits;
     this.#fullName = fullName;
     this.#socialName = socialName;
     this.#courseName = courseName;
     this.#familyIncome = familyIncome;
     this.#householdSize = householdSize;
+    this.#disabilities = disabilities;
+    this.#socialBenefitNames = socialBenefitNames;
     this.validateStudent();
   }
 
@@ -167,12 +165,12 @@ export class Student extends User {
     return this.#committedToParticipate;
   }
 
-  get disability(): Disability | undefined {
-    return this.#disability;
+  get disabilities(): string[] {
+    return this.#disabilities;
   }
 
-  get socialBenefits(): SocialBenefit[] {
-    return this.#socialBenefits;
+  get socialBenefitNames(): string[] {
+    return this.#socialBenefitNames;
   }
 
   public changeContact(newContact: Contact): void {
@@ -242,16 +240,16 @@ export class Student extends User {
     this.validateControlledValues();
   }
 
-  public changeDisability(disability?: Disability): void {
-    this.#disability = disability;
+  public changeDisabilities(disabilities: string[]): void {
+    this.#disabilities = disabilities;
   }
 
   public changeSocialName(socialName?: string): void {
     this.#socialName = socialName?.trim() || undefined;
   }
 
-  public replaceSocialBenefits(benefits: SocialBenefit[]): void {
-    this.#socialBenefits = benefits;
+  public replaceSocialBenefits(benefits: string[]): void {
+    this.#socialBenefitNames = benefits;
   }
 
   private validateStudent(): void {
@@ -338,7 +336,7 @@ export class Student extends User {
   }
 
   private validateCollections(): void {
-    if (!Array.isArray(this.#socialBenefits)) {
+    if (!Array.isArray(this.#socialBenefitNames)) {
       throw new DomainException(
         'Os beneficios sociais devem ser uma lista valida.',
       );
@@ -363,8 +361,17 @@ export class Student extends User {
       hasComputer: this.hasComputer,
       hasInternet: this.hasInternet,
       committedToParticipate: this.committedToParticipate,
-      disability: this.disability,
-      socialBenefits: this.socialBenefits,
+      disabilities: this.disabilities,
+      socialBenefitNames: this.socialBenefitNames,
+      disability:
+        this.disabilities.length > 0
+          ? { hasDisability: true, type: this.disabilities.join(', ') }
+          : { hasDisability: false, type: undefined },
+      socialBenefits: this.socialBenefitNames.map((name, i) => ({
+        id: -(i + 1),
+        studentId: this.id,
+        benefit: name,
+      })),
       fullName: this.fullName,
       socialName: this.socialName,
       courseName: this.courseName,

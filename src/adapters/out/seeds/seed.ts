@@ -4,7 +4,6 @@ import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { buildDatabaseOptions } from '../../../config/database.config';
 
-import { SocialBenefitType } from '../../../core/domain/enums/social-benefit.enum';
 import {
   EducationLevel,
   FamilyIncome,
@@ -16,12 +15,14 @@ import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { AdminOrmEntity } from '../orm/admin.orm-entity';
 import { CompanyOrmEntity } from '../orm/company.orm-entity';
-import { ContactOrmEntity } from '../orm/contact.orm-entity';
+import { TelephoneCompanyOrmEntity } from '../orm/telephone-company.orm-entity';
+import { AddressCompanyOrmEntity } from '../orm/address-company.orm-entity';
+import { TelephoneStudentOrmEntity } from '../orm/telephone-student.orm-entity';
+import { AddressStudentOrmEntity } from '../orm/address-student.orm-entity';
 import { CourseOrmEntity } from '../orm/course.orm-entity';
 import { CurriculumSkillOrmEntity } from '../orm/curriculum-skill.orm-entity';
 import { CurriculumOrmEntity } from '../orm/curriculum.orm-entity';
 import { DisabilityOrmEntity } from '../orm/disability.orm-entity';
-import { InPersonCourseDetailOrmEntity } from '../orm/in-person-course-detail.orm-entity';
 import { JobOpeningOrmEntity } from '../orm/job-opening.orm-entity';
 import { JobSkillOrmEntity } from '../orm/job-skill.orm-entity';
 import { SettingOrmEntity } from '../orm/setting.orm-entity';
@@ -112,9 +113,10 @@ async function ensureSeedMode(appDataSource: DataSource): Promise<boolean> {
   if (shouldReset) {
     await appDataSource.query(`TRUNCATE TABLE
       job_skills, curriculum_skills, skills, job_openings, curriculum,
-      in_person_course_details, courses, disabilities,
-      social_benefits,
-      students, admins, companies, contacts, users, settings
+      courses, disability, student_disability,
+      social_benefit, student_social_benefit, telephone_student,
+      telephone_company, address_student, address_company,
+      students, admins, companies, users, settings
       RESTART IDENTITY CASCADE`);
     logger.info('Dados anteriores removidos.');
   } else {
@@ -177,6 +179,7 @@ export async function seed(): Promise<void> {
       phone: '(51) 99111-2222',
       city: 'Porto Alegre',
       state: 'RS',
+      cep: '90010-030',
     },
     {
       email: 'rh@solucoesdigitais.com',
@@ -186,6 +189,7 @@ export async function seed(): Promise<void> {
       phone: '(51) 98222-3333',
       city: 'Canoas',
       state: 'RS',
+      cep: '92010-020',
     },
     {
       email: 'vagas@nextera.com',
@@ -195,6 +199,7 @@ export async function seed(): Promise<void> {
       phone: '(51) 97333-4444',
       city: 'São Leopoldo',
       state: 'RS',
+      cep: '93010-130',
     },
   ];
 
@@ -208,21 +213,33 @@ export async function seed(): Promise<void> {
       role: UserRoleEnum.COMPANY,
     });
     await appDataSource.getRepository(UserOrmEntity).save(user);
-    const contact = appDataSource.getRepository(ContactOrmEntity).create({
-      id: userId,
-      phone: e.phone,
-      city: e.city,
-      state: e.state,
-    });
-    await appDataSource.getRepository(ContactOrmEntity).save(contact);
     const company = appDataSource.getRepository(CompanyOrmEntity).create({
       id: userId,
       cnpj: e.cnpj,
       name: e.name,
       responsibleName: e.responsibleName,
-      contact: contact,
     });
     await appDataSource.getRepository(CompanyOrmEntity).save(company);
+    const telephone = appDataSource
+      .getRepository(TelephoneCompanyOrmEntity)
+      .create({
+        id: userId,
+        companyId: userId,
+        phone: e.phone,
+      });
+    await appDataSource
+      .getRepository(TelephoneCompanyOrmEntity)
+      .save(telephone);
+    const address = appDataSource
+      .getRepository(AddressCompanyOrmEntity)
+      .create({
+        id: userId,
+        companyId: userId,
+        city: e.city,
+        state: e.state,
+        cep: e.cep,
+      });
+    await appDataSource.getRepository(AddressCompanyOrmEntity).save(address);
     empresas.push(company);
   }
   logger.info('3 empresas criadas.');
@@ -258,6 +275,8 @@ export async function seed(): Promise<void> {
       linkAccess: 'https://www.amoresfati.org.br/',
       modality: 'PRESENCIAL',
       vacancyCount: 30,
+      shift: 'morning',
+      address: 'Instituto Caldeira - Porto Alegre/RS',
     },
   ];
 
@@ -272,12 +291,44 @@ export async function seed(): Promise<void> {
   }
   logger.info('2 cursos criados.');
 
+  // 3.5. DISABILITIES E BENEFITS
+  const disabilityTypes = [
+    'VISUAL',
+    'AUDITIVA',
+    'FISICA',
+    'INTELECTUAL',
+    'PSICOSSOCIAL',
+    'MULTIPLA',
+    'TEA',
+    'OUTRA',
+    'NENHUMA',
+  ];
+  for (const type of disabilityTypes) {
+    const disability = appDataSource.getRepository(DisabilityOrmEntity).create({
+      id: uuidv4(),
+      name: type,
+    });
+    await appDataSource.getRepository(DisabilityOrmEntity).save(disability);
+  }
+  logger.info('Deficiências criadas.');
+
+  const benefitTypes = ['BOLSA FAMILIA', 'BPC', 'OUTROS'];
+  for (const type of benefitTypes) {
+    const benefit = appDataSource.getRepository(SocialBenefitOrmEntity).create({
+      id: uuidv4(),
+      name: type,
+    });
+    await appDataSource.getRepository(SocialBenefitOrmEntity).save(benefit);
+  }
+  logger.info('Benefícios Sociais criados.');
+
   // 4. ALUNOS (15)
   const alunosData = [
     {
       name: 'Ana Beatriz Costa',
       city: 'Porto Alegre',
       state: 'RS',
+      cep: '90010-030',
       education: 'ensino_medio',
       disability: 'visual',
       has_disability: true,
@@ -289,6 +340,7 @@ export async function seed(): Promise<void> {
       name: 'Bruno Ferreira',
       city: 'Canoas',
       state: 'RS',
+      cep: '92010-020',
       education: 'superior',
       disability: 'auditiva',
       has_disability: true,
@@ -300,6 +352,7 @@ export async function seed(): Promise<void> {
       name: 'Carla Souza',
       city: 'Gravataí',
       state: 'RS',
+      cep: '94010-200',
       education: 'tecnico',
       disability: 'fisica',
       has_disability: true,
@@ -311,6 +364,7 @@ export async function seed(): Promise<void> {
       name: 'Diego Almeida',
       city: 'Novo Hamburgo',
       state: 'RS',
+      cep: '93310-080',
       education: 'ensino_medio',
       disability: 'intelectual',
       has_disability: true,
@@ -322,6 +376,7 @@ export async function seed(): Promise<void> {
       name: 'Elisa Mendes',
       city: 'São Leopoldo',
       state: 'RS',
+      cep: '93010-130',
       education: 'superior',
       disability: 'psicossocial',
       has_disability: true,
@@ -333,6 +388,7 @@ export async function seed(): Promise<void> {
       name: 'Felipe Rodrigues',
       city: 'Pelotas',
       state: 'RS',
+      cep: '96010-000',
       education: 'pos_graduacao',
       disability: 'multipla',
       has_disability: true,
@@ -344,6 +400,7 @@ export async function seed(): Promise<void> {
       name: 'Gabriela Nunes',
       city: 'Santa Maria',
       state: 'RS',
+      cep: '97010-001',
       education: 'tecnico',
       disability: 'TEA',
       has_disability: true,
@@ -355,6 +412,7 @@ export async function seed(): Promise<void> {
       name: 'Henrique Oliveira',
       city: 'Porto Alegre',
       state: 'RS',
+      cep: '90010-030',
       education: 'ensino_medio',
       disability: 'outra',
       has_disability: true,
@@ -366,6 +424,7 @@ export async function seed(): Promise<void> {
       name: 'Isabela Lima',
       city: 'Caxias do Sul',
       state: 'RS',
+      cep: '95010-001',
       education: 'superior',
       disability: 'nenhuma',
       has_disability: false,
@@ -377,6 +436,7 @@ export async function seed(): Promise<void> {
       name: 'João Pedro Santos',
       city: 'Porto Alegre',
       state: 'RS',
+      cep: '90010-030',
       education: 'tecnico',
       disability: 'nenhuma',
       has_disability: false,
@@ -388,6 +448,7 @@ export async function seed(): Promise<void> {
       name: 'Karen Vieira',
       city: 'Viamão',
       state: 'RS',
+      cep: '94415-000',
       education: 'ensino_medio',
       disability: 'visual',
       has_disability: true,
@@ -399,6 +460,7 @@ export async function seed(): Promise<void> {
       name: 'Lucas Martins',
       city: 'Alvorada',
       state: 'RS',
+      cep: '94840-000',
       education: 'pos_graduacao',
       disability: 'auditiva',
       has_disability: true,
@@ -410,6 +472,7 @@ export async function seed(): Promise<void> {
       name: 'Mariana Pereira',
       city: 'Porto Alegre',
       state: 'RS',
+      cep: '90010-030',
       education: 'superior',
       disability: 'fisica',
       has_disability: true,
@@ -421,6 +484,7 @@ export async function seed(): Promise<void> {
       name: 'Nicolas Carvalho',
       city: 'Esteio',
       state: 'RS',
+      cep: '93260-030',
       education: 'ensino_medio',
       disability: 'nenhuma',
       has_disability: false,
@@ -432,6 +496,7 @@ export async function seed(): Promise<void> {
       name: 'Olivia Ferreira',
       city: 'Porto Alegre',
       state: 'RS',
+      cep: '90010-030',
       education: 'tecnico',
       disability: 'psicossocial',
       has_disability: true,
@@ -468,16 +533,8 @@ export async function seed(): Promise<void> {
       role: UserRoleEnum.STUDENT,
     });
     await appDataSource.getRepository(UserOrmEntity).save(user);
-    const contact = appDataSource.getRepository(ContactOrmEntity).create({
-      id: userId,
-      phone: `(51) 90000-${numero}00`,
-      city: a.city,
-      state: a.state,
-    });
-    await appDataSource.getRepository(ContactOrmEntity).save(contact);
     const student = appDataSource.getRepository(StudentOrmEntity).create({
       id: userId,
-      contact: contact,
       cpf: `${100000000 + i * 11111111}`.slice(0, 11),
       birthDate: new Date(a.birthDate),
       education: a.education,
@@ -494,49 +551,74 @@ export async function seed(): Promise<void> {
       howHeard: a.howHeard,
     });
     await appDataSource.getRepository(StudentOrmEntity).save(student);
+    const telephone = appDataSource
+      .getRepository(TelephoneStudentOrmEntity)
+      .create({
+        id: userId,
+        studentId: userId,
+        phone: `(51) 90000-${numero}00`,
+      });
+    await appDataSource
+      .getRepository(TelephoneStudentOrmEntity)
+      .save(telephone);
+    const address = appDataSource
+      .getRepository(AddressStudentOrmEntity)
+      .create({
+        id: userId,
+        studentId: userId,
+        city: a.city,
+        state: a.state,
+        cep: a.cep,
+      });
+    await appDataSource.getRepository(AddressStudentOrmEntity).save(address);
 
-    const disability = appDataSource.getRepository(DisabilityOrmEntity).create({
-      studentId: userId,
-      hasDisability: a.hasDisability,
-      type: a.hasDisability ? a.disability : null,
-    });
-    await appDataSource.getRepository(DisabilityOrmEntity).save(disability);
+    // Link disabilities via student_disability table
+    if (a.hasDisability && a.disability) {
+      const normalizedDisabilityName = a.disability
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase();
+      const disability = await appDataSource
+        .getRepository(DisabilityOrmEntity)
+        .findOne({ where: { name: normalizedDisabilityName } });
 
+      if (disability) {
+        await appDataSource
+          .getRepository(StudentOrmEntity)
+          .createQueryBuilder()
+          .relation(StudentOrmEntity, 'disabilities')
+          .of(student)
+          .add(disability);
+      }
+    }
+
+    // Link social benefits via student_social_benefit table
     if (i % 3 === 0) {
-      const benefit = appDataSource
+      const benefitName = ['Bolsa Família', 'BPC', 'Outros'][i % 3];
+
+      const normalizedBenefitName = benefitName
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase();
+      const benefit = await appDataSource
         .getRepository(SocialBenefitOrmEntity)
-        .create({
-          student: student,
-          benefit: [
-            SocialBenefitType.BOLSA_FAMILIA,
-            SocialBenefitType.BPC,
-            SocialBenefitType.OTHERS,
-          ][i % 3],
-        });
-      await appDataSource.getRepository(SocialBenefitOrmEntity).save(benefit);
+        .findOne({ where: { name: normalizedBenefitName } });
+
+      if (benefit) {
+        await appDataSource
+          .getRepository(StudentOrmEntity)
+          .createQueryBuilder()
+          .relation(StudentOrmEntity, 'socialBenefits')
+          .of(student)
+          .add(benefit);
+      }
     }
     alunos.push(student);
   }
   logger.info('15 alunos criados.');
 
-  // CURSOS PRESENCIAIS
+  // CURSOS PRESENCIAIS (Removido InPersonCourseDetail)
   const cursosPresenciais = cursos.filter((c) => c.modality === 'PRESENCIAL');
-  for (const presencial of cursosPresenciais) {
-    const personCourse = appDataSource
-      .getRepository(InPersonCourseDetailOrmEntity)
-      .create({
-        id: uuidv4(),
-        course: presencial,
-        address: 'Instituto Caldeira - Porto Alegre/RS',
-        startDate: presencial.startDate,
-        shift: 'manha-tarde',
-        room: 'Terças e Quintas',
-        vacancies: presencial.vacancyCount,
-      });
-    await appDataSource
-      .getRepository(InPersonCourseDetailOrmEntity)
-      .save(personCourse);
-  }
   logger.info(`${cursosPresenciais.length} cursos presenciais criados.`);
 
   // 5. SKILLS
@@ -575,6 +657,7 @@ export async function seed(): Promise<void> {
       linkedin: `https://linkedin.com/in/aluno0${i + 1}`,
       github: `https://github.com/aluno0${i + 1}`,
       videoPresentation: `https://fatilab.com/videos/aluno0${i + 1}`,
+      preference: i % 2 === 0 ? 'Remoto' : 'Presencial',
     });
     await appDataSource.getRepository(CurriculumOrmEntity).save(curriculo);
     for (let j = 0; j < 3; j++) {
@@ -594,6 +677,7 @@ export async function seed(): Promise<void> {
       description: 'Vaga para dev React.',
       openingsCount: 2,
       isPcd: true,
+      announcementDate: new Date('2026-04-23T00:00:00.000Z'),
       company: empresas[0],
     },
     {
@@ -601,6 +685,7 @@ export async function seed(): Promise<void> {
       description: 'Python e SQL obrigatório.',
       openingsCount: 1,
       isPcd: false,
+      announcementDate: new Date('2026-04-24T00:00:00.000Z'),
       company: empresas[0],
     },
     {
@@ -608,6 +693,7 @@ export async function seed(): Promise<void> {
       description: 'Figma e pesquisa de UX.',
       openingsCount: 3,
       isPcd: true,
+      announcementDate: new Date('2026-04-25T00:00:00.000Z'),
       company: empresas[1],
     },
     {
@@ -615,6 +701,7 @@ export async function seed(): Promise<void> {
       description: 'Docker, K8s e AWS.',
       openingsCount: 1,
       isPcd: false,
+      announcementDate: new Date('2026-04-26T00:00:00.000Z'),
       company: empresas[1],
     },
     {
@@ -622,6 +709,7 @@ export async function seed(): Promise<void> {
       description: 'Node.js + React.',
       openingsCount: 2,
       isPcd: true,
+      announcementDate: new Date('2026-04-27T00:00:00.000Z'),
       company: empresas[2],
     },
   ];
@@ -632,6 +720,7 @@ export async function seed(): Promise<void> {
       description: v.description,
       openingsCount: v.openingsCount,
       isPcd: v.isPcd,
+      announcementDate: v.announcementDate,
       company: v.company,
     });
     await appDataSource.getRepository(JobOpeningOrmEntity).save(job);

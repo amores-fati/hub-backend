@@ -4,6 +4,7 @@ import {
   ConflictException,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -13,7 +14,10 @@ import {
   Patch,
   Post,
   Put,
+  Query,
+  Req,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -32,11 +36,18 @@ import {
 } from '../../../core/command/company.command';
 import { CompanyService } from '../../../core/services/company.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
+import { CurrentUser } from '../../../utils/decorators/current-user.decorator';
+import type { AuthenticatedUser as BaseAuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCompanyDto } from '../dtos/company/create-company.dto';
 import { PatchCompanyDto } from '../dtos/company/patch-company.dto';
 import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
+import { ListMyVacanciesQueryDto } from '../dtos/vacancy/list-my-vacancies-query.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
+
+interface AuthenticatedUser extends BaseAuthenticatedUser {
+  companyId: string | null;
+}
 
 @ApiTags('Companies')
 @Controller('companies')
@@ -236,6 +247,39 @@ export class CompanyController {
     }
   }
 
+  @RequireAuth(UserRoleEnum.COMPANY)
+  @Get('me/vacancies')
+  @ApiOperation({
+    summary: 'Lista as vagas da empresa autenticada com filtros e paginacao',
+  })
+  @ApiOkResponse({ description: 'Vagas listadas com sucesso.' })
+  async listMyVacancies(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ListMyVacanciesQueryDto,
+  ) {
+    this.logger.info('Listando vagas da empresa autenticada', {
+      userId: user.id,
+    });
+
+    try {
+      return await this.companyService.listMyVacancies(user.id, {
+        page: query.page ?? 1,
+        limit: query.limit ?? 10,
+        search: query.search,
+        vacancyCount: query.vacancyCount,
+        isPcd: query.isPcd,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CompanyNotFoundException') {
+        this.logger.warn('Company not found for authenticated user', {
+          userId: user.id,
+        });
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
+  }
+
   @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -256,6 +300,39 @@ export class CompanyController {
       if (error instanceof Error && error.name === 'DomainException') {
         this.logger.error('Company deletion domain error');
         throw new BadRequestException(error.message);
+      }
+
+      throw error;
+    }
+  }
+
+  @RequireAuth(UserRoleEnum.COMPANY)
+  @Delete('me/vacancies/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Deleta uma vaga da empresa autenticada' })
+  @ApiNoContentResponse({ description: 'Vaga deletada com sucesso.' })
+  @ApiNotFoundResponse({ description: 'Vaga nao encontrada.' })
+  async deleteVacancy(
+    @Req() req: Request & { user: AuthenticatedUser },
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    try {
+      this.logger.log(`Iniciando exclusão da vaga ${id}`);
+      const companyId = req.user.companyId;
+      if (!companyId) {
+        throw new ForbiddenException('Token inválido: companyId ausente');
+      }
+      await this.companyService.deleteVacancy(id, companyId);
+      this.logger.info('Vacancy deleted', { id });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        this.logger.warn('Vacancy not found', { id });
+        throw new NotFoundException(error.message);
+      }
+
+      if (error instanceof ForbiddenException) {
+        this.logger.warn('Forbidden deleting vacancy', { id });
+        throw new ForbiddenException(error.message);
       }
 
       throw error;

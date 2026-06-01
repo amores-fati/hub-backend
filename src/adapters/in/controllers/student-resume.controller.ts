@@ -73,6 +73,7 @@ export class StudentResumeController {
         about: 'Desenvolvedor em formacao.',
         linkedinUrl: 'https://www.linkedin.com/in/aluno',
         githubUrl: 'https://github.com/aluno',
+        videoPresentationUrl: 'https://www.youtube.com/watch?v=abc123',
         photoUrl: '/uploads/resume-photos/student-id/photo.webp',
         skills: [{ id: 'skill-id', skillName: 'TypeScript' }],
       },
@@ -94,6 +95,38 @@ export class StudentResumeController {
         throw this.notFound(error.message);
       }
 
+      throw error;
+    }
+  }
+
+  @RequireAuth(UserRoleEnum.ADMIN)
+  @Get('students/:id/resume')
+  @ApiOperation({ summary: 'Consulta o curriculo de um aluno (admin)' })
+  @ApiOkResponse({
+    description: 'Curriculo encontrado com sucesso.',
+    schema: {
+      example: {
+        id: '1d8f37f5-91a9-4c44-b75c-7a4f7576ad21',
+        about: 'Desenvolvedor em formacao.',
+        linkedinUrl: 'https://www.linkedin.com/in/aluno',
+        githubUrl: 'https://github.com/aluno',
+        videoPresentationUrl: 'https://www.youtube.com/watch?v=abc123',
+        photoUrl: '/uploads/resume-photos/student-id/photo.webp',
+        skills: [{ id: 'skill-id', skillName: 'TypeScript' }],
+      },
+    },
+  })
+  @ApiNotFoundResponse({ description: 'Curriculo nao encontrado.' })
+  async getStudentResumeAsAdmin(@Param('id', ParseUUIDPipe) id: string) {
+    try {
+      this.logger.info('Admin fetching student resume', { studentId: id });
+      const curriculum = await this.studentResumeService.getResume(id);
+      return curriculum.toJSON();
+    } catch (error) {
+      if (error instanceof ResumeNotFoundException) {
+        this.logger.warn('Student resume not found', { studentId: id });
+        throw this.notFound(error.message);
+      }
       throw error;
     }
   }

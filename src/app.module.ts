@@ -9,6 +9,7 @@ import { AmoresFatiLogger, HttpLoggerInterceptor } from './utils/logger';
 
 // Admin Adapters & Core
 import { AdminController } from './adapters/in/controllers/admin.controller';
+import { AdminReportsController } from './adapters/in/controllers/admin-reports.controller';
 import { AdminService } from './core/services/admin.service';
 import { AdminRepository } from './adapters/out/repository/admin.repository';
 import { IAdminRepository } from './core/ports/admin.repository.interface';
@@ -30,9 +31,25 @@ import { JwtStrategy } from './utils/strategies/jwt.strategy';
 // Course Adapters & Core
 import { CourseController } from './adapters/in/controllers/course.controller';
 import { CourseService } from './core/services/course.service';
+import { CourseReportService } from './core/services/course-report.service';
+import { ResumeReportService } from './core/services/resume-report.service';
+import { StudentReportService } from './core/services/student-report.service';
+import { VacancyReportService } from './core/services/vacancy-report.service';
 import { CourseRepository } from './adapters/out/repository/course.repository';
+import { ResumeReportRepository } from './adapters/out/repository/resume-report.repository';
+import { VacancyReportRepository } from './adapters/out/repository/vacancy-report.repository';
+import { CourseReportPdfGenerator } from './adapters/out/pdf/course-report-pdf.generator';
+import { ResumeReportPdfGenerator } from './adapters/out/pdf/resume-report-pdf.generator';
+import { StudentReportPdfGenerator } from './adapters/out/pdf/student-report-pdf.generator';
+import { VacancyReportPdfGenerator } from './adapters/out/pdf/vacancy-report-pdf.generator';
 import { CourseOrmEntity } from './adapters/out/orm/course.orm-entity';
 import { ICourseRepository } from './core/ports/course.repository.interface';
+import { ICourseReportPdfGenerator } from './core/ports/course-report-pdf-generator.interface';
+import { IResumeReportRepository } from './core/ports/resume-report.repository.interface';
+import { IResumeReportPdfGenerator } from './core/ports/resume-report-pdf-generator.interface';
+import { IStudentReportPdfGenerator } from './core/ports/student-report-pdf-generator.interface';
+import { IVacancyReportRepository } from './core/ports/vacancy-report.repository.interface';
+import { IVacancyReportPdfGenerator } from './core/ports/vacancy-report-pdf-generator.interface';
 
 // Company Adapters & Core
 import { CompanyOrmEntity } from './adapters/out/orm/company.orm-entity';
@@ -41,15 +58,15 @@ import { CompanyController } from './adapters/in/controllers/company.controller'
 import { CompanyService } from './core/services/company.service';
 import { ICompanyRepository } from './core/ports/company.repository.interface';
 import { CompanyRepository } from './adapters/out/repository/company.repository';
+import { IJobOpeningRepository } from './core/ports/job-open.company.repository.interface';
+import { JobOpeningRepository } from './adapters/out/repository/job.opening.repository';
 
-// Additional ORM Entities
-import { ContactOrmEntity } from './adapters/out/orm/contact.orm-entity';
 import { DisabilityOrmEntity } from './adapters/out/orm/disability.orm-entity';
 import { SocialBenefitOrmEntity } from './adapters/out/orm/social-benefit.orm-entity';
 import { CurriculumOrmEntity } from './adapters/out/orm/curriculum.orm-entity';
 import { CurriculumSkillOrmEntity } from './adapters/out/orm/curriculum-skill.orm-entity';
+import { JobOpeningOrmEntity } from './adapters/out/orm/job-opening.orm-entity';
 import { SkillOrmEntity } from './adapters/out/orm/skill.orm-entity';
-import { InPersonCourseDetailOrmEntity } from './adapters/out/orm/in-person-course-detail.orm-entity';
 
 // Student Adapters & Core
 import { HealthController } from './adapters/in/controllers/health.controller';
@@ -106,7 +123,6 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       CourseOrmEntity,
       CompanyOrmEntity,
       StudentOrmEntity,
-      ContactOrmEntity,
       DisabilityOrmEntity,
       SocialBenefitOrmEntity,
       CurriculumOrmEntity,
@@ -114,11 +130,12 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       SkillOrmEntity,
       SettingOrmEntity,
       EnrollmentOrmEntity,
-      InPersonCourseDetailOrmEntity,
+      JobOpeningOrmEntity,
     ]),
   ],
   controllers: [
     AdminController,
+    AdminReportsController,
     AuthController,
     CourseController,
     CompanyController,
@@ -141,6 +158,8 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         hashService: IHashService,
         curriculumRepository: ICurriculumRepository,
         studentRepository: IStudentRepository,
+        jobOpeningRepository: IJobOpeningRepository,
+        companyRepository: ICompanyRepository,
       ) => {
         return new AdminService(
           userRepository,
@@ -148,6 +167,8 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
           hashService,
           curriculumRepository,
           studentRepository,
+          jobOpeningRepository,
+          companyRepository,
         );
       },
       inject: [
@@ -156,7 +177,13 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         IHashService,
         ICurriculumRepository,
         IStudentRepository,
+        IJobOpeningRepository,
+        ICompanyRepository,
       ],
+    },
+    {
+      provide: IJobOpeningRepository,
+      useClass: JobOpeningRepository,
     },
     {
       provide: IAdminRepository,
@@ -215,6 +242,98 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       inject: [ICourseRepository],
     },
     {
+      provide: CourseReportService,
+      useFactory: (
+        courseRepository: ICourseRepository,
+        pdfGenerator: CourseReportPdfGenerator,
+        logger: AmoresFatiLogger,
+      ) => {
+        logger.setContext(CourseReportService.name);
+        return new CourseReportService(courseRepository, pdfGenerator, logger);
+      },
+      inject: [ICourseRepository, ICourseReportPdfGenerator, AmoresFatiLogger],
+    },
+    {
+      provide: ICourseReportPdfGenerator,
+      useClass: CourseReportPdfGenerator,
+    },
+    {
+      provide: StudentReportService,
+      useFactory: (
+        studentRepository: IStudentRepository,
+        pdfGenerator: StudentReportPdfGenerator,
+        logger: AmoresFatiLogger,
+      ) => {
+        logger.setContext(StudentReportService.name);
+        return new StudentReportService(
+          studentRepository,
+          pdfGenerator,
+          logger,
+        );
+      },
+      inject: [
+        IStudentRepository,
+        IStudentReportPdfGenerator,
+        AmoresFatiLogger,
+      ],
+    },
+    {
+      provide: IStudentReportPdfGenerator,
+      useClass: StudentReportPdfGenerator,
+    },
+    {
+      provide: VacancyReportService,
+      useFactory: (
+        vacancyRepository: IVacancyReportRepository,
+        pdfGenerator: VacancyReportPdfGenerator,
+        logger: AmoresFatiLogger,
+      ) => {
+        logger.setContext(VacancyReportService.name);
+        return new VacancyReportService(
+          vacancyRepository,
+          pdfGenerator,
+          logger,
+        );
+      },
+      inject: [
+        IVacancyReportRepository,
+        IVacancyReportPdfGenerator,
+        AmoresFatiLogger,
+      ],
+    },
+    {
+      provide: IVacancyReportRepository,
+      useClass: VacancyReportRepository,
+    },
+    {
+      provide: IVacancyReportPdfGenerator,
+      useClass: VacancyReportPdfGenerator,
+    },
+    {
+      provide: ResumeReportService,
+      useFactory: (
+        resumeRepository: IResumeReportRepository,
+        pdfGenerator: ResumeReportPdfGenerator,
+        logger: AmoresFatiLogger,
+      ) => {
+        logger.setContext(ResumeReportService.name);
+        return new ResumeReportService(resumeRepository, pdfGenerator, logger);
+      },
+      inject: [
+        IResumeReportRepository,
+        IResumeReportPdfGenerator,
+        AmoresFatiLogger,
+      ],
+    },
+    {
+      provide: IResumeReportRepository,
+      useClass: ResumeReportRepository,
+    },
+    {
+      provide: IResumeReportPdfGenerator,
+      useClass: ResumeReportPdfGenerator,
+    },
+    {
       provide: ICourseRepository,
       useClass: CourseRepository,
     },
@@ -238,14 +357,21 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         companyRepository: ICompanyRepository,
         userRepository: IUserRepository,
         hashService: IHashService,
+        vacancyRepository: IVacancyReportRepository,
       ) => {
         return new CompanyService(
           companyRepository,
           userRepository,
           hashService,
+          vacancyRepository,
         );
       },
-      inject: [ICompanyRepository, IUserRepository, IHashService],
+      inject: [
+        ICompanyRepository,
+        IUserRepository,
+        IHashService,
+        IVacancyReportRepository,
+      ],
     },
     {
       provide: ICompanyRepository,

@@ -1,23 +1,20 @@
-import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn, ManyToMany } from 'typeorm';
 import { StudentOrmEntity } from './student.orm-entity';
 
-@Entity('disabilities')
+@Entity('disability')
 export class DisabilityOrmEntity {
-  @PrimaryColumn({ name: 'student_id', type: 'uuid' })
-  studentId: string;
+  @PrimaryColumn({ type: 'uuid' })
+  id: string;
 
-  @OneToOne(() => StudentOrmEntity, (student) => student.disability, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({
-    name: 'student_id',
-    foreignKeyConstraintName: 'fk_disabilities__student_id__students',
-  })
-  student: StudentOrmEntity;
+  @Column({ length: 100, unique: true })
+  name: string;
 
-  @Column({ name: 'has_disability', type: 'boolean', default: false })
-  hasDisability: boolean;
+  @Column({ name: 'created_at', type: 'timestamp' })
+  createdAt: Date;
 
-  @Column({ type: 'varchar', nullable: true })
-  type: string | null;
+  @Column({ name: 'updated_at', type: 'timestamp' })
+  updatedAt: Date;
+
+  @ManyToMany(() => StudentOrmEntity, (student) => student.disabilities)
+  students: StudentOrmEntity[];
 }

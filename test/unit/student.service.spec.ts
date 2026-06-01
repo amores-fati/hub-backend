@@ -32,6 +32,9 @@ describe('StudentService', () => {
     update: jest.fn(),
     delete: jest.fn(),
     softDeleteMany: jest.fn(),
+    findLocations: jest.fn(),
+    findManyForReportByIds: jest.fn(),
+    findManyForReportByFilters: jest.fn(),
     existsById: jest.fn(),
   };
 
@@ -191,13 +194,16 @@ describe('StudentService', () => {
   });
 
   describe('findAllStudents', () => {
-    it('should return an array of students', async () => {
-      (mockRepository.findAll as jest.Mock).mockResolvedValue([mockStudent]);
+    it('should return an array of students with curriculum availability', async () => {
+      (mockRepository.findAll as jest.Mock).mockResolvedValue([
+        { student: mockStudent, curriculumIsAvailable: false },
+      ]);
 
       const result = await service.findAllStudents();
 
       expect(result).toHaveLength(1);
       expect(result[0].cpf).toBe(mockStudent.cpf);
+      expect(result[0].curriculumIsAvailable).toBe(false);
       expect(mockRepository.findAll).toHaveBeenCalledTimes(1);
     });
   });

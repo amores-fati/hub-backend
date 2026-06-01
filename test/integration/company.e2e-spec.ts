@@ -95,6 +95,7 @@ describe('CompanyController (e2e)', () => {
           responsibleName: 'Admin E2E',
           contact: {
             phone: '11988888888',
+            cep: '01001000',
           },
         })
         .expect(409);

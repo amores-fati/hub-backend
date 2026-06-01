@@ -5,10 +5,13 @@ import { IAdminRepository } from '../../src/core/ports/admin.repository.interfac
 import { IHashService } from '../../src/core/ports/hash.service.interface';
 import { ICurriculumRepository } from '../../src/core/ports/curriculum.repository.interface';
 import { IStudentRepository } from '../../src/core/ports/student.repository.interface';
+import { ICompanyRepository } from '../../src/core/ports/company.repository.interface';
 import { CreateAdminCommand } from '../../src/core/command/admin.command';
+import { LocationScope } from '../../src/adapters/in/dtos/admin/get-locations.dto';
 import { Admin } from '../../src/core/domain/admin.entity';
 import { UserAlreadyExistsException } from '../../src/core/exceptions/user-already-exists.exception';
 import { NotFoundException } from '@nestjs/common'; // Novo import para o teste de erro
+import { IJobOpeningRepository } from 'src/core/ports/job-open.company.repository.interface';
 
 describe('AdminService', () => {
   let service: AdminService;
@@ -34,6 +37,17 @@ describe('AdminService', () => {
 
   const mockStudentRepository = {
     findById: jest.fn(),
+    findLocations: jest.fn(),
+    findManyForReportByIds: jest.fn(),
+    findManyForReportByFilters: jest.fn(),
+  };
+
+  const mockJobOpeningRepository = {
+    countActive: jest.fn(),
+  };
+
+  const mockCompanyRepository = {
+    findLocations: jest.fn(),
   };
 
   beforeEach(() => {
@@ -44,6 +58,8 @@ describe('AdminService', () => {
       mockHashService,
       mockCurriculumRepository as unknown as ICurriculumRepository,
       mockStudentRepository as unknown as IStudentRepository,
+      mockJobOpeningRepository as unknown as IJobOpeningRepository,
+      mockCompanyRepository as unknown as ICompanyRepository,
     );
   });
 
@@ -91,6 +107,7 @@ describe('AdminService', () => {
         about: 'Sobre mim',
         linkedinUrl: 'linkedin.com/in/user',
         githubUrl: 'github.com/user',
+        videoPresentationUrl: 'https://www.youtube.com/watch?v=abc123',
         photoUrl: 'photo.jpg',
         skills: [
           { id: 's1', skillName: 'Node.js' },
@@ -111,6 +128,9 @@ describe('AdminService', () => {
       const result = await service.getStudentResume(studentId);
 
       expect(result.id).toBe('curr-1');
+      expect(result.videoPresentationUrl).toBe(
+        'https://www.youtube.com/watch?v=abc123',
+      );
       expect(result.student.fullName).toBe('Tarciso Mota');
       expect(mockCurriculumRepository.findByStudentId).toHaveBeenCalledWith(
         studentId,
@@ -134,6 +154,28 @@ describe('AdminService', () => {
       await expect(service.getStudentResume(studentId)).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe('getLocations', () => {
+    const locations = [{ city: 'Porto Alegre', uf: 'RS' }];
+
+    it('should return student locations when scope is STUDENT', async () => {
+      mockStudentRepository.findLocations.mockResolvedValue(locations);
+
+      const result = await service.getLocations(LocationScope.STUDENT);
+
+      expect(result).toEqual(locations);
+      expect(mockStudentRepository.findLocations).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return company locations when scope is COMPANY', async () => {
+      mockCompanyRepository.findLocations.mockResolvedValue(locations);
+
+      const result = await service.getLocations(LocationScope.COMPANY);
+
+      expect(result).toEqual(locations);
+      expect(mockCompanyRepository.findLocations).toHaveBeenCalledTimes(1);
     });
   });
 });
