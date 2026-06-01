@@ -187,4 +187,22 @@ export class AdminController {
     return this.adminService.getDashboardStats();
   }
 
+  @Get('students/count-by-month')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Retorna a contagem de alunos cadastrados por mês',
+  })
+  @ApiOkResponse({
+    description: 'Contagem por mês retornada com sucesso.',
+    schema: {
+      example: [
+        { month: '2026-05', count: 10 },
+        { month: '2026-06', count: 15 },
+      ],
+    },
+  })
+  async getStudentCountByMonth(): Promise<{ month: string; count: number }[]> {
+    return this.adminService.getStudentCountByMonth();
+  }
+
 }

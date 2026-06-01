@@ -94,4 +94,5 @@ export interface IStudentRepository {
   countByCity(): Promise<StudentCityCount[]>;
   countTotal(): Promise<number>;
   countPCD(): Promise<number>;
+  countByMonth(): Promise<{ month: string; count: number }[]>;
 }

@@ -930,6 +930,18 @@ async countTotal(): Promise<number> {
     .getCount();
 }
 
+  async countByMonth(): Promise<{ month: string; count: number }[]> {
+    const rows = await this.ormRepository
+      .createQueryBuilder('student')
+      .innerJoin('student.user', 'user')
+      .select("TO_CHAR(user.createdAt, 'YYYY-MM')", 'month')
+      .addSelect('CAST(COUNT(student.id) AS int)', 'count')
+      .groupBy("TO_CHAR(user.createdAt, 'YYYY-MM')")
+      .orderBy('month', 'ASC')
+      .getRawMany<{ month: string; count: number }>();
+
+    return rows;
+  }
 }
 
 

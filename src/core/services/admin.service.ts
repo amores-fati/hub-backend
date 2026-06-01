@@ -132,6 +132,10 @@ export class AdminService {
   return { totalStudents, totalPcdStudents, totalOpenedJobs };
 }
 
+  async getStudentCountByMonth(): Promise<{ month: string; count: number }[]> {
+    return this.studentRepository.countByMonth();
+  }
+
   private mapToResumeListItem(
     item: ResumeListProjection,
   ): ResumeListItemDto {
