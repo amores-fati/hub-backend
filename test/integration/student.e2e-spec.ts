@@ -157,6 +157,7 @@ describe('StudentController (e2e)', () => {
           familyIncome: 'MAIS_DE_3',
           contact: {
             phone: '11988888888',
+            cep: '01001000',
           },
         })
         .expect(409);

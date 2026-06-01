@@ -78,7 +78,9 @@ export class CourseService {
     return this.courseRepository.update(updated);
   }
 
-  async filterCourses(command: FilterCoursesCommand): Promise<PaginatedCoursesResponse> {
+  async filterCourses(
+    command: FilterCoursesCommand,
+  ): Promise<PaginatedCoursesResponse> {
     const { page, limit, ...filters } = command;
     const all = await this.courseRepository.findManyByFilters(filters);
     const total = all.length;

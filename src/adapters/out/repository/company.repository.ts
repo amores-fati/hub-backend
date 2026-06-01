@@ -164,5 +164,4 @@ export class CompanyRepository implements ICompanyRepository {
 
     return rawData as { city: string; uf: string }[];
   }
-
 }

@@ -11,6 +11,7 @@ import { LocationScope } from '../../src/adapters/in/dtos/admin/get-locations.dt
 import { Admin } from '../../src/core/domain/admin.entity';
 import { UserAlreadyExistsException } from '../../src/core/exceptions/user-already-exists.exception';
 import { NotFoundException } from '@nestjs/common'; // Novo import para o teste de erro
+import { IJobOpeningRepository } from 'src/core/ports/job-open.company.repository.interface';
 
 describe('AdminService', () => {
   let service: AdminService;
@@ -41,10 +42,10 @@ describe('AdminService', () => {
     findManyForReportByFilters: jest.fn(),
   };
 
-   const mockJobOpeningRepository = {
+  const mockJobOpeningRepository = {
     countActive: jest.fn(),
   };
-  
+
   const mockCompanyRepository = {
     findLocations: jest.fn(),
   };
@@ -57,7 +58,7 @@ describe('AdminService', () => {
       mockHashService,
       mockCurriculumRepository as unknown as ICurriculumRepository,
       mockStudentRepository as unknown as IStudentRepository,
-      mockJobOpeningRepository as any,  
+      mockJobOpeningRepository as unknown as IJobOpeningRepository,
       mockCompanyRepository as unknown as ICompanyRepository,
     );
   });

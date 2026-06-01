@@ -142,7 +142,9 @@ describe('StudentRepository', () => {
 
     expect(students).toHaveLength(1);
     expect(students[0].student.birthDate).toBeInstanceOf(Date);
-    expect(students[0].student.birthDate?.toISOString()).toContain('1990-01-01');
+    expect(students[0].student.birthDate?.toISOString()).toContain(
+      '1990-01-01',
+    );
   });
 
   it('should filter students using the query builder', async () => {

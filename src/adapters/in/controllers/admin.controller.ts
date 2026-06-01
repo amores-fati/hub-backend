@@ -26,16 +26,17 @@ import { AdminService } from '../../../core/services/admin.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateAdminDto } from '../dtos/admin/create-admin.dto';
-import {DisabilityCount, StudentCityCount} from '../../../core/ports/student.repository.interface';
+import {
+  DisabilityCount,
+  StudentCityCount,
+} from '../../../core/ports/student.repository.interface';
 import { StudentResumeResponseDto } from '../dtos/admin/student-resume-response.dto';
 import {
   GetLocationsQueryDto,
   LocationResponseDto,
 } from '../dtos/admin/get-locations.dto';
 import { GetResumesQueryDto } from '../dtos/admin/get-resumes.dto';
-import {
-  PaginatedResumesResponseDto,
-} from '../dtos/admin/paginated-resumes-response.dto';
+import { PaginatedResumesResponseDto } from '../dtos/admin/paginated-resumes-response.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @ApiTags('Admins')
@@ -128,7 +129,7 @@ export class AdminController {
     return this.adminService.getResumes(query);
   }
 
-    @Get('students/disability-stats')
+  @Get('students/disability-stats')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Retorna contagem de alunos por tipo de deficiência',
@@ -146,7 +147,7 @@ export class AdminController {
     return this.adminService.getDisabilityStats();
   }
 
-    @Get('students/count-by-city')
+  @Get('students/count-by-city')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Retorna quantidade de alunos por cidade/UF',
@@ -160,11 +161,10 @@ export class AdminController {
       ],
     },
   })
-  
   async getStudentCountByCity(): Promise<StudentCityCount[]> {
     return this.adminService.getStudentCountByCity();
   }
-    @Get('dashboard')
+  @Get('dashboard')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Retorna estatísticas gerais do dashboard administrativo',
@@ -204,5 +204,4 @@ export class AdminController {
   async getStudentCountByMonth(): Promise<{ month: string; count: number }[]> {
     return this.adminService.getStudentCountByMonth();
   }
-
 }

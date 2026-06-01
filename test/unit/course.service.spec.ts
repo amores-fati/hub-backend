@@ -31,7 +31,7 @@ describe('CourseService', () => {
     modality: 'ONLINE',
     linkAccess: 'https://fatilab.com/cursos/web',
     vacancyCount: 30,
-    shift: 'MANHA'
+    shift: 'MANHA',
   };
 
   beforeEach(() => {

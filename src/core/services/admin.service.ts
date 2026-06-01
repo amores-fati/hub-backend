@@ -4,7 +4,11 @@ import { Admin } from '../domain/admin.entity';
 import { IAdminRepository } from '../ports/admin.repository.interface';
 import { ICurriculumRepository } from '../ports/curriculum.repository.interface';
 import { IHashService } from '../ports/hash.service.interface';
-import { StudentCityCount, DisabilityCount , IStudentRepository, } from '../ports/student.repository.interface';
+import {
+  StudentCityCount,
+  DisabilityCount,
+  IStudentRepository,
+} from '../ports/student.repository.interface';
 import { IUserRepository } from '../ports/user.repository.interface';
 import { ICompanyRepository } from '../ports/company.repository.interface';
 import { CreateAdminCommand } from '../command/admin.command';
@@ -83,7 +87,9 @@ export class AdminService {
     return this.companyRepository.findLocations();
   }
 
-  async getResumes(query: ResumeFilterQuery): Promise<PaginatedResumesResponseDto> {
+  async getResumes(
+    query: ResumeFilterQuery,
+  ): Promise<PaginatedResumesResponseDto> {
     const normalizedPage = Math.max(1, query.page);
     const normalizedLimit = Math.max(1, Math.min(50, query.limit));
 
@@ -115,30 +121,29 @@ export class AdminService {
     return this.studentRepository.countByDisabilityType();
   }
 
-    async getStudentCountByCity(): Promise<StudentCityCount[]> {
+  async getStudentCountByCity(): Promise<StudentCityCount[]> {
     return this.studentRepository.countByCity();
   }
 
   async getDashboardStats(): Promise<{
-  totalStudents: number;
-  totalPcdStudents: number;
-  totalOpenedJobs: number;
-}> {
-  const [totalStudents, totalPcdStudents, totalOpenedJobs] = await Promise.all([
-    this.studentRepository.countTotal(),
-   this.studentRepository.countPCD(),
-    this.jobOpeningRepository.countActive(),
-  ]);
-  return { totalStudents, totalPcdStudents, totalOpenedJobs };
-}
+    totalStudents: number;
+    totalPcdStudents: number;
+    totalOpenedJobs: number;
+  }> {
+    const [totalStudents, totalPcdStudents, totalOpenedJobs] =
+      await Promise.all([
+        this.studentRepository.countTotal(),
+        this.studentRepository.countPCD(),
+        this.jobOpeningRepository.countActive(),
+      ]);
+    return { totalStudents, totalPcdStudents, totalOpenedJobs };
+  }
 
   async getStudentCountByMonth(): Promise<{ month: string; count: number }[]> {
     return this.studentRepository.countByMonth();
   }
 
-  private mapToResumeListItem(
-    item: ResumeListProjection,
-  ): ResumeListItemDto {
+  private mapToResumeListItem(item: ResumeListProjection): ResumeListItemDto {
     return {
       id: item.id,
       studentId: item.studentId,

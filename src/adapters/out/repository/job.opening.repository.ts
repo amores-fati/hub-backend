@@ -4,10 +4,9 @@ import { Repository } from 'typeorm';
 import { JobOpeningOrmEntity } from '../orm/job-opening.orm-entity';
 import { IJobOpeningRepository } from '../../../core/ports/job-open.company.repository.interface';
 
-
 @Injectable()
 export class JobOpeningRepository implements IJobOpeningRepository {
-  constructor(   
+  constructor(
     @InjectRepository(JobOpeningOrmEntity)
     private readonly ormRepository: Repository<JobOpeningOrmEntity>,
   ) {}
@@ -18,4 +17,3 @@ export class JobOpeningRepository implements IJobOpeningRepository {
     });
   }
 }
-

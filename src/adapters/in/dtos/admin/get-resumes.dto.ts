@@ -68,7 +68,8 @@ export class GetResumesQueryDto {
   @ApiPropertyOptional({
     example: ['Porto Alegre/RS', 'Canoas/RS'],
     type: [String],
-    description: 'Filtro por cidade do aluno. Use o formato "Cidade/UF" para filtrar por cidade e estado.',
+    description:
+      'Filtro por cidade do aluno. Use o formato "Cidade/UF" para filtrar por cidade e estado.',
   })
   @Transform(
     ({ value }) =>

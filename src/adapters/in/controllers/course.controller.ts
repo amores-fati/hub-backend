@@ -38,7 +38,10 @@ import { CurrentUser } from '../../../utils/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCourseDto } from '../dtos/course/create-course.dto';
-import { CourseResponseDto, toCourseResponse } from '../dtos/course/course-response.dto';
+import {
+  CourseResponseDto,
+  toCourseResponse,
+} from '../dtos/course/course-response.dto';
 import { FilterCoursesDto } from '../dtos/course/filter-courses.dto';
 import { PaginatedCoursesResponseDto } from '../dtos/course/paginated-courses-response.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
@@ -195,10 +198,16 @@ export class CourseController {
   @Get('filter')
   @ApiOperation({
     summary: 'Lista cursos com filtros e paginação',
-    description: 'Retorna cursos paginados com filtros opcionais por nome, modalidade, status e período.',
+    description:
+      'Retorna cursos paginados com filtros opcionais por nome, modalidade, status e período.',
   })
-  @ApiOkResponse({ description: 'Cursos retornados com sucesso.', type: PaginatedCoursesResponseDto })
-  async filter(@Query() filters: FilterCoursesDto): Promise<PaginatedCoursesResponseDto> {
+  @ApiOkResponse({
+    description: 'Cursos retornados com sucesso.',
+    type: PaginatedCoursesResponseDto,
+  })
+  async filter(
+    @Query() filters: FilterCoursesDto,
+  ): Promise<PaginatedCoursesResponseDto> {
     this.logger.info('Filtering courses', {
       page: filters.page,
       limit: filters.limit,
@@ -228,7 +237,11 @@ export class CourseController {
   @ApiNotFoundResponse({
     description: 'Curso não encontrado.',
     schema: {
-      example: { statusCode: 404, message: 'Curso não encontrado', errorKind: 'NOT_FOUND' },
+      example: {
+        statusCode: 404,
+        message: 'Curso não encontrado',
+        errorKind: 'NOT_FOUND',
+      },
     },
   })
   async findById(@Param('id', ParseUUIDPipe) id: string) {

@@ -21,7 +21,9 @@ const isLocalFrontendOrigin = (origin?: string): boolean => {
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.set('query parser', (str: string) => qs.parse(str, { allowDots: true, depth: 5 }));
+  app.set('query parser', (str: string) =>
+    qs.parse(str, { allowDots: true, depth: 5 }),
+  );
   const configuredFrontendUrl = process.env.FRONTEND_URL;
   const isDevelopment = process.env.NODE_ENV !== 'production';
 

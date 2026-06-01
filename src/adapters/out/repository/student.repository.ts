@@ -891,9 +891,9 @@ export class StudentRepository implements IStudentRepository {
   async countByDisabilityType(): Promise<DisabilityCount[]> {
     const rows = await this.ormRepository
       .createQueryBuilder('student')
-      .innerJoin('student.disabilities', 'disability')    
+      .innerJoin('student.disabilities', 'disability')
       .select('disability.name', 'disabilityType')
-      .addSelect('CAST(COUNT(*) AS int)', 'count')   
+      .addSelect('CAST(COUNT(*) AS int)', 'count')
       .groupBy('disability.name')
       .orderBy('count', 'DESC')
       .getRawMany<{ disabilityType: string; count: number }>();
@@ -901,7 +901,7 @@ export class StudentRepository implements IStudentRepository {
     return rows;
   }
 
- async countByCity(): Promise<StudentCityCount[]> {
+  async countByCity(): Promise<StudentCityCount[]> {
     const rows = await this.ormRepository
       .createQueryBuilder('student')
       .innerJoin('student.address', 'address')
@@ -917,18 +917,18 @@ export class StudentRepository implements IStudentRepository {
 
     return rows;
   }
-async countTotal(): Promise<number> {
-      return this.ormRepository.count();
+  async countTotal(): Promise<number> {
+    return this.ormRepository.count();
   }
 
- async countPCD(): Promise<number> {
-  return this.ormRepository
-    .createQueryBuilder('student')
-    .innerJoin('student.disabilities', 'disability')
-    .select('student.id')
-    .distinct(true)
-    .getCount();
-}
+  async countPCD(): Promise<number> {
+    return this.ormRepository
+      .createQueryBuilder('student')
+      .innerJoin('student.disabilities', 'disability')
+      .select('student.id')
+      .distinct(true)
+      .getCount();
+  }
 
   async countByMonth(): Promise<{ month: string; count: number }[]> {
     const rows = await this.ormRepository
@@ -943,5 +943,3 @@ async countTotal(): Promise<number> {
     return rows;
   }
 }
-
-

@@ -87,9 +87,7 @@ export class CourseReportService {
     }
 
     if (command.mode === 'all') {
-      return this.courseRepository.findManyByFilters(
-        command.filters,
-      );
+      return this.courseRepository.findManyByFilters(command.filters);
     }
 
     throw new DomainException('Modo de exportacao de cursos invalido.');

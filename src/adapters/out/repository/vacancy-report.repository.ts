@@ -23,7 +23,7 @@ export class VacancyReportRepository implements IVacancyReportRepository {
       relations: ['company'],
     });
 
-    return ormEntity ? ormEntity.company?.id ?? null : null;
+    return ormEntity ? (ormEntity.company?.id ?? null) : null;
   }
 
   async deleteById(id: string): Promise<void> {

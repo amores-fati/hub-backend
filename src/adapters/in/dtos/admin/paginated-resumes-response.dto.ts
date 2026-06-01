@@ -22,7 +22,10 @@ export class ResumeListItemDto {
   @ApiProperty({ example: true })
   isAvailable: boolean;
 
-  @ApiProperty({ example: 'Desenvolvedor Full Stack com experiência em...', required: false })
+  @ApiProperty({
+    example: 'Desenvolvedor Full Stack com experiência em...',
+    required: false,
+  })
   about?: string;
 
   @ApiProperty({ example: 'https://linkedin.com/in/joao', required: false })
