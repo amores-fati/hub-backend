@@ -1,4 +1,5 @@
 import { Transform, Type } from 'class-transformer';
+import { IsBoolean } from 'class-validator';
 import {
   IsArray,
   IsInt,
@@ -63,6 +64,14 @@ export class GetResumesQueryDto {
   @IsString()
   @IsOptional()
   preference?: string;
+
+   @ApiPropertyOptional({
+    example: true,
+    description: 'Filtra currículos de alunos PCD',
+  })
+  @Transform(({ value }) => value === 'true')
+  @IsOptional()
+  isPcd?: boolean;
 
   @ApiPropertyOptional({
     example: 'available',
