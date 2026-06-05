@@ -292,7 +292,8 @@ describeOrSkip('CompanyController (e2e)', () => {
         .send({ email: otherEmail, password: companyPassword })
         .expect(200);
 
-      otherCompanyToken = (loginRes.body as { accessToken: string }).accessToken;
+      otherCompanyToken = (loginRes.body as { accessToken: string })
+        .accessToken;
     });
 
     it('should update an existing vacancy for the authenticated company (200)', async () => {

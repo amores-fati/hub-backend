@@ -76,8 +76,7 @@ function toIsoString(value: Date | string): string {
 
 export function toCourseResponse(course: Course): CourseResponseDto {
   const bannerUrl = course.banner?.trim() ? course.banner : null;
-  const hasStoredImage =
-    !!course.bannerImage && course.bannerImage.length > 0;
+  const hasStoredImage = !!course.bannerImage && course.bannerImage.length > 0;
   return {
     id: course.id,
     title: course.name,

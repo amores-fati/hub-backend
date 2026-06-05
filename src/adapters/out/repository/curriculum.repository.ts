@@ -82,9 +82,7 @@ export class CurriculumRepository implements ICurriculumRepository {
       queryBuilder.andWhere(
         'LOWER(student.activityArea) IN (:...activityAreas)',
         {
-          activityAreas: query.activityArea.map((area) =>
-            area.toLowerCase(),
-          ),
+          activityAreas: query.activityArea.map((area) => area.toLowerCase()),
         },
       );
     }
