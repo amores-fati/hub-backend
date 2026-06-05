@@ -512,9 +512,15 @@ export class StudentService {
     modality?: string,
   ): StudentListItem['enrollmentStatus'] {
     if (modality) {
-      const enrollment = student.enrollments.find((item) => item.courseModality === modality);
+      const enrollment = student.enrollments.find(
+        (item) => item.courseModality === modality,
+      );
       if (!enrollment) return ['NAO_INSCRITO'];
-      return [enrollment.courseModality.toUpperCase() === 'PRESENCIAL' ? 'PRESENCIAL' : 'ONLINE'];
+      return [
+        enrollment.courseModality.toUpperCase() === 'PRESENCIAL'
+          ? 'PRESENCIAL'
+          : 'ONLINE',
+      ];
     }
 
     if (!student.enrollments || student.enrollments.length === 0) {
@@ -523,7 +529,11 @@ export class StudentService {
 
     const statuses = new Set<'ONLINE' | 'PRESENCIAL'>();
     for (const enrollment of student.enrollments) {
-      statuses.add(enrollment.courseModality.toUpperCase() === 'PRESENCIAL' ? 'PRESENCIAL' : 'ONLINE');
+      statuses.add(
+        enrollment.courseModality.toUpperCase() === 'PRESENCIAL'
+          ? 'PRESENCIAL'
+          : 'ONLINE',
+      );
     }
 
     return Array.from(statuses);

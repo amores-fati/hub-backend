@@ -93,11 +93,11 @@ export class CreateCourseDto {
 
   @ApiProperty({
     example: 'online',
-    description: 'Modalidade do curso (Ex: online, presential).',
+    description: 'Modalidade do curso (Ex: online, presencial).',
   })
   @IsString()
   @IsNotEmpty()
-  @IsIn(['online', 'presential', 'ONLINE', 'PRESENCIAL'])
+  @IsIn(['online', 'presencial', 'ONLINE', 'PRESENCIAL'])
   modality: string;
 
   @ApiProperty({

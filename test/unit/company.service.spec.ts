@@ -13,6 +13,7 @@ import {
 import { IUserRepository } from '../../src/core/ports/user.repository.interface';
 import { IHashService } from '../../src/core/ports/hash.service.interface';
 import { IVacancyReportRepository } from '../../src/core/ports/vacancy-report.repository.interface';
+import { IJobOpeningRepository } from '../../src/core/ports/job-open.company.repository.interface';
 import { UserAlreadyExistsException } from '../../src/core/exceptions/user-already-exists.exception';
 
 describe('CompanyService', () => {
@@ -43,6 +44,14 @@ describe('CompanyService', () => {
     findManyByIds: jest.fn(),
     findManyByFilters: jest.fn(),
     findMyVacancies: jest.fn(),
+    findCompanyIdById: jest.fn(),
+    deleteById: jest.fn(),
+  };
+
+  const mockJobOpeningRepository: IJobOpeningRepository = {
+    countActive: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
   };
 
   let mockContact: Contact;
@@ -77,6 +86,7 @@ describe('CompanyService', () => {
       mockUserRepository,
       mockHashService,
       mockVacancyRepository,
+      mockJobOpeningRepository,
     );
   });
 

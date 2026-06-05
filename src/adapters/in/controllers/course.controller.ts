@@ -97,7 +97,8 @@ export class CourseController {
   async create(@Body() createCourseDto: CreateCourseDto) {
     try {
       this.logger.info('Creating course', { name: createCourseDto.name });
-      const command: CreateCourseCommand = this.toCreateCommand(createCourseDto);
+      const command: CreateCourseCommand =
+        this.toCreateCommand(createCourseDto);
       const course = await this.courseService.createCourse(command);
       this.logger.info('Course created', {
         id: (course as { id?: string })?.id,
@@ -118,7 +119,9 @@ export class CourseController {
     const { bannerImage, bannerImageMimeType, ...rest } = dto;
     return {
       ...rest,
-      bannerImage: bannerImage ? this.decodeBase64Image(bannerImage) : undefined,
+      bannerImage: bannerImage
+        ? this.decodeBase64Image(bannerImage)
+        : undefined,
       bannerImageMimeType: bannerImage ? bannerImageMimeType : undefined,
     };
   }
