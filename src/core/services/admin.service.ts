@@ -99,6 +99,7 @@ export class AdminService {
       preference: query.preference,
       status: query.status,
       city: query.city,
+      isPcd: query.isPcd,
       page: normalizedPage,
       limit: normalizedLimit,
     };

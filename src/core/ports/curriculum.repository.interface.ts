@@ -28,6 +28,7 @@ export interface ResumeFilterQuery {
   preference?: string;
   status?: string;
   city?: string[];
+  isPcd?: boolean;
   page: number;
   limit: number;
 }

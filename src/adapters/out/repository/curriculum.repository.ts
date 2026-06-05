@@ -56,7 +56,8 @@ export class CurriculumRepository implements ICurriculumRepository {
       .innerJoinAndSelect('curriculum.student', 'student')
       .innerJoinAndSelect('student.user', 'user')
       .leftJoinAndSelect('student.telephone', 'phone')
-      .leftJoinAndSelect('student.address', 'address');
+      .leftJoinAndSelect('student.address', 'address')
+      .leftJoin('student.disabilities', 'disability');
 
     if (query.search) {
       const search = this.buildLikeFilter(query.search);
@@ -127,6 +128,14 @@ export class CurriculumRepository implements ICurriculumRepository {
           });
         }),
       );
+    }
+
+    if (query.isPcd !== undefined) {
+      if (query.isPcd) {
+        queryBuilder.andWhere('disability.id IS NOT NULL');
+      } else {
+        queryBuilder.andWhere('disability.id IS NULL');
+      }
     }
 
     const [ormEntities, total] = await queryBuilder
