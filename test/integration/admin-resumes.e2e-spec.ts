@@ -20,31 +20,11 @@ describe('AdminController (e2e) - Resumes', () => {
       const adminId = randomUUID();
       await dataSource.query(
         `INSERT INTO "users" (id, email, password_hash, role) VALUES ($1, $2, $3, $4)`,
-        [adminId, adminEmail, hashedPassword, 'ADMIN'],
+        [adminId, adminEmail, hashedPassword, 'ADMINISTRADOR'],
       );
-      await dataSource.query(`INSERT INTO "admins" (id) VALUES ($1)`, [adminId]);
-
-      // Create Contacts
-      const contact1Id = randomUUID();
-      const contact2Id = randomUUID();
-      const contact3Id = randomUUID();
-      await dataSource.query(
-        `INSERT INTO "contacts" (id, phone, city, state) VALUES ($1, $2, $3, $4), ($5, $6, $7, $8), ($9, $10, $11, $12)`,
-        [
-          contact1Id,
-          '11999999999',
-          'Porto Alegre',
-          'RS',
-          contact2Id,
-          '11988888888',
-          'São Paulo',
-          'SP',
-          contact3Id,
-          '11977777777',
-          'Rio de Janeiro',
-          'RJ',
-        ],
-      );
+      await dataSource.query(`INSERT INTO "admins" (id) VALUES ($1)`, [
+        adminId,
+      ]);
 
       // Create Students with and without resumes
       const student1Id = randomUUID();
@@ -59,69 +39,99 @@ describe('AdminController (e2e) - Resumes', () => {
           student1Id,
           'ana@test.com',
           'hash',
-          'STUDENT',
+          'ESTUDANTE',
           student2Id,
           'joao@test.com',
           'hash',
-          'STUDENT',
+          'ESTUDANTE',
           student3Id,
           'maria@test.com',
           'hash',
-          'STUDENT',
+          'ESTUDANTE',
           student4Id,
           'noresume1@test.com',
           'hash',
-          'STUDENT',
+          'ESTUDANTE',
           student5Id,
           'noresume2@test.com',
           'hash',
-          'STUDENT',
+          'ESTUDANTE',
         ],
       );
 
       await dataSource.query(
-        `INSERT INTO "students" (id, contact_id, cpf, full_name, social_name, date_of_birth, gender, race) VALUES ($1, $2, $3, $4, $5, $6, $7, $8), ($9, $10, $11, $12, $13, $14, $15, $16), ($17, $18, $19, $20, $21, $22, $23, $24), ($25, $26, $27, $28, $29, $30, $31, $32), ($33, $34, $35, $36, $37, $38, $39, $40)`,
+        `INSERT INTO "students" (id, cpf, full_name, social_name, date_of_birth, gender, race) VALUES ($1, $2, $3, $4, $5, $6, $7), ($8, $9, $10, $11, $12, $13, $14), ($15, $16, $17, $18, $19, $20, $21), ($22, $23, $24, $25, $26, $27, $28), ($29, $30, $31, $32, $33, $34, $35)`,
         [
           student1Id,
-          contact1Id,
           '12345678900',
           'Ana Júlia Silva',
           'Ana',
           '1995-05-15',
-          'FEMALE',
-          'WHITE',
+          'FEMININO',
+          'BRANCO',
           student2Id,
-          contact2Id,
           '98765432100',
           'João Santos',
           null,
           '1990-01-01',
-          'MALE',
-          'WHITE',
+          'MASCULINO',
+          'BRANCO',
           student3Id,
-          contact3Id,
           '45678912300',
           'Maria Oliveira',
           null,
           '1992-03-20',
-          'FEMALE',
-          'BLACK',
+          'FEMININO',
+          'PRETO',
           student4Id,
-          contact1Id,
           '11122233300',
           'No Resume One',
           null,
           '1998-07-10',
-          'MALE',
-          'WHITE',
+          'MASCULINO',
+          'BRANCO',
           student5Id,
-          contact2Id,
           '44455566600',
           'No Resume Two',
           null,
           '1997-09-25',
-          'FEMALE',
-          'BLACK',
+          'FEMININO',
+          'PRETO',
+        ],
+      );
+
+      // Create Telephones and Addresses
+      const contact1Id = randomUUID();
+      const contact2Id = randomUUID();
+      const contact3Id = randomUUID();
+      const contact4Id = randomUUID();
+      const contact5Id = randomUUID();
+
+      const addr1Id = randomUUID();
+      const addr2Id = randomUUID();
+      const addr3Id = randomUUID();
+      const addr4Id = randomUUID();
+      const addr5Id = randomUUID();
+
+      await dataSource.query(
+        `INSERT INTO "telephone_student" (id, student_id, phone) VALUES ($1, $2, $3), ($4, $5, $6), ($7, $8, $9), ($10, $11, $12), ($13, $14, $15)`,
+        [
+          contact1Id, student1Id, '11999999999',
+          contact2Id, student2Id, '11988888888',
+          contact3Id, student3Id, '11977777777',
+          contact4Id, student4Id, '11999999999',
+          contact5Id, student5Id, '11988888888',
+        ],
+      );
+
+      await dataSource.query(
+        `INSERT INTO "address_student" (id, student_id, city, state, cep) VALUES ($1, $2, $3, $4, $5), ($6, $7, $8, $9, $10), ($11, $12, $13, $14, $15), ($16, $17, $18, $19, $20), ($21, $22, $23, $24, $25)`,
+        [
+          addr1Id, student1Id, 'Porto Alegre', 'RS', '00000000',
+          addr2Id, student2Id, 'São Paulo', 'SP', '00000000',
+          addr3Id, student3Id, 'Rio de Janeiro', 'RJ', '00000000',
+          addr4Id, student4Id, 'Porto Alegre', 'RS', '00000000',
+          addr5Id, student5Id, 'São Paulo', 'SP', '00000000',
         ],
       );
 
@@ -258,27 +268,40 @@ describe('AdminController (e2e) - Resumes', () => {
     it('Cenário - Paginação funciona: deve retornar 5 itens na página 2 de 12', async () => {
       // First, add more students with resumes for pagination test
       const dataSource = app.get(DataSource);
-      
+
       for (let i = 0; i < 9; i++) {
-        const contactId = randomUUID();
+        const telephoneId = randomUUID();
+        const addressId = randomUUID();
         const studentId = randomUUID();
         const curriculumId = randomUUID();
-        
-        await dataSource.query(
-          `INSERT INTO "contacts" (id, phone, city, state) VALUES ($1, $2, $3, $4)`,
-          [contactId, '51999999999', 'Porto Alegre', 'RS'],
-        );
-        
+
         await dataSource.query(
           `INSERT INTO "users" (id, email, password_hash, role) VALUES ($1, $2, $3, $4)`,
-          [studentId, `student${i}@test.com`, 'hash', 'STUDENT'],
+          [studentId, `student${i}@test.com`, 'hash', 'ESTUDANTE'],
         );
-        
+
         await dataSource.query(
-          `INSERT INTO "students" (id, contact_id, cpf, full_name, date_of_birth, gender, race) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [studentId, contactId, `${10000000000 + i}`, `Student ${i}`, '1990-01-01', 'MALE', 'WHITE'],
+          `INSERT INTO "students" (id, cpf, full_name, date_of_birth, gender, race) VALUES ($1, $2, $3, $4, $5, $6)`,
+          [
+            studentId,
+            `${10000000000 + i}`,
+            `Student ${i}`,
+            '1990-01-01',
+            'MASCULINO',
+            'BRANCO',
+          ],
         );
-        
+
+        await dataSource.query(
+          `INSERT INTO "telephone_student" (id, student_id, phone) VALUES ($1, $2, $3)`,
+          [telephoneId, studentId, '51999999999'],
+        );
+
+        await dataSource.query(
+          `INSERT INTO "address_student" (id, student_id, city, state, cep) VALUES ($1, $2, $3, $4, $5)`,
+          [addressId, studentId, 'Porto Alegre', 'RS', '00000000'],
+        );
+
         await dataSource.query(
           `INSERT INTO "curriculum" (id, student_id, is_available, about) VALUES ($1, $2, $3, $4)`,
           [curriculumId, studentId, true, 'About student'],
@@ -300,31 +323,44 @@ describe('AdminController (e2e) - Resumes', () => {
         });
     });
 
-    it('Cenário - Limit acima do máximo: deve forçar limit=50', async () => {
+    it('Cenário - Limit acima do máximo: deve retornar 400 Bad Request', async () => {
       // Add more students to test limit
       const dataSource = app.get(DataSource);
-      
+
       for (let i = 0; i < 100; i++) {
-        const contactId = randomUUID();
+        const telephoneId = randomUUID();
+        const addressId = randomUUID();
         const studentId = randomUUID();
         const curriculumId = randomUUID();
-        
+
         try {
           await dataSource.query(
-            `INSERT INTO "contacts" (id, phone, city, state) VALUES ($1, $2, $3, $4)`,
-            [contactId, '51999999999', 'Porto Alegre', 'RS'],
-          );
-          
-          await dataSource.query(
             `INSERT INTO "users" (id, email, password_hash, role) VALUES ($1, $2, $3, $4)`,
-            [studentId, `limitstudent${i}@test.com`, 'hash', 'STUDENT'],
+            [studentId, `limitstudent${i}@test.com`, 'hash', 'ESTUDANTE'],
           );
-          
+
           await dataSource.query(
-            `INSERT INTO "students" (id, contact_id, cpf, full_name, date_of_birth, gender, race) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [studentId, contactId, `${20000000000 + i}`, `Limit Student ${i}`, '1990-01-01', 'MALE', 'WHITE'],
+            `INSERT INTO "students" (id, cpf, full_name, date_of_birth, gender, race) VALUES ($1, $2, $3, $4, $5, $6)`,
+            [
+              studentId,
+              `${20000000000 + i}`,
+              `Limit Student ${i}`,
+              '1990-01-01',
+              'MASCULINO',
+              'BRANCO',
+            ],
           );
-          
+
+          await dataSource.query(
+            `INSERT INTO "telephone_student" (id, student_id, phone) VALUES ($1, $2, $3)`,
+            [telephoneId, studentId, '51999999999'],
+          );
+
+          await dataSource.query(
+            `INSERT INTO "address_student" (id, student_id, city, state, cep) VALUES ($1, $2, $3, $4, $5)`,
+            [addressId, studentId, 'Porto Alegre', 'RS', '00000000'],
+          );
+
           await dataSource.query(
             `INSERT INTO "curriculum" (id, student_id, is_available, about) VALUES ($1, $2, $3, $4)`,
             [curriculumId, studentId, true, 'About'],
@@ -338,12 +374,7 @@ describe('AdminController (e2e) - Resumes', () => {
         .get('/admins/resumes')
         .set('Authorization', `Bearer ${adminAccessToken}`)
         .query({ limit: 200 })
-        .expect(200)
-        .expect((res) => {
-          const body = res.body as PaginatedResumesResponseDto;
-          expect(body.data.length).toBeLessThanOrEqual(50);
-          expect(body.meta.limit).toBe(50);
-        });
+        .expect(400);
     });
 
     it('Cenário - Aluno sem currículo é excluído: deve retornar apenas 3 itens', () => {
@@ -361,16 +392,12 @@ describe('AdminController (e2e) - Resumes', () => {
         });
     });
 
-    it('Cenário - Page negativa é normalizada: deve forçar page=1', () => {
+    it('Cenário - Page negativa: deve retornar 400 Bad Request', () => {
       return request(app.getHttpServer() as Server)
         .get('/admins/resumes')
         .set('Authorization', `Bearer ${adminAccessToken}`)
         .query({ page: -5 })
-        .expect(200)
-        .expect((res) => {
-          const body = res.body as PaginatedResumesResponseDto;
-          expect(body.meta.page).toBe(1);
-        });
+        .expect(400);
     });
 
     it('should return 401 if not authenticated', () => {

@@ -17,6 +17,7 @@ import {
   StudentFilterQuery,
   StudentReportFilters,
   StudentReportProjection,
+  StudentWithCurriculumAvailability,
 } from '../../../core/ports/student.repository.interface';
 import { Student } from '../../../core/domain/student.entity';
 import { Contact } from '../../../core/domain/contact.entity';
@@ -29,6 +30,7 @@ import { SocialBenefitOrmEntity } from '../orm/social-benefit.orm-entity';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 import { EnrollmentOrmEntity } from '../orm/enrollment.orm-entity';
 import { CourseOrmEntity } from '../orm/course.orm-entity';
+import { CurriculumOrmEntity } from '../orm/curriculum.orm-entity';
 import { EnrollmentType } from '../../../core/domain/enrollment.entity';
 
 type EnrollmentWithCourse = EnrollmentOrmEntity & {
@@ -37,6 +39,7 @@ type EnrollmentWithCourse = EnrollmentOrmEntity & {
 
 type StudentWithEnrollments = StudentOrmEntity & {
   enrollments?: EnrollmentWithCourse[];
+  curriculum?: CurriculumOrmEntity;
 };
 
 interface StudentReportRawRow {
@@ -96,20 +99,31 @@ export class StudentRepository implements IStudentRepository {
     return this.mapToDomain(savedEntity!);
   }
 
-  async findAll(): Promise<Student[]> {
-    const ormEntities = await this.ormRepository.find({
-      relations: [
-        'user',
-        'telephone',
-        'address',
-        'disabilities',
-        'socialBenefits',
-      ],
-    });
+  async findAll(): Promise<StudentWithCurriculumAvailability[]> {
+    const ormEntities = await this.ormRepository
+      .createQueryBuilder('student')
+      .innerJoinAndSelect('student.user', 'user', 'user.deletedAt IS NULL')
+      .leftJoinAndSelect('student.telephone', 'telephone')
+      .leftJoinAndSelect('student.address', 'address')
+      .leftJoinAndSelect('student.disabilities', 'disabilities')
+      .leftJoinAndSelect('student.socialBenefits', 'socialBenefits')
+      .leftJoinAndMapOne(
+        'student.curriculum',
+        CurriculumOrmEntity,
+        'curriculum',
+        'curriculum.student_id = student.id',
+      )
+      .getMany();
 
-    return ormEntities
-      .filter((entity) => entity.user !== null)
-      .map((entity) => this.mapToDomain(entity));
+    return ormEntities.map((entity) => {
+      const withCurriculum = entity as StudentOrmEntity & {
+        curriculum?: CurriculumOrmEntity;
+      };
+      return {
+        student: this.mapToDomain(entity),
+        curriculumIsAvailable: withCurriculum.curriculum?.isAvailable ?? false,
+      };
+    });
   }
 
   async findAllWithFilter(
@@ -133,6 +147,12 @@ export class StudentRepository implements IStudentRepository {
         CourseOrmEntity,
         'course',
         'course.id = enrollment.courseId',
+      )
+      .leftJoinAndMapOne(
+        'student.curriculum',
+        CurriculumOrmEntity,
+        'curriculum',
+        'curriculum.student_id = student.id',
       );
 
     if (query.search) {
@@ -518,7 +538,7 @@ export class StudentRepository implements IStudentRepository {
     ormEntity.address.state = student.contact.state || null;
     ormEntity.address.city = student.contact.city || null;
     ormEntity.address.address = student.contact.address || null;
-    ormEntity.address.cep = student.contact.cep || null;
+    ormEntity.address.cep = student.contact.cep!;
     ormEntity.address.complement = student.contact.complement || null;
 
     return ormEntity;
@@ -777,6 +797,7 @@ export class StudentRepository implements IStudentRepository {
         courseId: enrollment.courseId,
         courseModality: enrollment.course?.modality ?? 'ONLINE',
       })),
+      curriculumIsAvailable: ormEntity.curriculum?.isAvailable ?? false,
     };
   }
 
@@ -813,7 +834,7 @@ export class StudentRepository implements IStudentRepository {
       ormEntity.address.state || undefined,
       ormEntity.address.city || undefined,
       ormEntity.address.address || undefined,
-      ormEntity.address.cep || undefined,
+      ormEntity.address.cep,
       ormEntity.address.complement || undefined,
     );
 
@@ -870,9 +891,9 @@ export class StudentRepository implements IStudentRepository {
   async countByDisabilityType(): Promise<DisabilityCount[]> {
     const rows = await this.ormRepository
       .createQueryBuilder('student')
-      .innerJoin('student.disabilities', 'disability')    
+      .innerJoin('student.disabilities', 'disability')
       .select('disability.name', 'disabilityType')
-      .addSelect('CAST(COUNT(*) AS int)', 'count')   
+      .addSelect('CAST(COUNT(*) AS int)', 'count')
       .groupBy('disability.name')
       .orderBy('count', 'DESC')
       .getRawMany<{ disabilityType: string; count: number }>();
@@ -880,7 +901,7 @@ export class StudentRepository implements IStudentRepository {
     return rows;
   }
 
- async countByCity(): Promise<StudentCityCount[]> {
+  async countByCity(): Promise<StudentCityCount[]> {
     const rows = await this.ormRepository
       .createQueryBuilder('student')
       .innerJoin('student.address', 'address')
@@ -896,19 +917,29 @@ export class StudentRepository implements IStudentRepository {
 
     return rows;
   }
-async countTotal(): Promise<number> {
-      return this.ormRepository.count();
+  async countTotal(): Promise<number> {
+    return this.ormRepository.count();
   }
 
- async countPCD(): Promise<number> {
-  return this.ormRepository
-    .createQueryBuilder('student')
-    .innerJoin('student.disabilities', 'disability')
-    .select('student.id')
-    .distinct(true)
-    .getCount();
+  async countPCD(): Promise<number> {
+    return this.ormRepository
+      .createQueryBuilder('student')
+      .innerJoin('student.disabilities', 'disability')
+      .select('student.id')
+      .distinct(true)
+      .getCount();
+  }
+
+  async countByMonth(): Promise<{ month: string; count: number }[]> {
+    const rows = await this.ormRepository
+      .createQueryBuilder('student')
+      .innerJoin('student.user', 'user')
+      .select("TO_CHAR(user.createdAt, 'YYYY-MM')", 'month')
+      .addSelect('CAST(COUNT(student.id) AS int)', 'count')
+      .groupBy("TO_CHAR(user.createdAt, 'YYYY-MM')")
+      .orderBy('month', 'ASC')
+      .getRawMany<{ month: string; count: number }>();
+
+    return rows;
+  }
 }
-
-}
-
-

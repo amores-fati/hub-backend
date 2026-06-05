@@ -4,6 +4,7 @@ export const ICurriculumRepository = Symbol('ICurriculumRepository');
 
 export interface ResumeListProjection {
   id: string;
+  studentId: string;
   cpf: string;
   fullName: string;
   socialName?: string;
@@ -13,6 +14,7 @@ export interface ResumeListProjection {
   linkedin?: string;
   github?: string;
   preference?: string;
+  phone?: string;
 }
 
 export interface PaginatedResumeListResult {
@@ -22,9 +24,10 @@ export interface PaginatedResumeListResult {
 
 export interface ResumeFilterQuery {
   search?: string;
-  interestArea?: string;
+  activityArea?: string[];
   preference?: string;
   status?: string;
+  city?: string[];
   page: number;
   limit: number;
 }

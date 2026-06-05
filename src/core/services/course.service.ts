@@ -42,6 +42,8 @@ export class CourseService {
       command.address,
       command.description,
       command.status,
+      command.bannerImage,
+      command.bannerImageMimeType,
     );
 
     return this.courseRepository.create(course);
@@ -61,7 +63,7 @@ export class CourseService {
     const updated = new Course(
       id,
       command.name,
-      command.banner,
+      command.banner ?? existing.banner,
       command.courseLoad,
       new Date(command.startDate),
       new Date(command.endDate),
@@ -73,12 +75,17 @@ export class CourseService {
       command.shift,
       command.address,
       command.description,
+      existing.status,
+      command.bannerImage ?? existing.bannerImage,
+      command.bannerImageMimeType ?? existing.bannerImageMimeType,
     );
 
     return this.courseRepository.update(updated);
   }
 
-  async filterCourses(command: FilterCoursesCommand): Promise<PaginatedCoursesResponse> {
+  async filterCourses(
+    command: FilterCoursesCommand,
+  ): Promise<PaginatedCoursesResponse> {
     const { page, limit, ...filters } = command;
     const all = await this.courseRepository.findManyByFilters(filters);
     const total = all.length;

@@ -32,10 +32,11 @@ export class StudentListItemDto {
   disabilityType?: string;
 
   @ApiProperty({
-    example: 'ONLINE',
+    example: ['ONLINE'],
     enum: ['ONLINE', 'PRESENCIAL', 'NAO_INSCRITO'],
+    isArray: true,
   })
-  enrollmentStatus: 'ONLINE' | 'PRESENCIAL' | 'NAO_INSCRITO';
+  enrollmentStatus: Array<'ONLINE' | 'PRESENCIAL' | 'NAO_INSCRITO'>;
 }
 
 export class PaginatedStudentsMetaDto {

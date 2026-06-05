@@ -2,7 +2,9 @@ import { CourseStatus } from '../domain/course-status.enum';
 
 export interface CreateCourseCommand {
   name: string;
-  banner: string;
+  banner?: string;
+  bannerImage?: Buffer;
+  bannerImageMimeType?: string;
   description?: string;
   courseLoad: string;
   startDate: string;
@@ -19,7 +21,9 @@ export interface CreateCourseCommand {
 
 export interface UpdateCourseCommand {
   name: string;
-  banner: string;
+  banner?: string;
+  bannerImage?: Buffer;
+  bannerImageMimeType?: string;
   description?: string;
   courseLoad: string;
   startDate: string;

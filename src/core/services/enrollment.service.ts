@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { Enrollment, EnrollmentType } from '../domain/enrollment.entity';
 import { CourseNotFoundException } from '../exceptions/course-not-found.exception';
+import { DomainException } from '../exceptions/domain.exception';
 import { EnrollmentAlreadyExistsException } from '../exceptions/enrollment-already-exists.exception';
 import { ICourseRepository } from '../ports/course.repository.interface';
 import { IEnrollmentRepository } from '../ports/enrollment.repository.interface';
@@ -34,6 +35,12 @@ export class EnrollmentService {
     const course = await this.courseRepository.findById(courseId);
     if (!course) {
       throw new CourseNotFoundException(courseId);
+    }
+
+    if (type === EnrollmentType.ENROLLMENT && course.modality === 'online') {
+      throw new DomainException(
+        'Não é possível realizar matrícula direta em cursos da modalidade online.',
+      );
     }
 
     const existing = await this.enrollmentRepository.findByStudentAndCourse(

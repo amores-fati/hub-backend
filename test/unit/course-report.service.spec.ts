@@ -55,9 +55,7 @@ describe('CourseReportService', () => {
 
   it('should export selected courses and log before PDF generation', async () => {
     const events: string[] = [];
-    (repository.findManyByIds as jest.Mock).mockResolvedValue([
-      course,
-    ]);
+    (repository.findManyByIds as jest.Mock).mockResolvedValue([course]);
     (logger.info as jest.Mock).mockImplementation(() => events.push('log'));
     (pdfGenerator.generate as jest.Mock).mockImplementation(() => {
       events.push('pdf');
@@ -74,9 +72,7 @@ describe('CourseReportService', () => {
     expect(result.filename).toMatch(
       /^relatorio_cursos_\d{4}-\d{2}-\d{2}_\d{6}\.pdf$/,
     );
-    expect(repository.findManyByIds).toHaveBeenCalledWith([
-      course.id,
-    ]);
+    expect(repository.findManyByIds).toHaveBeenCalledWith([course.id]);
     expect(logger.info).toHaveBeenCalledWith('Generating courses report', {
       userId: 'admin-id',
       mode: 'selected',
@@ -99,9 +95,7 @@ describe('CourseReportService', () => {
   });
 
   it('should export all courses with filters', async () => {
-    (repository.findManyByFilters as jest.Mock).mockResolvedValue([
-      course,
-    ]);
+    (repository.findManyByFilters as jest.Mock).mockResolvedValue([course]);
 
     await service.generateReport({
       mode: 'all',

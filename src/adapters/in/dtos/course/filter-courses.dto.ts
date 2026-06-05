@@ -1,5 +1,12 @@
 import { Type } from 'class-transformer';
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { CourseStatus } from '../../../../core/domain/course-status.enum';
 
@@ -18,12 +25,18 @@ export class FilterCoursesDto {
   @IsOptional()
   limit = 10;
 
-  @ApiPropertyOptional({ example: 'web', description: 'Busca parcial por nome, case-insensitive.' })
+  @ApiPropertyOptional({
+    example: 'web',
+    description: 'Busca parcial por nome, case-insensitive.',
+  })
   @IsString()
   @IsOptional()
   search?: string;
 
-  @ApiPropertyOptional({ example: 'ONLINE', description: 'Modalidade: ONLINE ou PRESENCIAL.' })
+  @ApiPropertyOptional({
+    example: 'ONLINE',
+    description: 'Modalidade: ONLINE ou PRESENCIAL.',
+  })
   @IsString()
   @IsOptional()
   modality?: string;
@@ -33,12 +46,18 @@ export class FilterCoursesDto {
   @IsOptional()
   status?: CourseStatus;
 
-  @ApiPropertyOptional({ example: '2025-01-01', description: 'Cursos com startDate >= este valor.' })
+  @ApiPropertyOptional({
+    example: '2025-01-01',
+    description: 'Cursos com startDate >= este valor.',
+  })
   @IsDateString()
   @IsOptional()
   startDate?: string;
 
-  @ApiPropertyOptional({ example: '2025-12-31', description: 'Cursos com endDate <= este valor.' })
+  @ApiPropertyOptional({
+    example: '2025-12-31',
+    description: 'Cursos com endDate <= este valor.',
+  })
   @IsDateString()
   @IsOptional()
   endDate?: string;

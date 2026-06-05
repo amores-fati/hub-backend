@@ -37,6 +37,7 @@ describe('StudentRepository', () => {
     addOrderBy: jest.Mock;
     addSelect: jest.Mock;
     andWhere: jest.Mock;
+    getMany: jest.Mock;
     getRawMany: jest.Mock;
     getManyAndCount: jest.Mock;
     innerJoin: jest.Mock;
@@ -72,6 +73,7 @@ describe('StudentRepository', () => {
       addOrderBy: jest.fn().mockReturnThis(),
       addSelect: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
+      getMany: jest.fn(),
       getRawMany: jest.fn(),
       getManyAndCount: jest.fn(),
       innerJoin: jest.fn().mockReturnThis(),
@@ -134,13 +136,15 @@ describe('StudentRepository', () => {
     const ormEntity = buildStudentOrmEntity(buildStudent());
     ormEntity.birthDate = '1990-01-01' as unknown as Date;
 
-    (ormRepository.find as jest.Mock).mockResolvedValue([ormEntity]);
+    queryBuilder.getMany.mockResolvedValue([ormEntity]);
 
     const students = await repository.findAll();
 
     expect(students).toHaveLength(1);
-    expect(students[0].birthDate).toBeInstanceOf(Date);
-    expect(students[0].birthDate?.toISOString()).toContain('1990-01-01');
+    expect(students[0].student.birthDate).toBeInstanceOf(Date);
+    expect(students[0].student.birthDate?.toISOString()).toContain(
+      '1990-01-01',
+    );
   });
 
   it('should filter students using the query builder', async () => {

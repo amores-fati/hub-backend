@@ -20,13 +20,32 @@ export class CreateCourseDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'https://fatilab.com/banners/web.jpg',
-    description: 'URL do banner de divulgacao do curso.',
+    description:
+      'URL externa do banner de divulgacao do curso. Opcional quando bannerImage e enviado.',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  banner: string;
+  banner?: string;
+
+  @ApiPropertyOptional({
+    example: 'iVBORw0KGgoAAAANSUhEUgAAA...',
+    description:
+      'Imagem do banner codificada em base64 (somente os bytes, sem o prefixo data:). Armazenada como BYTEA no banco.',
+  })
+  @IsOptional()
+  @IsString()
+  bannerImage?: string;
+
+  @ApiPropertyOptional({
+    example: 'image/png',
+    description:
+      'Mime type da imagem enviada em bannerImage. Obrigatorio quando bannerImage e enviado.',
+  })
+  @IsOptional()
+  @IsString()
+  bannerImageMimeType?: string;
 
   @ApiProperty({
     example: 'Curso completo de desenvolvimento web com React e Node.js.',

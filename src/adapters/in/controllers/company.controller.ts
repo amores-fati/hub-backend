@@ -48,6 +48,8 @@ import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
 import { ListMyVacanciesQueryDto } from '../dtos/vacancy/list-my-vacancies-query.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 import { CreateUpdateJobOpeningDto } from '../dtos/job-opening/create-update-job-opening.dto';
+import { VacancyNotFoundException } from '../../../core/exceptions/vacancy-not-found.exception';
+import { VacancyForbiddenException } from '../../../core/exceptions/vacancy-forbidden.exception';
 
 interface AuthenticatedUser extends BaseAuthenticatedUser {
   companyId: string | null;
@@ -131,18 +133,28 @@ export class CompanyController {
       jobId: id,
     });
 
-    const result = await this.companyService.updateVacancy(id, companyId, {
-      title: updateDto.title,
-      description: updateDto.description,
-      link: updateDto.link,
-      vacancyCount: updateDto.vacancyCount,
-      isPcd: updateDto.isPcd,
-      workplaceType: updateDto.workplaceType,
-      skills: updateDto.skills,
-    });
+    try {
+      const result = await this.companyService.updateVacancy(id, companyId, {
+        title: updateDto.title,
+        description: updateDto.description,
+        link: updateDto.link,
+        vacancyCount: updateDto.vacancyCount,
+        isPcd: updateDto.isPcd,
+        workplaceType: updateDto.workplaceType,
+        skills: updateDto.skills,
+      });
 
-    this.logger.info('Job opening updated', { jobId: result.id });
-    return result;
+      this.logger.info('Job opening updated', { jobId: result.id });
+      return result;
+    } catch (error) {
+      if (error instanceof VacancyNotFoundException) {
+        throw new NotFoundException(error.message);
+      }
+      if (error instanceof VacancyForbiddenException) {
+        throw new ForbiddenException(error.message);
+      }
+      throw error;
+    }
   }
 
   @Post()
@@ -411,12 +423,12 @@ export class CompanyController {
       await this.companyService.deleteVacancy(id, companyId);
       this.logger.info('Vacancy deleted', { id });
     } catch (error) {
-      if (error instanceof NotFoundException) {
+      if (error instanceof VacancyNotFoundException) {
         this.logger.warn('Vacancy not found', { id });
         throw new NotFoundException(error.message);
       }
 
-      if (error instanceof ForbiddenException) {
+      if (error instanceof VacancyForbiddenException) {
         this.logger.warn('Forbidden deleting vacancy', { id });
         throw new ForbiddenException(error.message);
       }

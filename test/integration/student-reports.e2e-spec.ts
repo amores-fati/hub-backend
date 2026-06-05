@@ -269,8 +269,15 @@ async function insertStudent(
     ],
   );
   await dataSource.query(
-    `INSERT INTO "address_student" (id, student_id, city, state, address) VALUES ($1, $2, $3, $4, $5)`,
-    [randomUUID(), params.id, params.city, params.state, 'Rua Teste'],
+    `INSERT INTO "address_student" (id, student_id, city, state, address, cep) VALUES ($1, $2, $3, $4, $5, $6)`,
+    [
+      randomUUID(),
+      params.id,
+      params.city,
+      params.state,
+      'Rua Teste',
+      '12345-678',
+    ],
   );
   await dataSource.query(
     `INSERT INTO "telephone_student" (id, student_id, phone) VALUES ($1, $2, $3)`,
@@ -334,9 +341,9 @@ async function insertLimitStudents(
     userParams.push(id, email, 'not-used', 'ESTUDANTE');
 
     addressValues.push(
-      `($${addressParams.length + 1}, $${addressParams.length + 2}, $${addressParams.length + 3}, $${addressParams.length + 4})`,
+      `($${addressParams.length + 1}, $${addressParams.length + 2}, $${addressParams.length + 3}, $${addressParams.length + 4}, $${addressParams.length + 5})`,
     );
-    addressParams.push(randomUUID(), id, 'Porto Alegre', 'RS');
+    addressParams.push(randomUUID(), id, 'Porto Alegre', 'RS', '90010-030');
 
     telephoneValues.push(
       `($${telephoneParams.length + 1}, $${telephoneParams.length + 2}, $${telephoneParams.length + 3})`,
@@ -367,7 +374,7 @@ async function insertLimitStudents(
     studentParams,
   );
   await dataSource.query(
-    `INSERT INTO "address_student" (id, student_id, city, state) VALUES ${addressValues.join(', ')}`,
+    `INSERT INTO "address_student" (id, student_id, city, state, cep) VALUES ${addressValues.join(', ')}`,
     addressParams,
   );
   await dataSource.query(

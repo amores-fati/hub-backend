@@ -1,4 +1,5 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { VacancyNotFoundException } from '../exceptions/vacancy-not-found.exception';
+import { VacancyForbiddenException } from '../exceptions/vacancy-forbidden.exception';
 import { randomUUID } from 'crypto';
 import { Company } from '../domain/company.entity';
 import { ICompanyRepository } from '../ports/company.repository.interface';
@@ -188,11 +189,11 @@ export class CompanyService {
       await this.vacancyRepository.findCompanyIdById(vacancyId);
 
     if (!ownerCompanyId) {
-      throw new NotFoundException('Vaga não encontrada');
+      throw new VacancyNotFoundException();
     }
 
     if (ownerCompanyId !== companyId) {
-      throw new ForbiddenException('A vaga pertence a outra empresa.');
+      throw new VacancyForbiddenException();
     }
 
     return this.jobOpeningRepository.update(vacancyId, command);
@@ -203,13 +204,11 @@ export class CompanyService {
       await this.vacancyRepository.findCompanyIdById(vacancyId);
 
     if (!vacancyCompanyId) {
-      throw new NotFoundException('Vaga não encontrada');
+      throw new VacancyNotFoundException();
     }
 
     if (vacancyCompanyId !== companyId) {
-      throw new ForbiddenException(
-        'Você não tem permissão para excluir esta vaga',
-      );
+      throw new VacancyForbiddenException();
     }
 
     await this.vacancyRepository.deleteById(vacancyId);

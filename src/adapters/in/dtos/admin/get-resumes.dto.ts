@@ -1,5 +1,12 @@
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Min, Max } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsArray,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+  Max,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class GetResumesQueryDto {
@@ -35,12 +42,19 @@ export class GetResumesQueryDto {
   search?: string;
 
   @ApiPropertyOptional({
-    example: 'Desenvolvimento',
-    description: 'Filtro por área de interesse do aluno',
+    example: ['design', 'desenvolvimento'],
+    type: [String],
+    description:
+      'Filtro por área de atuação do aluno. Aceita múltiplos valores.',
   })
-  @IsString()
+  @Transform(
+    ({ value }) =>
+      (Array.isArray(value) ? value : value ? [value] : []) as string[],
+  )
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  interestArea?: string;
+  activityArea?: string[];
 
   @ApiPropertyOptional({
     example: 'Remoto',
@@ -57,4 +71,19 @@ export class GetResumesQueryDto {
   @IsString()
   @IsOptional()
   status?: string;
+
+  @ApiPropertyOptional({
+    example: ['Porto Alegre/RS', 'Canoas/RS'],
+    type: [String],
+    description:
+      'Filtro por cidade do aluno. Use o formato "Cidade/UF" para filtrar por cidade e estado.',
+  })
+  @Transform(
+    ({ value }) =>
+      (Array.isArray(value) ? value : value ? [value] : []) as string[],
+  )
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  city?: string[];
 }

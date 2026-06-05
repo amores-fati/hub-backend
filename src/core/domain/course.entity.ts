@@ -4,7 +4,9 @@ import { CourseStatus } from './course-status.enum';
 export class Course {
   readonly #id: string;
   #name: string;
-  #banner: string;
+  #banner: string | undefined;
+  #bannerImage: Buffer | undefined;
+  #bannerImageMimeType: string | undefined;
   #courseLoad: string;
   #startDate: Date;
   #endDate: Date;
@@ -21,7 +23,7 @@ export class Course {
   constructor(
     id: string,
     name: string,
-    banner: string,
+    banner: string | undefined,
     courseLoad: string,
     startDate: Date,
     endDate: Date,
@@ -34,10 +36,14 @@ export class Course {
     address?: string,
     description?: string,
     status: CourseStatus = CourseStatus.ATIVO,
+    bannerImage?: Buffer,
+    bannerImageMimeType?: string,
   ) {
     this.#id = id;
     this.#name = name;
     this.#banner = banner;
+    this.#bannerImage = bannerImage;
+    this.#bannerImageMimeType = bannerImageMimeType;
     this.#courseLoad = courseLoad;
     this.#startDate = startDate;
     this.#endDate = endDate;
@@ -61,8 +67,16 @@ export class Course {
     return this.#name;
   }
 
-  get banner(): string {
+  get banner(): string | undefined {
     return this.#banner;
+  }
+
+  get bannerImage(): Buffer | undefined {
+    return this.#bannerImage;
+  }
+
+  get bannerImageMimeType(): string | undefined {
+    return this.#bannerImageMimeType;
   }
 
   get description(): string | undefined {
@@ -115,7 +129,7 @@ export class Course {
 
   private validateCourse(): void {
     this.validateRequiredText(this.#name, 'O nome do curso e obrigatorio.');
-    this.validateRequiredText(this.#banner, 'O banner do curso e obrigatorio.');
+    this.validateBannerPresence();
     this.validateRequiredText(
       this.#courseLoad,
       'A carga horaria do curso e obrigatoria.',
@@ -150,6 +164,23 @@ export class Course {
   private validateRequiredText(value: string, message: string): void {
     if (!value || value.trim().length === 0) {
       throw new DomainException(message);
+    }
+  }
+
+  private validateBannerPresence(): void {
+    const hasBannerUrl = !!this.#banner && this.#banner.trim().length > 0;
+    const hasBannerImage = !!this.#bannerImage && this.#bannerImage.length > 0;
+
+    if (!hasBannerUrl && !hasBannerImage) {
+      throw new DomainException(
+        'O banner do curso e obrigatorio (informe uma URL ou envie uma imagem).',
+      );
+    }
+
+    if (hasBannerImage && !this.#bannerImageMimeType?.trim()) {
+      throw new DomainException(
+        'O mime type da imagem do banner e obrigatorio quando ha imagem.',
+      );
     }
   }
 
@@ -193,7 +224,9 @@ export class Course {
     return {
       id: this.id,
       name: this.name,
-      banner: this.banner,
+      banner: this.banner ?? null,
+      hasBannerImage: !!this.bannerImage && this.bannerImage.length > 0,
+      bannerImageMimeType: this.bannerImageMimeType ?? null,
       description: this.description ?? null,
       courseLoad: this.courseLoad,
       startDate: this.startDate,

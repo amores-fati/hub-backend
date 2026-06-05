@@ -1,10 +1,11 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { AmoresFatiLogger } from './utils/logger';
-import { join } from 'path';
+import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { join } from 'path';
+import * as qs from 'qs';
+import { AppModule } from './app.module';
+import { AmoresFatiLogger } from './utils/logger';
 
 const isLocalFrontendOrigin = (origin?: string): boolean => {
   if (!origin) return true;
@@ -20,6 +21,11 @@ const isLocalFrontendOrigin = (origin?: string): boolean => {
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.set('query parser', (str: string) =>
+    qs.parse(str, { allowDots: true, depth: 5 }),
+  );
+  app.useBodyParser('json', { limit: '10mb' });
+  app.useBodyParser('urlencoded', { limit: '10mb', extended: true });
   const configuredFrontendUrl = process.env.FRONTEND_URL;
   const isDevelopment = process.env.NODE_ENV !== 'production';
 
