@@ -65,11 +65,16 @@ export class GetResumesQueryDto {
   @IsOptional()
   preference?: string;
 
-   @ApiPropertyOptional({
+  @ApiPropertyOptional({
     example: true,
     description: 'Filtra currículos de alunos PCD',
   })
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return undefined;
+  })
+  @IsBoolean()
   @IsOptional()
   isPcd?: boolean;
 

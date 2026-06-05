@@ -1,6 +1,8 @@
+import { VacancyNotFoundException } from '../exceptions/vacancy-not-found.exception';
+import { VacancyForbiddenException } from '../exceptions/vacancy-forbidden.exception';
+import { randomUUID } from 'crypto';
 import { Company } from '../domain/company.entity';
 import { ICompanyRepository } from '../ports/company.repository.interface';
-import { randomUUID } from 'crypto';
 import { CompanyNotFoundException } from '../exceptions/company-not-found.exception';
 import { CompanyAlreadyExistsException } from '../exceptions/company-already-exists.exception';
 import {
@@ -16,8 +18,15 @@ import {
   MyVacanciesFilters,
   PaginatedVacanciesResult,
 } from '../ports/vacancy-report.repository.interface';
+import {
+  IJobOpeningRepository,
+  JobOpeningResult,
+} from '../ports/job-open.company.repository.interface';
+import {
+  CreateJobOpeningCommand,
+  UpdateJobOpeningCommand,
+} from '../command/job-opening.command';
 import { UserAlreadyExistsException } from '../exceptions/user-already-exists.exception';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
 
 export class CompanyService {
   constructor(
@@ -25,6 +34,7 @@ export class CompanyService {
     private readonly userRepository: IUserRepository,
     private readonly hashService: IHashService,
     private readonly vacancyRepository: IVacancyReportRepository,
+    private readonly jobOpeningRepository: IJobOpeningRepository,
   ) {}
 
   async createCompany(command: CreateCompanyCommand): Promise<Company> {
@@ -162,18 +172,43 @@ export class CompanyService {
     await this.companyRepository.delete(company.id);
   }
 
+  async createVacancy(
+    companyId: string,
+    command: Omit<CreateJobOpeningCommand, 'companyId'>,
+  ): Promise<JobOpeningResult> {
+    await this.getCompanyById(companyId);
+    return this.jobOpeningRepository.create({ ...command, companyId });
+  }
+
+  async updateVacancy(
+    vacancyId: string,
+    companyId: string,
+    command: UpdateJobOpeningCommand,
+  ): Promise<JobOpeningResult> {
+    const ownerCompanyId =
+      await this.vacancyRepository.findCompanyIdById(vacancyId);
+
+    if (!ownerCompanyId) {
+      throw new VacancyNotFoundException();
+    }
+
+    if (ownerCompanyId !== companyId) {
+      throw new VacancyForbiddenException();
+    }
+
+    return this.jobOpeningRepository.update(vacancyId, command);
+  }
+
   async deleteVacancy(vacancyId: string, companyId: string): Promise<void> {
     const vacancyCompanyId =
       await this.vacancyRepository.findCompanyIdById(vacancyId);
 
     if (!vacancyCompanyId) {
-      throw new NotFoundException('Vaga não encontrada');
+      throw new VacancyNotFoundException();
     }
 
     if (vacancyCompanyId !== companyId) {
-      throw new ForbiddenException(
-        'Você não tem permissão para excluir esta vaga',
-      );
+      throw new VacancyForbiddenException();
     }
 
     await this.vacancyRepository.deleteById(vacancyId);

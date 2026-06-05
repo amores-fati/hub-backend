@@ -56,7 +56,7 @@ export class CurriculumRepository implements ICurriculumRepository {
       .innerJoinAndSelect('curriculum.student', 'student')
       .innerJoinAndSelect('student.user', 'user')
       .leftJoinAndSelect('student.telephone', 'phone')
-      .leftJoinAndSelect('student.address', 'address');
+      .leftJoinAndSelect('student.address', 'address')
       .leftJoin('student.disabilities', 'disability');
 
     if (query.search) {
@@ -83,9 +83,7 @@ export class CurriculumRepository implements ICurriculumRepository {
       queryBuilder.andWhere(
         'LOWER(student.activityArea) IN (:...activityAreas)',
         {
-          activityAreas: query.activityArea.map((area) =>
-            area.toLowerCase(),
-          ),
+          activityAreas: query.activityArea.map((area) => area.toLowerCase()),
         },
       );
     }
@@ -131,7 +129,7 @@ export class CurriculumRepository implements ICurriculumRepository {
         }),
       );
     }
-    
+
     if (query.isPcd !== undefined) {
       if (query.isPcd) {
         queryBuilder.andWhere('disability.id IS NOT NULL');
