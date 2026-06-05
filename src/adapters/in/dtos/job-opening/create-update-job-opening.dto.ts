@@ -47,7 +47,7 @@ export class CreateUpdateJobOpeningDto {
   isPcd: boolean;
 
   @ApiProperty({
-    example: 'presential',
+    example: 'presencial',
     enum: WorkplaceTypeEnum,
     description: 'Tipo de local de trabalho',
   })

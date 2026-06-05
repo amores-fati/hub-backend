@@ -1,5 +1,5 @@
 export enum WorkplaceTypeEnum {
-  PRESENTIAL = 'presential',
+  PRESENTIAL = 'presencial',
   ONLINE = 'online',
-  HYBRID = 'hybrid',
+  HYBRID = 'hibrido',
 }

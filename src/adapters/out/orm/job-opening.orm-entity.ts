@@ -68,8 +68,8 @@ export class JobOpeningOrmEntity {
   @Column({
     name: 'workplace_type',
     type: 'varchar',
-    length: 20,
-    default: 'presential',
+    length: 100,
+    default: 'presencial',
   })
   workplaceType: string;
 
