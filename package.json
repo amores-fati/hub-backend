@@ -20,6 +20,8 @@
     "migration:show": "npm run typeorm -- migration:show",
     "seed:dev": "ts-node -r tsconfig-paths/register src/adapters/out/seeds/seed.ts",
     "seed:dev:reset": "ts-node -r tsconfig-paths/register src/adapters/out/seeds/seed.ts --reset",
+    "seed:prod": "ts-node -r tsconfig-paths/register src/adapters/out/seeds/seed-production.ts",
+    "seed:prod:reset": "ts-node -r tsconfig-paths/register src/adapters/out/seeds/seed-production.ts --reset",
     "bootstrap:test:dev": "ts-node -r tsconfig-paths/register src/adapters/out/seeds/bootstrap-test-db.ts",
     "bootstrap:test:dev:reset": "ts-node -r tsconfig-paths/register src/adapters/out/seeds/bootstrap-test-db.ts --reset",
     "seed:test:dev": "ts-node -r tsconfig-paths/register src/adapters/out/seeds/seed-test.ts",
