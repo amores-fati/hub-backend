@@ -46,6 +46,10 @@ export class EnrollmentRepository implements IEnrollmentRepository {
     return this.mapToDomain(saved);
   }
 
+  async delete(studentId: string, courseId: string): Promise<void> {
+    await this.ormRepository.delete({ studentId, courseId });
+  }
+
   private mapToDomain(orm: EnrollmentOrmEntity): Enrollment {
     return new Enrollment(
       orm.id,
