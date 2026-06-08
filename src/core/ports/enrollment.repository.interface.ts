@@ -9,4 +9,5 @@ export interface IEnrollmentRepository {
     courseId: string,
   ): Promise<Enrollment | null>;
   create(enrollment: Enrollment): Promise<Enrollment>;
+  delete(studentId: string, courseId: string): Promise<void>;
 }

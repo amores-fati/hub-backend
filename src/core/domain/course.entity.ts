@@ -127,6 +127,17 @@ export class Course {
     return this.#address;
   }
 
+  decreaseVacancy(): void {
+    if (this.#vacancyCount <= 0) {
+      throw new DomainException('Não há vagas disponíveis para este curso.');
+    }
+    this.#vacancyCount -= 1;
+  }
+
+  increaseVacancy(): void {
+    this.#vacancyCount += 1;
+  }
+
   private validateCourse(): void {
     this.validateRequiredText(this.#name, 'O nome do curso e obrigatorio.');
     this.validateBannerPresence();
