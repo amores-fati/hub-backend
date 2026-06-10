@@ -35,7 +35,10 @@ import {
   CreateCompanyCommand,
   UpdateCompanyCommand,
 } from '../../../core/command/company.command';
-import { CompanyService } from '../../../core/services/company.service';
+import {
+  CompanyService,
+  FilterCompaniesCommand,
+} from '../../../core/services/company.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import {
   CurrentUser,
@@ -45,6 +48,9 @@ import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCompanyDto } from '../dtos/company/create-company.dto';
 import { PatchCompanyDto } from '../dtos/company/patch-company.dto';
 import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
+import { FilterCompaniesDto } from '../dtos/company/filter-companies.dto';
+import { PaginatedCompaniesResponseDto } from '../dtos/company/paginated-companies-response.dto';
+import { toCompanyResponse } from '../dtos/company/company-response.dto';
 import { ListMyVacanciesQueryDto } from '../dtos/vacancy/list-my-vacancies-query.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 import { CreateUpdateJobOpeningDto } from '../dtos/job-opening/create-update-job-opening.dto';
@@ -215,6 +221,35 @@ export class CompanyController {
     const companies = await this.companyService.findAllCompanies();
     this.logger.info('Companies listed', { count: companies.length });
     return companies;
+  }
+
+  @RequireAuth(UserRoleEnum.ADMIN)
+  @Get('filter')
+  @ApiOperation({
+    summary: 'Lista empresas com filtros e paginação',
+    description: 'Retorna empresas paginadas com filtros opcionais por busca textual e status.',
+  })
+  @ApiOkResponse({ description: 'Empresas retornadas com sucesso.', type: PaginatedCompaniesResponseDto })
+  async filter(@Query() filters: FilterCompaniesDto): Promise<PaginatedCompaniesResponseDto> {
+    this.logger.info('Filtering companies', {
+      page: filters.page,
+      limit: filters.limit,
+      search: filters.search,
+      status: filters.status,
+    });
+    const command: FilterCompaniesCommand = {
+      page: filters.page,
+      limit: filters.limit,
+      search: filters.search,
+      status: filters.status,
+    };
+    const result = await this.companyService.filterCompanies(command);
+    return {
+      data: result.data.map(({ company, status }) => toCompanyResponse(company, status)),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
   }
 
   @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)

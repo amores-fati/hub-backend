@@ -1,6 +1,17 @@
 import { Company } from '../domain/company.entity';
+import { CompanyStatus } from '../domain/company-status.enum';
 
 export const ICompanyRepository = Symbol('ICompanyRepository');
+
+export interface CompanyFilterOptions {
+  search?: string;
+  status?: CompanyStatus;
+}
+
+export interface CompanyWithStatus {
+  company: Company;
+  status: CompanyStatus;
+}
 
 export interface ICompanyRepository {
   create(company: Company): Promise<Company>;
@@ -11,4 +22,9 @@ export interface ICompanyRepository {
   update(company: Company): Promise<Company>;
   delete(id: string): Promise<void>;
   findLocations(): Promise<{ city: string; uf: string }[]>;
+  findManyByFilters(
+    filters: CompanyFilterOptions,
+    page: number,
+    limit: number
+  ): Promise<{ data: CompanyWithStatus[]; total: number }>;
 }
