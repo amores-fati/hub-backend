@@ -27,6 +27,14 @@ export class EnrollmentService {
     return this.register(studentId, courseId, EnrollmentType.ENROLLMENT);
   }
 
+  async removeInterest(studentId: string, courseId: string): Promise<void> {
+    return this.unregister(studentId, courseId, EnrollmentType.INTEREST);
+  }
+
+  async unenroll(studentId: string, courseId: string): Promise<void> {
+    return this.unregister(studentId, courseId, EnrollmentType.ENROLLMENT);
+  }
+
   private async register(
     studentId: string,
     courseId: string,
@@ -51,6 +59,8 @@ export class EnrollmentService {
       throw new EnrollmentAlreadyExistsException();
     }
 
+    course.decreaseVacancy();
+
     const enrollment = new Enrollment(
       randomUUID(),
       studentId,
@@ -59,6 +69,34 @@ export class EnrollmentService {
       new Date(),
     );
 
-    return this.enrollmentRepository.create(enrollment);
+    const created = await this.enrollmentRepository.create(enrollment);
+    await this.courseRepository.update(course);
+    
+    return created;
+  }
+
+  private async unregister(
+    studentId: string,
+    courseId: string,
+    type: EnrollmentType,
+  ): Promise<void> {
+    const existing = await this.enrollmentRepository.findByStudentAndCourse(
+      studentId,
+      courseId,
+    );
+
+    if (!existing || existing.type !== type) {
+      throw new DomainException('Vínculo não encontrado.');
+    }
+
+    const course = await this.courseRepository.findById(courseId);
+    if (!course) {
+      throw new CourseNotFoundException(courseId);
+    }
+
+    await this.enrollmentRepository.delete(studentId, courseId);
+
+    course.increaseVacancy();
+    await this.courseRepository.update(course);
   }
 }
