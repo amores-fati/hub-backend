@@ -2,7 +2,11 @@ import { VacancyNotFoundException } from '../exceptions/vacancy-not-found.except
 import { VacancyForbiddenException } from '../exceptions/vacancy-forbidden.exception';
 import { randomUUID } from 'crypto';
 import { Company } from '../domain/company.entity';
-import { ICompanyRepository } from '../ports/company.repository.interface';
+import {
+  ICompanyRepository,
+  CompanyFilterOptions,
+  CompanyWithStatus,
+} from '../ports/company.repository.interface';
 import { CompanyNotFoundException } from '../exceptions/company-not-found.exception';
 import { CompanyAlreadyExistsException } from '../exceptions/company-already-exists.exception';
 import {
@@ -27,6 +31,18 @@ import {
   UpdateJobOpeningCommand,
 } from '../command/job-opening.command';
 import { UserAlreadyExistsException } from '../exceptions/user-already-exists.exception';
+
+export interface FilterCompaniesCommand extends CompanyFilterOptions {
+  page: number;
+  limit: number;
+}
+
+export interface PaginatedCompaniesResponse {
+  data: CompanyWithStatus[];
+  total: number;
+  page: number;
+  limit: number;
+}
 
 export class CompanyService {
   constructor(
@@ -77,6 +93,16 @@ export class CompanyService {
 
   async findAllCompanies(): Promise<Company[]> {
     return this.companyRepository.findAll();
+  }
+
+  async filterCompanies(
+    command: FilterCompaniesCommand,
+  ): Promise<PaginatedCompaniesResponse> {
+    const { page, limit, ...filters } = command;
+    const all = await this.companyRepository.findManyByFilters(filters);
+    const total = all.length;
+    const data = all.slice((page - 1) * limit, page * limit);
+    return { data, total, page, limit };
   }
 
   async getCompanyById(id: string): Promise<Company> {

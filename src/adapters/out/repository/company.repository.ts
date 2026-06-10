@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ICompanyRepository } from '../../../core/ports/company.repository.interface';
+import { Brackets, Repository } from 'typeorm';
+import {
+  ICompanyRepository,
+  CompanyFilterOptions,
+  CompanyWithStatus,
+} from '../../../core/ports/company.repository.interface';
 import { Company } from '../../../core/domain/company.entity';
 import { CompanyOrmEntity } from '../orm/company.orm-entity';
 import { Contact } from '../../../core/domain/contact.entity';
@@ -9,6 +13,7 @@ import { UserOrmEntity } from '../orm/user.orm-entity';
 import { TelephoneCompanyOrmEntity } from '../orm/telephone-company.orm-entity';
 import { AddressCompanyOrmEntity } from '../orm/address-company.orm-entity';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
+import { CompanyStatus } from '../../../core/domain/company-status.enum';
 
 @Injectable()
 export class CompanyRepository implements ICompanyRepository {
@@ -149,6 +154,96 @@ export class CompanyRepository implements ICompanyRepository {
       ormEntity.responsibleName,
       contact,
     );
+  }
+
+  async findManyByFilters(
+    filters: CompanyFilterOptions = {},
+  ): Promise<CompanyWithStatus[]> {
+    const qb = this.ormRepository
+      .createQueryBuilder('company')
+      .withDeleted()
+      .innerJoin('users', 'user', 'user.id = company.id')
+      .innerJoin('telephone_company', 'telephone', 'telephone.company_id = company.id')
+      .innerJoin('address_company', 'address', 'address.company_id = company.id')
+      .select('company.id', 'c_id')
+      .addSelect('company.cnpj', 'c_cnpj')
+      .addSelect('company.name', 'c_name')
+      .addSelect('company.responsibleName', 'c_responsible_name')
+      .addSelect('user.email', 'u_email')
+      .addSelect('user.password_hash', 'u_password_hash')
+      .addSelect('user.deleted_at', 'u_deleted_at')
+      .addSelect('telephone.id', 't_id')
+      .addSelect('telephone.phone', 't_phone')
+      .addSelect('address.id', 'a_id')
+      .addSelect('address.neighbourhood', 'a_neighbourhood')
+      .addSelect('address.state', 'a_state')
+      .addSelect('address.city', 'a_city')
+      .addSelect('address.address', 'a_address')
+      .addSelect('address.cep', 'a_cep')
+      .addSelect('address.complement', 'a_complement');
+
+    if (filters.status === CompanyStatus.INATIVO) {
+      qb.where('user.deleted_at IS NOT NULL');
+    } else if (filters.status === CompanyStatus.ATIVO) {
+      qb.where('user.deleted_at IS NULL');
+    }
+
+    const search = filters.search?.trim();
+    if (search) {
+      qb.andWhere(
+        new Brackets((sub) => {
+          sub
+            .where('company.name ILIKE :search', { search: `%${search}%` })
+            .orWhere('company.cnpj ILIKE :search', { search: `%${search}%` })
+            .orWhere('user.email ILIKE :search', { search: `%${search}%` });
+        }),
+      );
+    }
+
+    qb.orderBy('company.name', 'ASC');
+
+    const raw = await qb.getRawMany<{
+      c_id: string;
+      c_cnpj: string;
+      c_name: string;
+      c_responsible_name: string;
+      u_email: string;
+      u_password_hash: string;
+      u_deleted_at: Date | null;
+      t_id: string;
+      t_phone: string;
+      a_id: string;
+      a_neighbourhood: string | null;
+      a_state: string | null;
+      a_city: string | null;
+      a_address: string | null;
+      a_cep: string;
+      a_complement: string | null;
+    }>();
+
+    return raw.map((row) => {
+      const contact = new Contact(
+        row.t_id,
+        row.t_phone,
+        row.a_neighbourhood ?? undefined,
+        row.a_state ?? undefined,
+        row.a_city ?? undefined,
+        row.a_address ?? undefined,
+        row.a_cep,
+        row.a_complement ?? undefined,
+      );
+      const company = new Company(
+        row.c_id,
+        row.u_email,
+        row.u_password_hash,
+        row.c_name,
+        row.c_cnpj,
+        row.c_responsible_name,
+        contact,
+      );
+      const status = row.u_deleted_at ? CompanyStatus.INATIVO : CompanyStatus.ATIVO;
+      return { company, status };
+    });
   }
 
   async findLocations(): Promise<{ city: string; uf: string }[]> {
