@@ -20,6 +20,9 @@ export class ResumeListItemDto {
   email: string;
 
   @ApiProperty({ example: true })
+  isPcd: boolean;
+
+  @ApiProperty({ example: true })
   isAvailable: boolean;
 
   @ApiProperty({
