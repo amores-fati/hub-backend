@@ -46,8 +46,9 @@ npm run migration:run
 npm run seed:dev
 npm run bootstrap:test:dev
 npm run start:dev
-```
+```     
 
+-
 Endpoints locais:
 
 - API: `http://localhost:3001`
