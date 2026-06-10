@@ -22,5 +22,9 @@ export interface ICompanyRepository {
   update(company: Company): Promise<Company>;
   delete(id: string): Promise<void>;
   findLocations(): Promise<{ city: string; uf: string }[]>;
-  findManyByFilters(filters?: CompanyFilterOptions): Promise<CompanyWithStatus[]>;
+  findManyByFilters(
+    filters: CompanyFilterOptions,
+    page: number,
+    limit: number
+  ): Promise<{ data: CompanyWithStatus[]; total: number }>;
 }

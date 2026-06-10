@@ -419,7 +419,10 @@ describe('CompanyService', () => {
       }));
 
     it('should return 10 companies and total=245 when page=1&limit=10', async () => {
-      (mockRepository.findManyByFilters as jest.Mock).mockResolvedValue(make245Companies());
+      (mockRepository.findManyByFilters as jest.Mock).mockResolvedValue({
+        data: make245Companies().slice(0, 10),
+        total: 245,
+      });
 
       const result = await service.filterCompanies({ page: 1, limit: 10 });
 
@@ -430,7 +433,10 @@ describe('CompanyService', () => {
     });
 
     it('should return correct slice for page 2', async () => {
-      (mockRepository.findManyByFilters as jest.Mock).mockResolvedValue(make245Companies());
+      (mockRepository.findManyByFilters as jest.Mock).mockResolvedValue({
+        data: make245Companies().slice(10, 20),
+        total: 245,
+      });
 
       const result = await service.filterCompanies({ page: 2, limit: 10 });
 
@@ -439,25 +445,32 @@ describe('CompanyService', () => {
     });
 
     it('should pass search filter to repository', async () => {
-      (mockRepository.findManyByFilters as jest.Mock).mockResolvedValue([
-        { company: mockCompany, status: CompanyStatus.ATIVO },
-      ]);
+      (mockRepository.findManyByFilters as jest.Mock).mockResolvedValue({
+        data: [{ company: mockCompany, status: CompanyStatus.ATIVO }],
+        total: 1,
+      });
 
       await service.filterCompanies({ page: 1, limit: 10, search: 'db' });
 
-      expect(mockRepository.findManyByFilters).toHaveBeenCalledWith({ search: 'db' });
+      expect(mockRepository.findManyByFilters).toHaveBeenCalledWith({ search: 'db' }, 1, 10);
     });
 
     it('should pass status filter to repository', async () => {
-      (mockRepository.findManyByFilters as jest.Mock).mockResolvedValue([]);
+      (mockRepository.findManyByFilters as jest.Mock).mockResolvedValue({
+        data: [],
+        total: 0,
+      });
 
       await service.filterCompanies({ page: 1, limit: 10, status: CompanyStatus.INATIVO });
 
-      expect(mockRepository.findManyByFilters).toHaveBeenCalledWith({ status: CompanyStatus.INATIVO });
+      expect(mockRepository.findManyByFilters).toHaveBeenCalledWith({ status: CompanyStatus.INATIVO }, 1, 10);
     });
 
     it('should return empty data when no companies match', async () => {
-      (mockRepository.findManyByFilters as jest.Mock).mockResolvedValue([]);
+      (mockRepository.findManyByFilters as jest.Mock).mockResolvedValue({
+        data: [],
+        total: 0,
+      });
 
       const result = await service.filterCompanies({ page: 1, limit: 10 });
 

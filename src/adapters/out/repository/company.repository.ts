@@ -158,7 +158,9 @@ export class CompanyRepository implements ICompanyRepository {
 
   async findManyByFilters(
     filters: CompanyFilterOptions = {},
-  ): Promise<CompanyWithStatus[]> {
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{ data: CompanyWithStatus[]; total: number }> {
     const qb = this.ormRepository
       .createQueryBuilder('company')
       .withDeleted()
@@ -200,7 +202,11 @@ export class CompanyRepository implements ICompanyRepository {
       );
     }
 
-    qb.orderBy('company.name', 'ASC');
+    const total = await qb.getCount();
+
+    qb.orderBy('company.name', 'ASC')
+      .offset((page - 1) * limit)
+      .limit(limit);
 
     const raw = await qb.getRawMany<{
       c_id: string;
@@ -221,7 +227,7 @@ export class CompanyRepository implements ICompanyRepository {
       a_complement: string | null;
     }>();
 
-    return raw.map((row) => {
+    const data = raw.map((row) => {
       const contact = new Contact(
         row.t_id,
         row.t_phone,
@@ -244,6 +250,8 @@ export class CompanyRepository implements ICompanyRepository {
       const status = row.u_deleted_at ? CompanyStatus.INATIVO : CompanyStatus.ATIVO;
       return { company, status };
     });
+
+    return { data, total };
   }
 
   async findLocations(): Promise<{ city: string; uf: string }[]> {

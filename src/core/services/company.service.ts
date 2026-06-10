@@ -99,9 +99,11 @@ export class CompanyService {
     command: FilterCompaniesCommand,
   ): Promise<PaginatedCompaniesResponse> {
     const { page, limit, ...filters } = command;
-    const all = await this.companyRepository.findManyByFilters(filters);
-    const total = all.length;
-    const data = all.slice((page - 1) * limit, page * limit);
+    const { data, total } = await this.companyRepository.findManyByFilters(
+      filters,
+      page,
+      limit,
+    );
     return { data, total, page, limit };
   }
 
