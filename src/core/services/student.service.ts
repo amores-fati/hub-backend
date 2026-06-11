@@ -41,6 +41,7 @@ export interface StudentListItem {
   disabilityType?: string;
   enrollmentStatus: Array<'ONLINE' | 'PRESENCIAL' | 'NAO_INSCRITO'>;
   curriculumIsAvailable: boolean;
+  photoUrl?: string;
 }
 
 export interface PaginatedStudentsResponse {
@@ -504,6 +505,7 @@ export class StudentService {
       disabilityType: student.disabilityType,
       enrollmentStatus: this.deriveEnrollmentStatus(student, modality),
       curriculumIsAvailable: student.curriculumIsAvailable,
+      photoUrl: student.photoUrl,
     };
   }
 

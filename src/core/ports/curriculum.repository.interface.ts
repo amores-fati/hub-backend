@@ -15,6 +15,7 @@ export interface ResumeListProjection {
   github?: string;
   preference?: string;
   phone?: string;
+  photoUrl?: string;
 }
 
 export interface PaginatedResumeListResult {

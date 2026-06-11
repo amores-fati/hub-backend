@@ -158,6 +158,7 @@ export class AdminService {
       github: item.github,
       preference: item.preference,
       phone: item.phone,
+      photoUrl: item.photoUrl,
     };
   }
 }

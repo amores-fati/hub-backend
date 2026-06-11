@@ -37,6 +37,9 @@ export class StudentListItemDto {
     isArray: true,
   })
   enrollmentStatus: Array<'ONLINE' | 'PRESENCIAL' | 'NAO_INSCRITO'>;
+
+  @ApiProperty({ example: '/api/students/123/resume/photo', required: false })
+  photoUrl?: string;
 }
 
 export class PaginatedStudentsMetaDto {

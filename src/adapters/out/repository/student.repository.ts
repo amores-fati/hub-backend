@@ -153,7 +153,9 @@ export class StudentRepository implements IStudentRepository {
         CurriculumOrmEntity,
         'curriculum',
         'curriculum.student_id = student.id',
-      );
+      )
+      .addSelect('curriculum.isAvailable')
+      .addSelect('curriculum.profilePhoto');
 
     if (query.search) {
       const search = this.buildLikeFilter(query.search);
@@ -798,6 +800,7 @@ export class StudentRepository implements IStudentRepository {
         courseModality: enrollment.course?.modality ?? 'ONLINE',
       })),
       curriculumIsAvailable: ormEntity.curriculum?.isAvailable ?? false,
+      photoUrl: ormEntity.curriculum?.profilePhoto || undefined,
     };
   }
 
