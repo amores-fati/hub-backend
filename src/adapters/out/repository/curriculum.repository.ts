@@ -235,6 +235,7 @@ export class CurriculumRepository implements ICurriculumRepository {
       github: ormEntity.github || undefined,
       preference: ormEntity.preference || undefined,
       phone: ormEntity.student.telephone?.phone || undefined,
+      photoUrl: ormEntity.profilePhoto || undefined,
     };
   }
 
