@@ -255,6 +255,8 @@ export class CurriculumRepository implements ICurriculumRepository {
     ormEntity.github = curriculum.githubUrl;
     ormEntity.videoPresentation = curriculum.videoPresentationUrl;
     ormEntity.profilePhoto = curriculum.photoUrl;
+    ormEntity.profilePhotoImage = curriculum.photoBuffer;
+    ormEntity.profilePhotoMimeType = curriculum.photoMimeType;
 
     return ormEntity;
   }
@@ -271,6 +273,8 @@ export class CurriculumRepository implements ICurriculumRepository {
       ormEntity.github,
       ormEntity.videoPresentation,
       ormEntity.profilePhoto,
+      ormEntity.profilePhotoImage,
+      ormEntity.profilePhotoMimeType,
       (ormEntity.curriculumSkills ?? []).map((curriculumSkill) => ({
         id: curriculumSkill.skill.id,
         skillName: curriculumSkill.skill.name,
