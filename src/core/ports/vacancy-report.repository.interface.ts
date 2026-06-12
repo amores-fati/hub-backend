@@ -15,6 +15,19 @@ export interface VacancyReportProjection {
   announcementDate: Date;
 }
 
+export interface MyVacancyProjection {
+  id: string;
+  companyId: string;
+  name: string;
+  description: string;
+  openingsCount: number;
+  applicationLink: string | null;
+  workplaceType: string;
+  isPcd: boolean;
+  announcementDate: Date;
+  skills: { id: string; name: string }[];
+}
+
 export interface MyVacanciesFilters {
   companyId: string;
   search?: string;
@@ -25,7 +38,7 @@ export interface MyVacanciesFilters {
 }
 
 export interface PaginatedVacanciesResult {
-  data: VacancyReportProjection[];
+  data: MyVacancyProjection[];
   total: number;
   page: number;
   limit: number;

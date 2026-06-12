@@ -227,10 +227,16 @@ export class CompanyController {
   @Get('filter')
   @ApiOperation({
     summary: 'Lista empresas com filtros e paginação',
-    description: 'Retorna empresas paginadas com filtros opcionais por busca textual e status.',
+    description:
+      'Retorna empresas paginadas com filtros opcionais por busca textual e status.',
   })
-  @ApiOkResponse({ description: 'Empresas retornadas com sucesso.', type: PaginatedCompaniesResponseDto })
-  async filter(@Query() filters: FilterCompaniesDto): Promise<PaginatedCompaniesResponseDto> {
+  @ApiOkResponse({
+    description: 'Empresas retornadas com sucesso.',
+    type: PaginatedCompaniesResponseDto,
+  })
+  async filter(
+    @Query() filters: FilterCompaniesDto,
+  ): Promise<PaginatedCompaniesResponseDto> {
     this.logger.info('Filtering companies', {
       page: filters.page,
       limit: filters.limit,
@@ -245,7 +251,9 @@ export class CompanyController {
     };
     const result = await this.companyService.filterCompanies(command);
     return {
-      data: result.data.map(({ company, status }) => toCompanyResponse(company, status)),
+      data: result.data.map(({ company, status }) =>
+        toCompanyResponse(company, status),
+      ),
       total: result.total,
       page: result.page,
       limit: result.limit,
