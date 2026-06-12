@@ -200,6 +200,24 @@ export class CompanyService {
     await this.companyRepository.delete(company.id);
   }
 
+  async getVacancyById(
+    id: string,
+    companyId: string | null,
+    isAdmin: boolean,
+  ): Promise<JobOpeningResult> {
+    const vacancy = await this.jobOpeningRepository.findById(id);
+    if (!vacancy) throw new VacancyNotFoundException();
+
+    if (!isAdmin) {
+      const ownerCompanyId = await this.vacancyRepository.findCompanyIdById(id);
+      if (ownerCompanyId !== companyId) {
+        throw new VacancyForbiddenException();
+      }
+    }
+
+    return vacancy;
+  }
+
   async createVacancy(
     companyId: string,
     command: Omit<CreateJobOpeningCommand, 'companyId'>,

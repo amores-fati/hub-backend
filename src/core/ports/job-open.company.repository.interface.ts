@@ -14,10 +14,12 @@ export interface JobOpeningResult {
   isPcd: boolean;
   workplaceType: string;
   announcementDate: Date;
+  skills: { id: string; name: string }[];
 }
 
 export interface IJobOpeningRepository {
   countActive(): Promise<number>;
+  findById(id: string): Promise<JobOpeningResult | null>;
   create(command: CreateJobOpeningCommand): Promise<JobOpeningResult>;
   update(
     id: string,

@@ -93,6 +93,12 @@ import { SettingRepository } from './adapters/out/repository/setting.repository'
 import { SettingOrmEntity } from './adapters/out/orm/setting.orm-entity';
 import { ISettingRepository } from './core/ports/setting.repository.interface';
 
+// Skill Adapters & Core
+import { SkillController } from './adapters/in/controllers/skill.controller';
+import { SkillService } from './core/services/skill.service';
+import { SkillRepository } from './adapters/out/repository/skill.repository';
+import { ISkillRepository } from './core/ports/skill.repository.interface';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -141,6 +147,7 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
     StudentResumeController,
     HealthController,
     SettingController,
+    SkillController,
   ],
   providers: [
     AmoresFatiLogger,
@@ -425,6 +432,17 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
     {
       provide: ISettingRepository,
       useClass: SettingRepository,
+    },
+    {
+      provide: SkillService,
+      useFactory: (skillRepository: ISkillRepository) => {
+        return new SkillService(skillRepository);
+      },
+      inject: [ISkillRepository],
+    },
+    {
+      provide: ISkillRepository,
+      useClass: SkillRepository,
     },
   ],
 })

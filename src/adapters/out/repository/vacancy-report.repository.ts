@@ -4,6 +4,7 @@ import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm';
 import {
   IVacancyReportRepository,
   MyVacanciesFilters,
+  MyVacancyProjection,
   PaginatedVacanciesResult,
   VacancyReportFilters,
   VacancyReportProjection,
@@ -69,7 +70,9 @@ export class VacancyReportRepository implements IVacancyReportRepository {
     const { companyId, search, vacancyCount, isPcd, page, limit } = filters;
     const qb = this.ormRepository
       .createQueryBuilder('vacancy')
-      .innerJoin('vacancy.company', 'company')
+      .innerJoinAndSelect('vacancy.company', 'company')
+      .leftJoinAndSelect('vacancy.skills', 'jobSkill')
+      .leftJoinAndSelect('jobSkill.skill', 'skill')
       .where('company.id = :companyId', { companyId });
 
     if (search) {
@@ -94,7 +97,7 @@ export class VacancyReportRepository implements IVacancyReportRepository {
       .getMany();
 
     return {
-      data: ormEntities.map((e) => this.mapToProjection(e)),
+      data: ormEntities.map((e) => this.mapToMyVacancyProjection(e)),
       total,
       page,
       limit,
@@ -136,6 +139,28 @@ export class VacancyReportRepository implements IVacancyReportRepository {
         dateTo: this.normalizeDateFilter(filters.dateTo),
       });
     }
+  }
+
+  private mapToMyVacancyProjection(
+    ormEntity: JobOpeningOrmEntity,
+  ): MyVacancyProjection {
+    return {
+      id: ormEntity.id,
+      companyId: ormEntity.company.id,
+      name: ormEntity.name,
+      description: ormEntity.description,
+      openingsCount: ormEntity.openingsCount,
+      applicationLink: ormEntity.applicationLink,
+      workplaceType: ormEntity.workplaceType,
+      isPcd: ormEntity.isPcd,
+      announcementDate: this.coerceDate(
+        ormEntity.announcementDate as Date | string,
+      ),
+      skills: (ormEntity.skills ?? []).map((js) => ({
+        id: js.skill.id,
+        name: js.skill.name,
+      })),
+    };
   }
 
   private mapToProjection(
