@@ -26,6 +26,10 @@ describe('VacancyReportService', () => {
     repository = {
       findManyByIds: jest.fn(),
       findManyByFilters: jest.fn(),
+      findMyVacancies: jest.fn(),
+      findAllForAdmin: jest.fn(),
+      findCompanyIdById: jest.fn(),
+      deleteById: jest.fn(),
     };
     pdfGenerator = {
       generate: jest.fn().mockResolvedValue(Buffer.from('%PDF-1.3')),
