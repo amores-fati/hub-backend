@@ -25,7 +25,9 @@ describe('AdminController (e2e) - GET /admins/vacancies/filter', () => {
         `INSERT INTO "users" (id, email, password_hash, role) VALUES ($1, $2, $3, $4)`,
         [adminId, adminEmail, hashedAdmin, 'ADMINISTRADOR'],
       );
-      await dataSource.query(`INSERT INTO "admins" (id) VALUES ($1)`, [adminId]);
+      await dataSource.query(`INSERT INTO "admins" (id) VALUES ($1)`, [
+        adminId,
+      ]);
 
       // Student (para testar acesso sem perfil admin)
       const hashedStudent = await bcrypt.hash(studentPassword, 10);
@@ -36,7 +38,14 @@ describe('AdminController (e2e) - GET /admins/vacancies/filter', () => {
       );
       await dataSource.query(
         `INSERT INTO "students" (id, cpf, full_name, date_of_birth, gender, race) VALUES ($1, $2, $3, $4, $5, $6)`,
-        [studentId, '99988877766', 'Estudante Teste', '1998-01-01', 'MASCULINO', 'BRANCO'],
+        [
+          studentId,
+          '99988877766',
+          'Estudante Teste',
+          '1998-01-01',
+          'MASCULINO',
+          'BRANCO',
+        ],
       );
       await dataSource.query(
         `INSERT INTO "telephone_student" (id, student_id, phone) VALUES ($1, $2, $3)`,
@@ -71,17 +80,59 @@ describe('AdminController (e2e) - GET /admins/vacancies/filter', () => {
 
       // Vagas
       const vacancies = [
-        { id: randomUUID(), companyId: companyAId, name: 'Estagiário Frontend', isPcd: false, workplaceType: 'presencial', openingsCount: 1 },
-        { id: randomUUID(), companyId: companyAId, name: 'Desenvolvedor Backend', isPcd: true, workplaceType: 'online', openingsCount: 3 },
-        { id: randomUUID(), companyId: companyBId, name: 'Designer UX', isPcd: false, workplaceType: 'híbrida', openingsCount: 2 },
-        { id: randomUUID(), companyId: companyBId, name: 'Analista de Dados', isPcd: true, workplaceType: 'presencial', openingsCount: 1 },
-        { id: randomUUID(), companyId: companyAId, name: 'Fullstack Júnior', isPcd: false, workplaceType: 'online', openingsCount: 2 },
+        {
+          id: randomUUID(),
+          companyId: companyAId,
+          name: 'Estagiário Frontend',
+          isPcd: false,
+          workplaceType: 'presencial',
+          openingsCount: 1,
+        },
+        {
+          id: randomUUID(),
+          companyId: companyAId,
+          name: 'Desenvolvedor Backend',
+          isPcd: true,
+          workplaceType: 'online',
+          openingsCount: 3,
+        },
+        {
+          id: randomUUID(),
+          companyId: companyBId,
+          name: 'Designer UX',
+          isPcd: false,
+          workplaceType: 'híbrida',
+          openingsCount: 2,
+        },
+        {
+          id: randomUUID(),
+          companyId: companyBId,
+          name: 'Analista de Dados',
+          isPcd: true,
+          workplaceType: 'presencial',
+          openingsCount: 1,
+        },
+        {
+          id: randomUUID(),
+          companyId: companyAId,
+          name: 'Fullstack Júnior',
+          isPcd: false,
+          workplaceType: 'online',
+          openingsCount: 2,
+        },
       ];
 
       for (const v of vacancies) {
         await dataSource.query(
           `INSERT INTO "job_openings" (id, company_id, name, openings_count, is_pcd, workplace_type, announcement_date) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_DATE)`,
-          [v.id, v.companyId, v.name, v.openingsCount, v.isPcd, v.workplaceType],
+          [
+            v.id,
+            v.companyId,
+            v.name,
+            v.openingsCount,
+            v.isPcd,
+            v.workplaceType,
+          ],
         );
       }
     };
@@ -96,7 +147,8 @@ describe('AdminController (e2e) - GET /admins/vacancies/filter', () => {
     const studentLogin = await request(app.getHttpServer() as Server)
       .post('/auth/login')
       .send({ email: studentEmail, password: studentPassword });
-    studentAccessToken = (studentLogin.body as { accessToken: string }).accessToken;
+    studentAccessToken = (studentLogin.body as { accessToken: string })
+      .accessToken;
   }, 30000);
 
   afterAll(async () => {
@@ -144,7 +196,9 @@ describe('AdminController (e2e) - GET /admins/vacancies/filter', () => {
         .expect((res) => {
           const body = res.body as PaginatedAdminVacanciesResponseDto;
           expect(body.meta.total).toBe(2);
-          expect(body.items.every((v) => v.workplaceType === 'presencial')).toBe(true);
+          expect(
+            body.items.every((v) => v.workplaceType === 'presencial'),
+          ).toBe(true);
         });
     });
 
@@ -170,7 +224,9 @@ describe('AdminController (e2e) - GET /admins/vacancies/filter', () => {
         .expect((res) => {
           const body = res.body as PaginatedAdminVacanciesResponseDto;
           expect(body.meta.total).toBe(2);
-          expect(body.items.every((v) => v.companyName === 'Empresa Beta')).toBe(true);
+          expect(
+            body.items.every((v) => v.companyName === 'Empresa Beta'),
+          ).toBe(true);
         });
     });
 

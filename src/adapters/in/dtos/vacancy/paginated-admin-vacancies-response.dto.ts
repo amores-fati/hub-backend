@@ -19,7 +19,10 @@ export class VacancyAdminListItemDto {
   @ApiProperty({ example: '2026-01-15T00:00:00.000Z' })
   announcementDate: Date;
 
-  @ApiProperty({ example: 'presencial', enum: ['presencial', 'online', 'híbrida'] })
+  @ApiProperty({
+    example: 'presencial',
+    enum: ['presencial', 'online', 'híbrida'],
+  })
   workplaceType: string;
 }
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { Brackets, Repository } from 'typeorm';
 import { VacancyReportRepository } from '../../src/adapters/out/repository/vacancy-report.repository';
 import { JobOpeningOrmEntity } from '../../src/adapters/out/orm/job-opening.orm-entity';
@@ -106,9 +105,7 @@ describe('VacancyReportRepository.findAllForAdmin', () => {
     };
     await repository.findAllForAdmin(filters);
 
-    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      expect.any(Brackets),
-    );
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(expect.any(Brackets));
   });
 
   it('deve mapear os campos corretamente no item retornado', async () => {
