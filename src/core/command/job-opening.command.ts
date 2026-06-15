@@ -2,20 +2,20 @@ import { WorkplaceTypeEnum } from '../domain/enums/workplace-type.enum';
 
 export interface CreateJobOpeningCommand {
   companyId: string;
-  title: string;
+  name: string;
   description: string;
-  link: string;
-  vacancyCount: number;
+  applicationLink?: string;
+  openingsCount: number;
   isPcd: boolean;
   workplaceType: WorkplaceTypeEnum;
   skills?: string[];
 }
 
 export interface UpdateJobOpeningCommand {
-  title: string;
+  name: string;
   description: string;
-  link: string;
-  vacancyCount: number;
+  applicationLink?: string;
+  openingsCount: number;
   isPcd: boolean;
   workplaceType: WorkplaceTypeEnum;
   skills?: string[];
