@@ -67,7 +67,7 @@ export class VacancyReportRepository implements IVacancyReportRepository {
   async findMyVacancies(
     filters: MyVacanciesFilters,
   ): Promise<PaginatedVacanciesResult> {
-    const { companyId, search, vacancyCount, isPcd, page, limit } = filters;
+    const { companyId, search, vacancyCount, isPcd, workplaceType, page, limit } = filters;
     const qb = this.ormRepository
       .createQueryBuilder('vacancy')
       .innerJoinAndSelect('vacancy.company', 'company')
@@ -80,13 +80,15 @@ export class VacancyReportRepository implements IVacancyReportRepository {
     }
 
     if (vacancyCount !== undefined) {
-      qb.andWhere('vacancy.openingsCount = :vacancyCount', {
-        vacancyCount,
-      });
+      qb.andWhere('vacancy.openingsCount = :vacancyCount', { vacancyCount });
     }
 
     if (isPcd !== undefined) {
       qb.andWhere('vacancy.isPcd = :isPcd', { isPcd });
+    }
+
+    if (workplaceType !== undefined) {
+      qb.andWhere('vacancy.workplaceType = :workplaceType', { workplaceType });
     }
 
     const total = await qb.getCount();

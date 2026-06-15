@@ -1,6 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsBoolean, IsInt, Min } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsBoolean,
+  IsInt,
+  Min,
+  IsEnum,
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import { WorkplaceTypeEnum } from '../../../../core/domain/enums/workplace-type.enum';
 
 export class ListMyVacanciesQueryDto {
   @ApiPropertyOptional({ example: 1 })
@@ -34,4 +42,9 @@ export class ListMyVacanciesQueryDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isPcd?: boolean;
+
+  @ApiPropertyOptional({ example: 'presencial', enum: WorkplaceTypeEnum })
+  @IsOptional()
+  @IsEnum(WorkplaceTypeEnum)
+  workType?: WorkplaceTypeEnum;
 }

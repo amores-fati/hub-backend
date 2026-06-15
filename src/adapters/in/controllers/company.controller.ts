@@ -422,27 +422,21 @@ export class CompanyController {
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListMyVacanciesQueryDto,
   ) {
-    this.logger.info('Listando vagas da empresa autenticada', {
-      userId: user.id,
-    });
-
-    try {
-      return await this.companyService.listMyVacancies(user.id, {
-        page: query.page ?? 1,
-        limit: query.limit ?? 10,
-        search: query.search,
-        vacancyCount: query.vacancyCount,
-        isPcd: query.isPcd,
-      });
-    } catch (error) {
-      if (error instanceof Error && error.name === 'CompanyNotFoundException') {
-        this.logger.warn('Company not found for authenticated user', {
-          userId: user.id,
-        });
-        throw new NotFoundException(error.message);
-      }
-      throw error;
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException('Token inválido: companyId ausente');
     }
+
+    this.logger.info('Listando vagas da empresa autenticada', { companyId });
+
+    return this.companyService.listMyVacancies(companyId, {
+      page: query.page ?? 1,
+      limit: query.limit ?? 10,
+      search: query.search,
+      vacancyCount: query.vacancyCount,
+      isPcd: query.isPcd,
+      workplaceType: query.workType,
+    });
   }
 
   @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
