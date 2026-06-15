@@ -206,7 +206,7 @@ describe('AdminController (e2e) - GET /admins/vacancies/filter', () => {
       return request(app.getHttpServer() as Server)
         .get('/admins/vacancies/filter')
         .set('Authorization', `Bearer ${adminAccessToken}`)
-        .query({ search: 'ESTAGIÁRIO' })
+        .query({ search: 'Frontend' })
         .expect(200)
         .expect((res) => {
           const body = res.body as PaginatedAdminVacanciesResponseDto;

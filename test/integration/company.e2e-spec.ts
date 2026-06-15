@@ -111,6 +111,7 @@ describeOrSkip('CompanyController (e2e)', () => {
           responsibleName: 'Admin E2E',
           contact: {
             phone: '11988888888',
+            cep: '01001000',
           },
         })
         .expect(409);
@@ -209,7 +210,7 @@ describeOrSkip('CompanyController (e2e)', () => {
           link: 'https://company.jobs/apply/fullstack',
           vacancyCount: 2,
           isPcd: false,
-          workplaceType: 'hybrid',
+          workplaceType: 'hibrido',
           skills: ['TypeScript', 'NestJS', 'React'],
         })
         .expect(201);
@@ -227,7 +228,7 @@ describeOrSkip('CompanyController (e2e)', () => {
       expect(body.openingsCount).toBe(2);
       expect(body.applicationLink).toBe('https://company.jobs/apply/fullstack');
       expect(body.isPcd).toBe(false);
-      expect(body.workplaceType).toBe('hybrid');
+      expect(body.workplaceType).toBe('hibrido');
       vacancyId = body.id;
     });
 
@@ -275,7 +276,7 @@ describeOrSkip('CompanyController (e2e)', () => {
           link: 'https://company.jobs/apply/not-found',
           vacancyCount: 1,
           isPcd: false,
-          workplaceType: 'presential',
+          workplaceType: 'presencial',
         })
         .expect(404);
     });
