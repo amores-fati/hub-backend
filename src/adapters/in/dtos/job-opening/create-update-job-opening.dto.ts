@@ -38,7 +38,9 @@ export class CreateUpdateJobOpeningDto {
   })
   @IsOptional()
   @IsUrl()
-  @Transform(({ value }) => (value == null || value === '' ? undefined : value))
+  @Transform(({ value }: { value: unknown }) =>
+    value == null || value === '' ? undefined : value,
+  )
   applicationLink?: string;
 
   @ApiProperty({ example: 3, description: 'Quantidade de vagas' })
@@ -60,7 +62,8 @@ export class CreateUpdateJobOpeningDto {
 
   @ApiProperty({
     example: ['3fa85f64-5717-4562-b3fc-2c963f66afa6'],
-    description: 'Lista de IDs (UUIDs) das skills. Use GET /skills para obter os IDs disponíveis.',
+    description:
+      'Lista de IDs (UUIDs) das skills. Use GET /skills para obter os IDs disponíveis.',
     required: false,
   })
   @IsOptional()
