@@ -58,7 +58,11 @@ export class CreateUpdateJobOpeningDto {
   @IsEnum(WorkplaceTypeEnum)
   workplaceType: WorkplaceTypeEnum;
 
-  @ApiProperty({ example: ['react', 'typescript'], required: false })
+  @ApiProperty({
+    example: ['3fa85f64-5717-4562-b3fc-2c963f66afa6'],
+    description: 'Lista de IDs (UUIDs) das skills. Use GET /skills para obter os IDs disponíveis.',
+    required: false,
+  })
   @IsOptional()
   @IsArray()
   @ArrayUnique()
