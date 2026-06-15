@@ -433,6 +433,7 @@ export class CompanyController {
         search: query.search,
         vacancyCount: query.vacancyCount,
         isPcd: query.isPcd,
+        workplaceType: query.workplaceType,
       });
     } catch (error) {
       if (error instanceof Error && error.name === 'CompanyNotFoundException') {
