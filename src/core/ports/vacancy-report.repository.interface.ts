@@ -45,6 +45,29 @@ export interface PaginatedVacanciesResult {
   limit: number;
 }
 
+export interface AdminVacancyFilters {
+  search?: string;
+  isPcd?: boolean;
+  workType?: string;
+  page: number;
+  limit: number;
+}
+
+export interface AdminVacancyListItem {
+  id: string;
+  name: string;
+  companyName: string;
+  openingsCount: number;
+  isPcd: boolean;
+  announcementDate: Date;
+  workplaceType: string;
+}
+
+export interface PaginatedAdminVacanciesResult {
+  items: AdminVacancyListItem[];
+  total: number;
+}
+
 export interface IVacancyReportRepository {
   findManyByIds(ids: string[]): Promise<VacancyReportProjection[]>;
   findManyByFilters(
@@ -53,6 +76,9 @@ export interface IVacancyReportRepository {
   findMyVacancies(
     filters: MyVacanciesFilters,
   ): Promise<PaginatedVacanciesResult>;
+  findAllForAdmin(
+    filters: AdminVacancyFilters,
+  ): Promise<PaginatedAdminVacanciesResult>;
   findCompanyIdById(id: string): Promise<string | null>;
   deleteById(id: string): Promise<void>;
 }

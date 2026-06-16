@@ -400,7 +400,11 @@ export class CompanyController {
     try {
       this.logger.info('Buscando vaga por ID', { id });
       const isAdmin = user.role === UserRoleEnum.ADMIN;
-      return await this.companyService.getVacancyById(id, user.companyId, isAdmin);
+      return await this.companyService.getVacancyById(
+        id,
+        user.companyId,
+        isAdmin,
+      );
     } catch (error) {
       if (error instanceof VacancyNotFoundException) {
         throw new NotFoundException(error.message);

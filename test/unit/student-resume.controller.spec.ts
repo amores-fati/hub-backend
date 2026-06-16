@@ -136,7 +136,9 @@ describe('StudentResumeController', () => {
 
   describe('uploadPhoto', () => {
     it('should return uploaded photo URL', async () => {
-      service.uploadPhoto.mockResolvedValue({ photoUrl: `/api/students/${user.id}/resume/photo` });
+      service.uploadPhoto.mockResolvedValue({
+        photoUrl: `/api/students/${user.id}/resume/photo`,
+      });
 
       const result = await controller.uploadPhoto(user, {
         originalname: 'photo.png',
@@ -145,7 +147,9 @@ describe('StudentResumeController', () => {
         buffer: Buffer.from('image'),
       });
 
-      expect(result).toEqual({ photoUrl: `/api/students/${user.id}/resume/photo` });
+      expect(result).toEqual({
+        photoUrl: `/api/students/${user.id}/resume/photo`,
+      });
       expect(service.uploadPhoto).toHaveBeenCalledWith(user.id, {
         originalName: 'photo.png',
         mimeType: 'image/png',

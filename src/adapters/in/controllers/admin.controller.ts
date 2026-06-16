@@ -23,7 +23,12 @@ import {
 } from '@nestjs/swagger';
 import { DomainException } from '../../../core/exceptions/domain.exception';
 import { AdminService } from '../../../core/services/admin.service';
+import { VacancyReportService } from '../../../core/services/vacancy-report.service';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
+import {
+  CurrentUser,
+  type AuthenticatedUser,
+} from '../../../utils/decorators/current-user.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateAdminDto } from '../dtos/admin/create-admin.dto';
 import {
@@ -37,6 +42,8 @@ import {
 } from '../dtos/admin/get-locations.dto';
 import { GetResumesQueryDto } from '../dtos/admin/get-resumes.dto';
 import { PaginatedResumesResponseDto } from '../dtos/admin/paginated-resumes-response.dto';
+import { GetAdminVacanciesDto } from '../dtos/vacancy/get-admin-vacancies.dto';
+import { PaginatedAdminVacanciesResponseDto } from '../dtos/vacancy/paginated-admin-vacancies-response.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 
 @ApiTags('Admins')
@@ -45,6 +52,7 @@ import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
+    private readonly vacancyReportService: VacancyReportService,
     private readonly logger: AmoresFatiLogger,
   ) {
     this.logger.setContext(AdminController.name);
@@ -145,6 +153,48 @@ export class AdminController {
   })
   async getDisabilityStats(): Promise<DisabilityCount[]> {
     return this.adminService.getDisabilityStats();
+  }
+
+  @Get('vacancies/filter')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Lista vagas com filtros e paginação para admins' })
+  @ApiOkResponse({
+    description: 'Retorna vagas paginadas com filtros opcionais.',
+    type: PaginatedAdminVacanciesResponseDto,
+  })
+  async findAllVacanciesWithFilter(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() filters: GetAdminVacanciesDto,
+  ): Promise<PaginatedAdminVacanciesResponseDto> {
+    this.logger.info('Listing vacancies with admin filters', {
+      page: filters.page,
+      limit: filters.limit,
+      adminId: user.id,
+    });
+    const result = await this.vacancyReportService.findAllVacanciesWithFilter({
+      search: filters.search,
+      isPcd: filters.isPcd,
+      workType: filters.workType,
+      page: filters.page,
+      limit: filters.limit,
+    });
+    return {
+      items: result.items.map((v) => ({
+        id: v.id,
+        title: v.name,
+        companyName: v.companyName,
+        openingsCount: v.openingsCount,
+        isPcd: v.isPcd,
+        announcementDate: v.announcementDate,
+        workplaceType: v.workplaceType,
+      })),
+      meta: {
+        page: filters.page,
+        limit: filters.limit,
+        total: result.total,
+        totalPages: Math.ceil(result.total / filters.limit),
+      },
+    };
   }
 
   @Get('students/count-by-city')

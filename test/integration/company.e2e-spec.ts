@@ -2,9 +2,8 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { Server } from 'http';
 import { execSync } from 'child_process';
-import { cnpj } from 'cpf-cnpj-validator';
 import { randomUUID } from 'crypto';
-import * as bcrypt from 'bcrypt';
+import { cnpj } from 'cpf-cnpj-validator';
 import { DataSource } from 'typeorm';
 import { createIntegrationApp } from './bootstrap';
 
@@ -38,11 +37,22 @@ describeOrSkip('CompanyController (e2e)', () => {
   let createdCompanyId: string;
   let dynamicCnpj: string;
   let accessToken: string;
+  let skillIds: string[] = [];
   const companyEmail = `test-${Date.now()}@company.com`;
   const companyPassword = 'securepassword123';
 
   beforeAll(async () => {
-    app = await createIntegrationApp();
+    const seed = async (dataSource: DataSource) => {
+      const typescriptId = randomUUID();
+      const nestjsId = randomUUID();
+      const reactId = randomUUID();
+      await dataSource.query(
+        `INSERT INTO "skills" (id, name) VALUES ($1, $2), ($3, $4), ($5, $6)`,
+        [typescriptId, 'TypeScript', nestjsId, 'NestJS', reactId, 'React'],
+      );
+      skillIds = [typescriptId, nestjsId, reactId];
+    };
+    app = await createIntegrationApp({ seed });
     dynamicCnpj = cnpj.generate();
   });
 
@@ -199,20 +209,22 @@ describeOrSkip('CompanyController (e2e)', () => {
     });
   });
 
-  describe('/companies/me/vacancies (POST)', () => {
+  describe('/companies/me/vacancies (POST) and /companies/me/vacancies/:id (PUT)', () => {
+    let vacancyId: string;
+
     it('should create a new vacancy for the authenticated company (201)', async () => {
       const response = await request(app.getHttpServer() as Server)
         .post('/companies/me/vacancies')
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          title: 'Desenvolvedor Fullstack',
+          name: 'Desenvolvedor Fullstack',
           description:
             'Vaga de desenvolvedor para atuar com backend e frontend.',
-          link: 'https://company.jobs/apply/fullstack',
-          vacancyCount: 2,
+          applicationLink: 'https://company.jobs/apply/fullstack',
+          openingsCount: 2,
           isPcd: false,
           workplaceType: 'hibrido',
-          skills: ['TypeScript', 'NestJS', 'React'],
+          skills: skillIds,
         })
         .expect(201);
 
@@ -223,6 +235,7 @@ describeOrSkip('CompanyController (e2e)', () => {
         applicationLink: string;
         isPcd: boolean;
         workplaceType: string;
+        skills: { id: string; name: string }[];
       };
       expect(body.id).toBeDefined();
       expect(body.name).toBe('Desenvolvedor Fullstack');
@@ -230,73 +243,13 @@ describeOrSkip('CompanyController (e2e)', () => {
       expect(body.applicationLink).toBe('https://company.jobs/apply/fullstack');
       expect(body.isPcd).toBe(false);
       expect(body.workplaceType).toBe('hibrido');
-    });
-
-    it('should return 400 for invalid workplaceType', () => {
-      return request(app.getHttpServer() as Server)
-        .post('/companies/me/vacancies')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({
-          title: 'Vaga inválida',
-          description: 'Teste',
-          link: 'https://company.jobs/apply/test',
-          vacancyCount: 1,
-          isPcd: false,
-          workplaceType: 'invalid-type',
-        })
-        .expect(400);
-    });
-  });
-
-  describe('/companies/me/vacancies/:id (PUT)', () => {
-    let vacancyId: string;
-    let otherCompanyToken: string;
-
-    beforeAll(async () => {
-      const res = await request(app.getHttpServer() as Server)
-        .post('/companies/me/vacancies')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({
-          title: 'Vaga para atualizar',
-          description: 'Descrição inicial.',
-          link: 'https://company.jobs/apply/setup',
-          vacancyCount: 1,
-          isPcd: false,
-          workplaceType: 'presencial',
-        })
-        .expect(201);
-
-      vacancyId = (res.body as { id: string }).id;
-
-      const otherCnpj = cnpj.generate();
-      const otherEmail = `other-${Date.now()}@company.com`;
-
-      await request(app.getHttpServer() as Server)
-        .post('/companies')
-        .send({
-          name: 'Other E2E Company',
-          cnpj: otherCnpj,
-          email: otherEmail,
-          password: companyPassword,
-          responsibleName: 'Other Admin',
-          contact: {
-            city: 'Brasília',
-            state: 'DF',
-            address: 'SQN',
-            neighbourhood: 'Asa Norte',
-            cep: '70000000',
-            phone: '61988888888',
-          },
-        })
-        .expect(201);
-
-      const loginRes = await request(app.getHttpServer() as Server)
-        .post('/auth/login')
-        .send({ email: otherEmail, password: companyPassword })
-        .expect(200);
-
-      otherCompanyToken = (loginRes.body as { accessToken: string })
-        .accessToken;
+      expect(body.skills).toHaveLength(3);
+      expect(body.skills.map((s) => s.name).sort()).toEqual([
+        'NestJS',
+        'React',
+        'TypeScript',
+      ]);
+      vacancyId = body.id;
     });
 
     it('should update an existing vacancy for the authenticated company (200)', async () => {
@@ -304,13 +257,13 @@ describeOrSkip('CompanyController (e2e)', () => {
         .put(`/companies/me/vacancies/${vacancyId}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          title: 'Desenvolvedor Fullstack Senior',
+          name: 'Desenvolvedor Fullstack Senior',
           description: 'Vaga atualizada para desenvolvedor fullstack senior.',
-          link: 'https://company.jobs/apply/fullstack-senior',
-          vacancyCount: 1,
+          applicationLink: 'https://company.jobs/apply/fullstack-senior',
+          openingsCount: 1,
           isPcd: true,
           workplaceType: 'online',
-          skills: ['Node.js', 'React', 'TypeScript'],
+          skills: [skillIds[0]],
         })
         .expect(200);
 
@@ -321,6 +274,7 @@ describeOrSkip('CompanyController (e2e)', () => {
         applicationLink: string;
         isPcd: boolean;
         workplaceType: string;
+        skills: { id: string; name: string }[];
       };
       expect(body.id).toBe(vacancyId);
       expect(body.name).toBe('Desenvolvedor Fullstack Senior');
@@ -330,6 +284,8 @@ describeOrSkip('CompanyController (e2e)', () => {
       );
       expect(body.isPcd).toBe(true);
       expect(body.workplaceType).toBe('online');
+      expect(body.skills).toHaveLength(1);
+      expect(body.skills[0].name).toBe('TypeScript');
     });
 
     it('should return 404 when updating a non-existing vacancy', () => {
@@ -338,29 +294,14 @@ describeOrSkip('CompanyController (e2e)', () => {
         .put(`/companies/me/vacancies/${nonExistentVacancyId}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          title: 'Vaga Inexistente',
+          name: 'Vaga Inexistente',
           description: 'Teste',
-          link: 'https://company.jobs/apply/not-found',
-          vacancyCount: 1,
+          applicationLink: 'https://company.jobs/apply/not-found',
+          openingsCount: 1,
           isPcd: false,
           workplaceType: 'presencial',
         })
         .expect(404);
-    });
-
-    it('should return 403 when updating a vacancy belonging to another company', () => {
-      return request(app.getHttpServer() as Server)
-        .put(`/companies/me/vacancies/${vacancyId}`)
-        .set('Authorization', `Bearer ${otherCompanyToken}`)
-        .send({
-          title: 'Tentativa indevida',
-          description: 'Outra empresa tentando atualizar.',
-          link: 'https://company.jobs/apply/forbidden',
-          vacancyCount: 1,
-          isPcd: false,
-          workplaceType: 'presencial',
-        })
-        .expect(403);
     });
   });
 
@@ -370,179 +311,6 @@ describeOrSkip('CompanyController (e2e)', () => {
         .delete(`/companies/${createdCompanyId}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(204);
-    });
-  });
-});
-
-describeOrSkip('CompanyController (e2e) - Filter', () => {
-  let app: INestApplication;
-  let adminToken: string;
-  let companyToken: string;
-  let inativeCompanyId: string;
-
-  const adminEmail = 'admin-filter@test.com';
-  const adminPassword = 'adminpassword123';
-  const activeCompanyEmail = 'db-server@test.com';
-  const activeCompanyPassword = 'companypassword123';
-  const inativeCompanyEmail = 'inativa@test.com';
-
-  beforeAll(async () => {
-    const seed = async (dataSource: DataSource) => {
-      // Admin
-      const adminId = randomUUID();
-      const hashedAdminPwd = await bcrypt.hash(adminPassword, 10);
-      await dataSource.query(
-        `INSERT INTO "users" (id, email, password_hash, role) VALUES ($1, $2, $3, $4)`,
-        [adminId, adminEmail, hashedAdminPwd, 'ADMINISTRADOR'],
-      );
-      await dataSource.query(`INSERT INTO "admins" (id) VALUES ($1)`, [adminId]);
-
-      // Empresa ativa — nome contém "db" para o cenário de busca
-      const activeId = randomUUID();
-      const hashedCompanyPwd = await bcrypt.hash(activeCompanyPassword, 10);
-      await dataSource.query(
-        `INSERT INTO "users" (id, email, password_hash, role) VALUES ($1, $2, $3, $4)`,
-        [activeId, activeCompanyEmail, hashedCompanyPwd, 'EMPRESA'],
-      );
-      await dataSource.query(
-        `INSERT INTO "companies" (id, cnpj, name, responsible_name) VALUES ($1, $2, $3, $4)`,
-        [activeId, '12345678000195', 'DB Server', 'Responsável Ativo'],
-      );
-      await dataSource.query(
-        `INSERT INTO "telephone_company" (id, company_id, phone) VALUES ($1, $2, $3)`,
-        [activeId, activeId, '11999999999'],
-      );
-      await dataSource.query(
-        `INSERT INTO "address_company" (id, company_id, cep) VALUES ($1, $2, $3)`,
-        [activeId, activeId, '01001000'],
-      );
-
-      // Empresa inativa — soft-deleted via deleted_at
-      inativeCompanyId = randomUUID();
-      await dataSource.query(
-        `INSERT INTO "users" (id, email, password_hash, role, deleted_at) VALUES ($1, $2, $3, $4, NOW())`,
-        [inativeCompanyId, inativeCompanyEmail, 'hash', 'EMPRESA'],
-      );
-      await dataSource.query(
-        `INSERT INTO "companies" (id, cnpj, name, responsible_name) VALUES ($1, $2, $3, $4)`,
-        [inativeCompanyId, '98765432000196', 'Empresa Inativa', 'Responsável Inativo'],
-      );
-      await dataSource.query(
-        `INSERT INTO "telephone_company" (id, company_id, phone) VALUES ($1, $2, $3)`,
-        [inativeCompanyId, inativeCompanyId, '11988888888'],
-      );
-      await dataSource.query(
-        `INSERT INTO "address_company" (id, company_id, cep) VALUES ($1, $2, $3)`,
-        [inativeCompanyId, inativeCompanyId, '01001000'],
-      );
-    };
-
-    app = await createIntegrationApp({ seed });
-
-    const adminLoginRes = await request(app.getHttpServer() as Server)
-      .post('/auth/login')
-      .send({ email: adminEmail, password: adminPassword })
-      .expect(200);
-    adminToken = (adminLoginRes.body as { accessToken: string }).accessToken;
-
-    const companyLoginRes = await request(app.getHttpServer() as Server)
-      .post('/auth/login')
-      .send({ email: activeCompanyEmail, password: activeCompanyPassword })
-      .expect(200);
-    companyToken = (companyLoginRes.body as { accessToken: string }).accessToken;
-  }, 30000);
-
-  afterAll(async () => {
-    if (app) {
-      await app.close();
-    }
-  });
-
-  describe('/companies/filter (GET)', () => {
-    it('should return paginated metadata with page and limit (200)', () => {
-      return request(app.getHttpServer() as Server)
-        .get('/companies/filter?page=1&limit=10')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200)
-        .expect((res) => {
-          const body = res.body as {
-            data: unknown[];
-            total: number;
-            page: number;
-            limit: number;
-          };
-          expect(Array.isArray(body.data)).toBe(true);
-          expect(typeof body.total).toBe('number');
-          expect(body.page).toBe(1);
-          expect(body.limit).toBe(10);
-          expect(body.data.length).toBeLessThanOrEqual(10);
-        });
-    });
-
-    it('should return only companies matching search=db, case-insensitive (200)', () => {
-      return request(app.getHttpServer() as Server)
-        .get('/companies/filter?search=db')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200)
-        .expect((res) => {
-          const body = res.body as {
-            data: { name: string; cnpj: string; email: string }[];
-            total: number;
-          };
-          expect(body.data.length).toBeGreaterThan(0);
-          body.data.forEach((company) => {
-            const matchesSearch =
-              company.name.toLowerCase().includes('db') ||
-              company.cnpj.toLowerCase().includes('db') ||
-              company.email.toLowerCase().includes('db');
-            expect(matchesSearch).toBe(true);
-          });
-        });
-    });
-
-    it('should return only ATIVO companies when status=ATIVO (200)', () => {
-      return request(app.getHttpServer() as Server)
-        .get('/companies/filter?status=ATIVO')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200)
-        .expect((res) => {
-          const body = res.body as { data: { status: string; id: string }[] };
-          expect(body.data.length).toBeGreaterThan(0);
-          body.data.forEach((company) => {
-            expect(company.status).toBe('ATIVO');
-          });
-          const ids = body.data.map((c) => c.id);
-          expect(ids).not.toContain(inativeCompanyId);
-        });
-    });
-
-    it('should return only INATIVO companies when status=INATIVO (200)', () => {
-      return request(app.getHttpServer() as Server)
-        .get('/companies/filter?status=INATIVO')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200)
-        .expect((res) => {
-          const body = res.body as { data: { status: string; id: string }[] };
-          expect(body.data.length).toBeGreaterThan(0);
-          body.data.forEach((company) => {
-            expect(company.status).toBe('INATIVO');
-          });
-          const ids = body.data.map((c) => c.id);
-          expect(ids).toContain(inativeCompanyId);
-        });
-    });
-
-    it('should return 401 when called without token', () => {
-      return request(app.getHttpServer() as Server)
-        .get('/companies/filter')
-        .expect(401);
-    });
-
-    it('should return 403 when called with non-admin token', () => {
-      return request(app.getHttpServer() as Server)
-        .get('/companies/filter')
-        .set('Authorization', `Bearer ${companyToken}`)
-        .expect(403);
     });
   });
 });

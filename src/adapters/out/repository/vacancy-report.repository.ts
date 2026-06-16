@@ -2,8 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm';
 import {
+  AdminVacancyFilters,
+  AdminVacancyListItem,
   IVacancyReportRepository,
   MyVacanciesFilters,
+  PaginatedAdminVacanciesResult,
   MyVacancyProjection,
   PaginatedVacanciesResult,
   VacancyReportFilters,
@@ -105,6 +108,64 @@ export class VacancyReportRepository implements IVacancyReportRepository {
       total,
       page,
       limit,
+    };
+  }
+
+  async findAllForAdmin(
+    filters: AdminVacancyFilters,
+  ): Promise<PaginatedAdminVacanciesResult> {
+    const { search, isPcd, workType, page, limit } = filters;
+
+    const qb = this.ormRepository
+      .createQueryBuilder('vacancy')
+      .innerJoinAndSelect('vacancy.company', 'company');
+
+    if (search) {
+      const searchFilter = this.buildLikeFilter(search.trim());
+      qb.andWhere(
+        new Brackets((qb2) => {
+          qb2
+            .where('vacancy.name ILIKE :search', { search: searchFilter })
+            .orWhere('company.name ILIKE :search', { search: searchFilter });
+        }),
+      );
+    }
+
+    if (typeof isPcd === 'boolean') {
+      qb.andWhere('vacancy.isPcd = :isPcd', { isPcd });
+    }
+
+    if (workType) {
+      qb.andWhere('vacancy.workplaceType ILIKE :workType', { workType });
+    }
+
+    const total = await qb.getCount();
+    const ormEntities = await qb
+      .orderBy('vacancy.announcementDate', 'DESC')
+      .addOrderBy('vacancy.name', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
+
+    return {
+      items: ormEntities.map((e) => this.mapToAdminListItem(e)),
+      total,
+    };
+  }
+
+  private mapToAdminListItem(
+    ormEntity: JobOpeningOrmEntity,
+  ): AdminVacancyListItem {
+    return {
+      id: ormEntity.id,
+      name: ormEntity.name,
+      companyName: ormEntity.company?.name ?? '',
+      openingsCount: ormEntity.openingsCount,
+      isPcd: ormEntity.isPcd,
+      announcementDate: this.coerceDate(
+        ormEntity.announcementDate as Date | string,
+      ),
+      workplaceType: ormEntity.workplaceType,
     };
   }
 

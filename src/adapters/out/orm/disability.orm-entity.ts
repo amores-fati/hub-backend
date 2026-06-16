@@ -1,4 +1,11 @@
-import { Column, Entity, PrimaryColumn, ManyToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryColumn,
+  ManyToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { StudentOrmEntity } from './student.orm-entity';
 
 @Entity('disability')

@@ -58,10 +58,13 @@ export class JobOpeningRepository implements IJobOpeningRepository {
         );
       }
 
-      const withSkills = await queryRunner.manager.findOne(JobOpeningOrmEntity, {
-        where: { id: savedJob.id },
-        relations: ['skills', 'skills.skill'],
-      });
+      const withSkills = await queryRunner.manager.findOne(
+        JobOpeningOrmEntity,
+        {
+          where: { id: savedJob.id },
+          relations: ['skills', 'skills.skill'],
+        },
+      );
 
       await queryRunner.commitTransaction();
       return this.toResult(withSkills!);
@@ -135,7 +138,9 @@ export class JobOpeningRepository implements IJobOpeningRepository {
       workplaceType: entity.workplaceType,
       announcementDate: entity.announcementDate,
       skills:
-        entity.skills?.map((js) => ({ id: js.skill?.id, name: js.skill?.name })).filter((s) => s.id && s.name) ?? [],
+        entity.skills
+          ?.map((js) => ({ id: js.skill?.id, name: js.skill?.name }))
+          .filter((s) => s.id && s.name) ?? [],
     };
   }
 }
