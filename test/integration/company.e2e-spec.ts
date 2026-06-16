@@ -2,7 +2,9 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { Server } from 'http';
 import { execSync } from 'child_process';
+import { randomUUID } from 'crypto';
 import { cnpj } from 'cpf-cnpj-validator';
+import { DataSource } from 'typeorm';
 import { createIntegrationApp } from './bootstrap';
 
 interface CompanyResponse {
@@ -35,11 +37,22 @@ describeOrSkip('CompanyController (e2e)', () => {
   let createdCompanyId: string;
   let dynamicCnpj: string;
   let accessToken: string;
+  let skillIds: string[] = [];
   const companyEmail = `test-${Date.now()}@company.com`;
   const companyPassword = 'securepassword123';
 
   beforeAll(async () => {
-    app = await createIntegrationApp();
+    const seed = async (dataSource: DataSource) => {
+      const typescriptId = randomUUID();
+      const nestjsId = randomUUID();
+      const reactId = randomUUID();
+      await dataSource.query(
+        `INSERT INTO "skills" (id, name) VALUES ($1, $2), ($3, $4), ($5, $6)`,
+        [typescriptId, 'TypeScript', nestjsId, 'NestJS', reactId, 'React'],
+      );
+      skillIds = [typescriptId, nestjsId, reactId];
+    };
+    app = await createIntegrationApp({ seed });
     dynamicCnpj = cnpj.generate();
   });
 
@@ -204,14 +217,14 @@ describeOrSkip('CompanyController (e2e)', () => {
         .post('/companies/me/vacancies')
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          title: 'Desenvolvedor Fullstack',
+          name: 'Desenvolvedor Fullstack',
           description:
             'Vaga de desenvolvedor para atuar com backend e frontend.',
-          link: 'https://company.jobs/apply/fullstack',
-          vacancyCount: 2,
+          applicationLink: 'https://company.jobs/apply/fullstack',
+          openingsCount: 2,
           isPcd: false,
           workplaceType: 'hibrido',
-          skills: ['TypeScript', 'NestJS', 'React'],
+          skills: skillIds,
         })
         .expect(201);
 
@@ -222,6 +235,7 @@ describeOrSkip('CompanyController (e2e)', () => {
         applicationLink: string;
         isPcd: boolean;
         workplaceType: string;
+        skills: { id: string; name: string }[];
       };
       expect(body.id).toBeDefined();
       expect(body.name).toBe('Desenvolvedor Fullstack');
@@ -229,6 +243,12 @@ describeOrSkip('CompanyController (e2e)', () => {
       expect(body.applicationLink).toBe('https://company.jobs/apply/fullstack');
       expect(body.isPcd).toBe(false);
       expect(body.workplaceType).toBe('hibrido');
+      expect(body.skills).toHaveLength(3);
+      expect(body.skills.map((s) => s.name).sort()).toEqual([
+        'NestJS',
+        'React',
+        'TypeScript',
+      ]);
       vacancyId = body.id;
     });
 
@@ -237,13 +257,13 @@ describeOrSkip('CompanyController (e2e)', () => {
         .put(`/companies/me/vacancies/${vacancyId}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          title: 'Desenvolvedor Fullstack Senior',
+          name: 'Desenvolvedor Fullstack Senior',
           description: 'Vaga atualizada para desenvolvedor fullstack senior.',
-          link: 'https://company.jobs/apply/fullstack-senior',
-          vacancyCount: 1,
+          applicationLink: 'https://company.jobs/apply/fullstack-senior',
+          openingsCount: 1,
           isPcd: true,
           workplaceType: 'online',
-          skills: ['Node.js', 'React', 'TypeScript'],
+          skills: [skillIds[0]],
         })
         .expect(200);
 
@@ -254,6 +274,7 @@ describeOrSkip('CompanyController (e2e)', () => {
         applicationLink: string;
         isPcd: boolean;
         workplaceType: string;
+        skills: { id: string; name: string }[];
       };
       expect(body.id).toBe(vacancyId);
       expect(body.name).toBe('Desenvolvedor Fullstack Senior');
@@ -263,6 +284,8 @@ describeOrSkip('CompanyController (e2e)', () => {
       );
       expect(body.isPcd).toBe(true);
       expect(body.workplaceType).toBe('online');
+      expect(body.skills).toHaveLength(1);
+      expect(body.skills[0].name).toBe('TypeScript');
     });
 
     it('should return 404 when updating a non-existing vacancy', () => {
@@ -271,10 +294,10 @@ describeOrSkip('CompanyController (e2e)', () => {
         .put(`/companies/me/vacancies/${nonExistentVacancyId}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          title: 'Vaga Inexistente',
+          name: 'Vaga Inexistente',
           description: 'Teste',
-          link: 'https://company.jobs/apply/not-found',
-          vacancyCount: 1,
+          applicationLink: 'https://company.jobs/apply/not-found',
+          openingsCount: 1,
           isPcd: false,
           workplaceType: 'presencial',
         })
