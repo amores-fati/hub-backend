@@ -34,4 +34,9 @@ export class ListMyVacanciesQueryDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isPcd?: boolean;
+
+  @ApiPropertyOptional({ example: 'remoto' })
+  @IsOptional()
+  @IsString()
+  workplaceType?: string;
 }

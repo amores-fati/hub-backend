@@ -33,6 +33,7 @@ export interface MyVacanciesFilters {
   search?: string;
   vacancyCount?: number;
   isPcd?: boolean;
+  workplaceType?: string;
   page: number;
   limit: number;
 }
