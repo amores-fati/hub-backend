@@ -27,6 +27,11 @@ import { JwtTokenService } from './adapters/out/auth/jwt-token.service';
 import { IHashService } from './core/ports/hash.service.interface';
 import { ITokenService } from './core/ports/token.service.interface';
 import { JwtStrategy } from './utils/strategies/jwt.strategy';
+import { PasswordResetTokenOrmEntity } from './adapters/out/orm/password-reset-token.orm-entity';
+import { PasswordResetTokenRepository } from './adapters/out/repository/password-reset-token.repository';
+import { IPasswordResetTokenRepository } from './core/ports/password-reset-token.repository.interface';
+import { IMailService } from './core/ports/mail.service.interface';
+import { NodemailerMailService } from './adapters/out/mail/nodemailer-mail.service';
 
 // Course Adapters & Core
 import { CourseController } from './adapters/in/controllers/course.controller';
@@ -135,6 +140,7 @@ import { ISkillRepository } from './core/ports/skill.repository.interface';
       SettingOrmEntity,
       EnrollmentOrmEntity,
       JobOpeningOrmEntity,
+      PasswordResetTokenOrmEntity,
     ]),
   ],
   controllers: [
@@ -204,6 +210,9 @@ import { ISkillRepository } from './core/ports/skill.repository.interface';
         studentRepository: IStudentRepository,
         companyRepository: ICompanyRepository,
         adminRepository: IAdminRepository,
+        passwordResetTokenRepository: IPasswordResetTokenRepository,
+        mailService: IMailService,
+        configService: ConfigService,
       ) => {
         return new AuthService(
           userRepository,
@@ -212,6 +221,20 @@ import { ISkillRepository } from './core/ports/skill.repository.interface';
           studentRepository,
           companyRepository,
           adminRepository,
+          passwordResetTokenRepository,
+          mailService,
+          {
+            frontendUrl: configService.get<string>(
+              'FRONTEND_URL',
+              'http://localhost:3000',
+            ),
+            expirationMinutes: Number(
+              configService.get<string>(
+                'RESET_PASSWORD_TOKEN_EXPIRATION_MINUTES',
+                '30',
+              ),
+            ),
+          },
         );
       },
       inject: [
@@ -221,7 +244,18 @@ import { ISkillRepository } from './core/ports/skill.repository.interface';
         IStudentRepository,
         ICompanyRepository,
         IAdminRepository,
+        IPasswordResetTokenRepository,
+        IMailService,
+        ConfigService,
       ],
+    },
+    {
+      provide: IPasswordResetTokenRepository,
+      useClass: PasswordResetTokenRepository,
+    },
+    {
+      provide: IMailService,
+      useClass: NodemailerMailService,
     },
     {
       provide: IHashService,

@@ -35,6 +35,7 @@ describe('CompanyService', () => {
   const mockUserRepository: IUserRepository = {
     findById: jest.fn(),
     findByEmail: jest.fn(),
+    updatePassword: jest.fn(),
   };
 
   const mockHashService: IHashService = {
@@ -452,7 +453,11 @@ describe('CompanyService', () => {
 
       await service.filterCompanies({ page: 1, limit: 10, search: 'db' });
 
-      expect(mockRepository.findManyByFilters).toHaveBeenCalledWith({ search: 'db' }, 1, 10);
+      expect(mockRepository.findManyByFilters).toHaveBeenCalledWith(
+        { search: 'db' },
+        1,
+        10,
+      );
     });
 
     it('should pass status filter to repository', async () => {
@@ -461,9 +466,17 @@ describe('CompanyService', () => {
         total: 0,
       });
 
-      await service.filterCompanies({ page: 1, limit: 10, status: CompanyStatus.INATIVO });
+      await service.filterCompanies({
+        page: 1,
+        limit: 10,
+        status: CompanyStatus.INATIVO,
+      });
 
-      expect(mockRepository.findManyByFilters).toHaveBeenCalledWith({ status: CompanyStatus.INATIVO }, 1, 10);
+      expect(mockRepository.findManyByFilters).toHaveBeenCalledWith(
+        { status: CompanyStatus.INATIVO },
+        1,
+        10,
+      );
     });
 
     it('should return empty data when no companies match', async () => {
