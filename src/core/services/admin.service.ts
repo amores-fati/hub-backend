@@ -153,6 +153,7 @@ export class AdminService {
       socialName: item.socialName,
       email: item.email,
       isAvailable: item.isAvailable,
+      isPcd: item.isPcd,
       about: item.about,
       linkedin: item.linkedin,
       github: item.github,
