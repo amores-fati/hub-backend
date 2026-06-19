@@ -205,14 +205,13 @@ describeOrSkip('CompanyController (e2e)', () => {
         .post('/companies/me/vacancies')
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          title: 'Desenvolvedor Fullstack',
+          name: 'Desenvolvedor Fullstack',
           description:
             'Vaga de desenvolvedor para atuar com backend e frontend.',
-          link: 'https://company.jobs/apply/fullstack',
-          vacancyCount: 2,
+          applicationLink: 'https://company.jobs/apply/fullstack',
+          openingsCount: 2,
           isPcd: false,
           workplaceType: 'hibrido',
-          skills: ['TypeScript', 'NestJS', 'React'],
         })
         .expect(201);
 
@@ -237,10 +236,10 @@ describeOrSkip('CompanyController (e2e)', () => {
         .post('/companies/me/vacancies')
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          title: 'Vaga inválida',
+          name: 'Vaga inválida',
           description: 'Teste',
-          link: 'https://company.jobs/apply/test',
-          vacancyCount: 1,
+          applicationLink: 'https://company.jobs/apply/test',
+          openingsCount: 1,
           isPcd: false,
           workplaceType: 'invalid-type',
         })
@@ -257,10 +256,10 @@ describeOrSkip('CompanyController (e2e)', () => {
         .post('/companies/me/vacancies')
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          title: 'Vaga para atualizar',
+          name: 'Vaga para atualizar',
           description: 'Descrição inicial.',
-          link: 'https://company.jobs/apply/setup',
-          vacancyCount: 1,
+          applicationLink: 'https://company.jobs/apply/setup',
+          openingsCount: 1,
           isPcd: false,
           workplaceType: 'presencial',
         })
@@ -304,13 +303,12 @@ describeOrSkip('CompanyController (e2e)', () => {
         .put(`/companies/me/vacancies/${vacancyId}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          title: 'Desenvolvedor Fullstack Senior',
+          name: 'Desenvolvedor Fullstack Senior',
           description: 'Vaga atualizada para desenvolvedor fullstack senior.',
-          link: 'https://company.jobs/apply/fullstack-senior',
-          vacancyCount: 1,
+          applicationLink: 'https://company.jobs/apply/fullstack-senior',
+          openingsCount: 1,
           isPcd: true,
           workplaceType: 'online',
-          skills: ['Node.js', 'React', 'TypeScript'],
         })
         .expect(200);
 
@@ -338,10 +336,10 @@ describeOrSkip('CompanyController (e2e)', () => {
         .put(`/companies/me/vacancies/${nonExistentVacancyId}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          title: 'Vaga Inexistente',
+          name: 'Vaga Inexistente',
           description: 'Teste',
-          link: 'https://company.jobs/apply/not-found',
-          vacancyCount: 1,
+          applicationLink: 'https://company.jobs/apply/not-found',
+          openingsCount: 1,
           isPcd: false,
           workplaceType: 'presencial',
         })
@@ -353,10 +351,10 @@ describeOrSkip('CompanyController (e2e)', () => {
         .put(`/companies/me/vacancies/${vacancyId}`)
         .set('Authorization', `Bearer ${otherCompanyToken}`)
         .send({
-          title: 'Tentativa indevida',
+          name: 'Tentativa indevida',
           description: 'Outra empresa tentando atualizar.',
-          link: 'https://company.jobs/apply/forbidden',
-          vacancyCount: 1,
+          applicationLink: 'https://company.jobs/apply/forbidden',
+          openingsCount: 1,
           isPcd: false,
           workplaceType: 'presencial',
         })
