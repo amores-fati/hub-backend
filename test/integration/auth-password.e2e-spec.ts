@@ -13,6 +13,17 @@ import {
 const GENERIC_FORGOT_PASSWORD_MESSAGE =
   'Se o e-mail estiver cadastrado, enviaremos as instrucoes para recuperacao de senha.';
 
+interface PasswordResetTokenRow {
+  token_hash: string;
+  used: boolean;
+  expires_at: Date;
+}
+
+interface UsedPasswordResetTokenRow {
+  used: boolean;
+  used_at: Date | null;
+}
+
 describe('Auth password flow (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
@@ -32,12 +43,16 @@ describe('Auth password flow (e2e)', () => {
   const wrongChangeUserEmail = `wrong-change-${Date.now()}@test.com`;
   const wrongChangeUserPassword = 'WrongChangePassword123';
 
+  const sendPasswordResetEmailMock = jest.fn<
+    Promise<void>,
+    [SendPasswordResetEmailInput]
+  >((input) => {
+    sentPasswordResetEmails.push(input);
+    return Promise.resolve();
+  });
+
   const mailService: IMailService = {
-    sendPasswordResetEmail: jest.fn(
-      async (input: SendPasswordResetEmailInput) => {
-        sentPasswordResetEmails.push(input);
-      },
-    ),
+    sendPasswordResetEmail: sendPasswordResetEmailMock,
   };
 
   beforeAll(async () => {
@@ -143,7 +158,7 @@ describe('Auth password flow (e2e)', () => {
       });
 
     expect(sentPasswordResetEmails).toHaveLength(0);
-    expect(mailService.sendPasswordResetEmail).not.toHaveBeenCalled();
+    expect(sendPasswordResetEmailMock).not.toHaveBeenCalled();
   });
 
   it('should create a reset token and send the reset link when email exists', async () => {
@@ -157,7 +172,7 @@ describe('Auth password flow (e2e)', () => {
         });
       });
 
-    expect(mailService.sendPasswordResetEmail).toHaveBeenCalledTimes(1);
+    expect(sendPasswordResetEmailMock).toHaveBeenCalledTimes(1);
     expect(sentPasswordResetEmails).toHaveLength(1);
     expect(sentPasswordResetEmails[0].to).toBe(resetUserEmail);
 
@@ -169,10 +184,10 @@ describe('Auth password flow (e2e)', () => {
     expect(resetUrl.pathname).toBe('/reset-password');
     expect(token).toBeTruthy();
 
-    const tokens = (await dataSource.query(
+    const tokens = await dataSource.query<PasswordResetTokenRow[]>(
       `SELECT token_hash, used, expires_at FROM "password_reset_tokens" WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
       [resetUserId],
-    )) as Array<{ token_hash: string; used: boolean; expires_at: Date }>;
+    );
 
     expect(tokens).toHaveLength(1);
     expect(tokens[0].token_hash).not.toBe(token);
@@ -206,10 +221,10 @@ describe('Auth password flow (e2e)', () => {
         expect((res.body as { accessToken?: string }).accessToken).toBeTruthy();
       });
 
-    const usedTokens = (await dataSource.query(
+    const usedTokens = await dataSource.query<UsedPasswordResetTokenRow[]>(
       `SELECT used, used_at FROM "password_reset_tokens" WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
       [resetUserId],
-    )) as Array<{ used: boolean; used_at: Date | null }>;
+    );
 
     expect(usedTokens).toHaveLength(1);
     expect(usedTokens[0].used).toBe(true);
@@ -312,9 +327,9 @@ describe('Auth password flow (e2e)', () => {
       })
       .expect(401)
       .expect((res) => {
-        expect(res.body).toMatchObject({
-          message: expect.stringContaining('Credenciais'),
-        });
+        const body = res.body as { message: string };
+
+        expect(body.message).toEqual(expect.stringContaining('Credenciais'));
       });
   });
 });

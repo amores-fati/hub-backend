@@ -70,7 +70,15 @@ export class VacancyReportRepository implements IVacancyReportRepository {
   async findMyVacancies(
     filters: MyVacanciesFilters,
   ): Promise<PaginatedVacanciesResult> {
-    const { companyId, search, vacancyCount, isPcd, workplaceType, page, limit } = filters;
+    const {
+      companyId,
+      search,
+      vacancyCount,
+      isPcd,
+      workplaceType,
+      page,
+      limit,
+    } = filters;
     const qb = this.ormRepository
       .createQueryBuilder('vacancy')
       .innerJoinAndSelect('vacancy.company', 'company')

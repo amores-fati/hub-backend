@@ -244,14 +244,16 @@ describe('AuthService', () => {
       ).toHaveBeenCalledWith(mockUser.id, now);
       expect(mockPasswordResetTokenRepository.create).toHaveBeenCalledTimes(1);
 
-      const createInput = (mockPasswordResetTokenRepository.create as jest.Mock)
-        .mock.calls[0][0] as {
-        userId: string;
-        tokenHash: string;
-        expiresAt: Date;
-      };
-      const mailInput = (mockMailService.sendPasswordResetEmail as jest.Mock)
-        .mock.calls[0][0] as { to: string; resetLink: string };
+      const createMock =
+        mockPasswordResetTokenRepository.create as jest.MockedFunction<
+          IPasswordResetTokenRepository['create']
+        >;
+      const mailMock =
+        mockMailService.sendPasswordResetEmail as jest.MockedFunction<
+          IMailService['sendPasswordResetEmail']
+        >;
+      const [createInput] = createMock.mock.calls[0];
+      const [mailInput] = mailMock.mock.calls[0];
       const token = new URL(mailInput.resetLink).searchParams.get('token');
 
       expect(createInput.userId).toBe(mockUser.id);
