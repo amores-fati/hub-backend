@@ -241,12 +241,16 @@ export class CompanyController {
       page: filters.page,
       limit: filters.limit,
       search: filters.search,
+      state: filters.state,
+      city: filters.city,
       status: filters.status,
     });
     const command: FilterCompaniesCommand = {
       page: filters.page,
       limit: filters.limit,
       search: filters.search,
+      state: filters.state,
+      city: filters.city,
       status: filters.status,
     };
     const result = await this.companyService.filterCompanies(command);

@@ -60,9 +60,12 @@ import { IVacancyReportPdfGenerator } from './core/ports/vacancy-report-pdf-gene
 import { CompanyOrmEntity } from './adapters/out/orm/company.orm-entity';
 import { AdminOrmEntity } from './adapters/out/orm/admin.orm-entity';
 import { CompanyController } from './adapters/in/controllers/company.controller';
+import { CompanyReportService } from './core/services/company-report.service';
 import { CompanyService } from './core/services/company.service';
 import { ICompanyRepository } from './core/ports/company.repository.interface';
 import { CompanyRepository } from './adapters/out/repository/company.repository';
+import { CompanyReportXlsxGenerator } from './adapters/out/xlsx/company-report-xlsx.generator';
+import { ICompanyReportXlsxGenerator } from './core/ports/company-report-xlsx-generator.interface';
 import { IJobOpeningRepository } from './core/ports/job-open.company.repository.interface';
 import { JobOpeningRepository } from './adapters/out/repository/job.opening.repository';
 
@@ -418,6 +421,30 @@ import { ISkillRepository } from './core/ports/skill.repository.interface';
     {
       provide: ICompanyRepository,
       useClass: CompanyRepository,
+    },
+    {
+      provide: CompanyReportService,
+      useFactory: (
+        companyRepository: ICompanyRepository,
+        xlsxGenerator: CompanyReportXlsxGenerator,
+        logger: AmoresFatiLogger,
+      ) => {
+        logger.setContext(CompanyReportService.name);
+        return new CompanyReportService(
+          companyRepository,
+          xlsxGenerator,
+          logger,
+        );
+      },
+      inject: [
+        ICompanyRepository,
+        ICompanyReportXlsxGenerator,
+        AmoresFatiLogger,
+      ],
+    },
+    {
+      provide: ICompanyReportXlsxGenerator,
+      useClass: CompanyReportXlsxGenerator,
     },
     {
       provide: StudentService,

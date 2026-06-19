@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, Repository, SelectQueryBuilder } from 'typeorm';
 import {
   ICompanyRepository,
   CompanyFilterOptions,
+  CompanyReportProjection,
   CompanyWithStatus,
 } from '../../../core/ports/company.repository.interface';
 import { Company } from '../../../core/domain/company.entity';
@@ -14,6 +15,38 @@ import { TelephoneCompanyOrmEntity } from '../orm/telephone-company.orm-entity';
 import { AddressCompanyOrmEntity } from '../orm/address-company.orm-entity';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
 import { CompanyStatus } from '../../../core/domain/company-status.enum';
+
+interface CompanyListRawRow {
+  c_id: string;
+  c_cnpj: string;
+  c_name: string;
+  c_responsible_name: string;
+  u_email: string;
+  u_password_hash: string;
+  u_deleted_at: Date | null;
+  t_id: string;
+  t_phone: string;
+  a_id: string;
+  a_neighbourhood: string | null;
+  a_state: string | null;
+  a_city: string | null;
+  a_address: string | null;
+  a_cep: string;
+  a_complement: string | null;
+}
+
+interface CompanyReportRawRow {
+  c_id: string;
+  c_cnpj: string;
+  c_name: string;
+  u_email: string;
+  u_created_at: Date | string;
+  u_deleted_at: Date | string | null;
+  t_phone: string;
+  a_neighbourhood: string | null;
+  a_state: string | null;
+  a_city: string | null;
+}
 
 @Injectable()
 export class CompanyRepository implements ICompanyRepository {
@@ -161,20 +194,7 @@ export class CompanyRepository implements ICompanyRepository {
     page: number = 1,
     limit: number = 10,
   ): Promise<{ data: CompanyWithStatus[]; total: number }> {
-    const qb = this.ormRepository
-      .createQueryBuilder('company')
-      .withDeleted()
-      .innerJoin('users', 'user', 'user.id = company.id')
-      .innerJoin(
-        'telephone_company',
-        'telephone',
-        'telephone.company_id = company.id',
-      )
-      .innerJoin(
-        'address_company',
-        'address',
-        'address.company_id = company.id',
-      )
+    const qb = this.createCompanyBaseQueryBuilder()
       .select('company.id', 'c_id')
       .addSelect('company.cnpj', 'c_cnpj')
       .addSelect('company.name', 'c_name')
@@ -192,23 +212,7 @@ export class CompanyRepository implements ICompanyRepository {
       .addSelect('address.cep', 'a_cep')
       .addSelect('address.complement', 'a_complement');
 
-    if (filters.status === CompanyStatus.INATIVO) {
-      qb.where('user.deleted_at IS NOT NULL');
-    } else if (filters.status === CompanyStatus.ATIVO) {
-      qb.where('user.deleted_at IS NULL');
-    }
-
-    const search = filters.search?.trim();
-    if (search) {
-      qb.andWhere(
-        new Brackets((sub) => {
-          sub
-            .where('company.name ILIKE :search', { search: `%${search}%` })
-            .orWhere('company.cnpj ILIKE :search', { search: `%${search}%` })
-            .orWhere('user.email ILIKE :search', { search: `%${search}%` });
-        }),
-      );
-    }
+    this.applyCompanyFilters(qb, filters);
 
     const total = await qb.getCount();
 
@@ -216,24 +220,7 @@ export class CompanyRepository implements ICompanyRepository {
       .offset((page - 1) * limit)
       .limit(limit);
 
-    const raw = await qb.getRawMany<{
-      c_id: string;
-      c_cnpj: string;
-      c_name: string;
-      c_responsible_name: string;
-      u_email: string;
-      u_password_hash: string;
-      u_deleted_at: Date | null;
-      t_id: string;
-      t_phone: string;
-      a_id: string;
-      a_neighbourhood: string | null;
-      a_state: string | null;
-      a_city: string | null;
-      a_address: string | null;
-      a_cep: string;
-      a_complement: string | null;
-    }>();
+    const raw = await qb.getRawMany<CompanyListRawRow>();
 
     const data = raw.map((row) => {
       const contact = new Contact(
@@ -264,6 +251,39 @@ export class CompanyRepository implements ICompanyRepository {
     return { data, total };
   }
 
+  async findManyForReportByIds(
+    ids: string[],
+  ): Promise<CompanyReportProjection[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const rows = await this.createCompanyReportQueryBuilder()
+      .andWhere('company.id IN (:...ids)', { ids })
+      .getRawMany<CompanyReportRawRow>();
+    const rowsById = new Map(rows.map((row) => [row.c_id, row]));
+
+    return ids
+      .map((id) => rowsById.get(id))
+      .filter((row): row is CompanyReportRawRow => Boolean(row))
+      .map((row) => this.mapToReportProjection(row));
+  }
+
+  async findManyForReportByFilters(
+    filters: CompanyFilterOptions = {},
+  ): Promise<CompanyReportProjection[]> {
+    const qb = this.createCompanyReportQueryBuilder();
+
+    this.applyCompanyFilters(qb, filters);
+
+    const rows = await qb
+      .orderBy('company.name', 'ASC')
+      .addOrderBy('company.id', 'ASC')
+      .getRawMany<CompanyReportRawRow>();
+
+    return rows.map((row) => this.mapToReportProjection(row));
+  }
+
   async findLocations(): Promise<{ city: string; uf: string }[]> {
     const rawData = await this.ormRepository
       .createQueryBuilder('company')
@@ -276,5 +296,90 @@ export class CompanyRepository implements ICompanyRepository {
       .getRawMany();
 
     return rawData as { city: string; uf: string }[];
+  }
+
+  private createCompanyBaseQueryBuilder(): SelectQueryBuilder<CompanyOrmEntity> {
+    return this.ormRepository
+      .createQueryBuilder('company')
+      .withDeleted()
+      .innerJoin('users', 'user', 'user.id = company.id')
+      .innerJoin(
+        'telephone_company',
+        'telephone',
+        'telephone.company_id = company.id',
+      )
+      .innerJoin(
+        'address_company',
+        'address',
+        'address.company_id = company.id',
+      );
+  }
+
+  private createCompanyReportQueryBuilder(): SelectQueryBuilder<CompanyOrmEntity> {
+    return this.createCompanyBaseQueryBuilder()
+      .select('company.id', 'c_id')
+      .addSelect('company.cnpj', 'c_cnpj')
+      .addSelect('company.name', 'c_name')
+      .addSelect('user.email', 'u_email')
+      .addSelect('user.created_at', 'u_created_at')
+      .addSelect('user.deleted_at', 'u_deleted_at')
+      .addSelect('telephone.phone', 't_phone')
+      .addSelect('address.neighbourhood', 'a_neighbourhood')
+      .addSelect('address.state', 'a_state')
+      .addSelect('address.city', 'a_city');
+  }
+
+  private applyCompanyFilters(
+    qb: SelectQueryBuilder<CompanyOrmEntity>,
+    filters: CompanyFilterOptions,
+  ): void {
+    if (filters.status === CompanyStatus.INATIVO) {
+      qb.andWhere('user.deleted_at IS NOT NULL');
+    } else if (filters.status === CompanyStatus.ATIVO) {
+      qb.andWhere('user.deleted_at IS NULL');
+    }
+
+    const search = filters.search?.trim();
+    if (search) {
+      qb.andWhere(
+        new Brackets((sub) => {
+          sub
+            .where('company.name ILIKE :search', { search: `%${search}%` })
+            .orWhere('company.cnpj ILIKE :search', { search: `%${search}%` })
+            .orWhere('user.email ILIKE :search', { search: `%${search}%` });
+        }),
+      );
+    }
+
+    const state = filters.state?.trim();
+    if (state) {
+      qb.andWhere('address.state ILIKE :state', { state });
+    }
+
+    const city = filters.city?.trim();
+    if (city) {
+      qb.andWhere('address.city ILIKE :city', { city: `%${city}%` });
+    }
+  }
+
+  private mapToReportProjection(
+    row: CompanyReportRawRow,
+  ): CompanyReportProjection {
+    return {
+      id: row.c_id,
+      name: row.c_name,
+      cnpj: row.c_cnpj,
+      email: row.u_email,
+      phone: row.t_phone,
+      state: row.a_state ?? undefined,
+      city: row.a_city ?? undefined,
+      neighbourhood: row.a_neighbourhood ?? undefined,
+      status: row.u_deleted_at ? CompanyStatus.INATIVO : CompanyStatus.ATIVO,
+      createdAt: this.coerceDate(row.u_created_at),
+    };
+  }
+
+  private coerceDate(value: Date | string): Date {
+    return value instanceof Date ? value : new Date(value);
   }
 }
