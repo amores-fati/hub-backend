@@ -71,7 +71,7 @@ export class EnrollmentService {
 
     const created = await this.enrollmentRepository.create(enrollment);
     await this.courseRepository.update(course);
-    
+
     return created;
   }
 

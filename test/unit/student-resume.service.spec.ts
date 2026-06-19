@@ -42,14 +42,9 @@ describe('StudentResumeService', () => {
     findManyForReportByFilters: jest.fn(),
   };
 
-
-
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new StudentResumeService(
-      curriculumRepository,
-      studentRepository,
-    );
+    service = new StudentResumeService(curriculumRepository, studentRepository);
   });
 
   describe('getResume', () => {
@@ -143,12 +138,14 @@ describe('StudentResumeService', () => {
         buffer: Buffer.from('image'),
       });
 
-      expect(result).toEqual({ photoUrl: `/api/students/${studentId}/resume/photo` });
+      expect(result).toEqual({
+        photoUrl: `/api/students/${studentId}/resume/photo`,
+      });
       expect(curriculumRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({ 
+        expect.objectContaining({
           studentId,
           photoBufferValue: Buffer.from('image'),
-          photoMimeTypeValue: 'image/png'
+          photoMimeTypeValue: 'image/png',
         }),
       );
     });

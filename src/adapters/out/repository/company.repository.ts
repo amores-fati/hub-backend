@@ -165,8 +165,16 @@ export class CompanyRepository implements ICompanyRepository {
       .createQueryBuilder('company')
       .withDeleted()
       .innerJoin('users', 'user', 'user.id = company.id')
-      .innerJoin('telephone_company', 'telephone', 'telephone.company_id = company.id')
-      .innerJoin('address_company', 'address', 'address.company_id = company.id')
+      .innerJoin(
+        'telephone_company',
+        'telephone',
+        'telephone.company_id = company.id',
+      )
+      .innerJoin(
+        'address_company',
+        'address',
+        'address.company_id = company.id',
+      )
       .select('company.id', 'c_id')
       .addSelect('company.cnpj', 'c_cnpj')
       .addSelect('company.name', 'c_name')
@@ -247,7 +255,9 @@ export class CompanyRepository implements ICompanyRepository {
         row.c_responsible_name,
         contact,
       );
-      const status = row.u_deleted_at ? CompanyStatus.INATIVO : CompanyStatus.ATIVO;
+      const status = row.u_deleted_at
+        ? CompanyStatus.INATIVO
+        : CompanyStatus.ATIVO;
       return { company, status };
     });
 

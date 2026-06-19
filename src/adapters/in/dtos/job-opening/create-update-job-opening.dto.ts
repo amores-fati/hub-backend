@@ -38,7 +38,9 @@ export class CreateUpdateJobOpeningDto {
   })
   @IsOptional()
   @IsUrl()
-  @Transform(({ value }) => (value == null || value === '' ? undefined : value))
+  @Transform(({ value }: { value: unknown }) =>
+    value == null || value === '' ? undefined : value,
+  )
   applicationLink?: string;
 
   @ApiProperty({ example: 3, description: 'Quantidade de vagas' })
