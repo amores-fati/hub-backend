@@ -34,11 +34,13 @@ import {
 import {
   CreateCompanyCommand,
   UpdateCompanyCommand,
+  UpdateCompanyMeCommand,
 } from '../../../core/command/company.command';
 import {
   CompanyService,
   FilterCompaniesCommand,
 } from '../../../core/services/company.service';
+import { UpdateCompanyMeDto } from '../dtos/company/update-company-me.dto';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
 import {
   CurrentUser,
@@ -110,6 +112,76 @@ export class CompanyController {
     } catch (error) {
       if (error instanceof Error && error.name === 'CompanyNotFoundException') {
         throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
+  }
+
+  @RequireAuth(UserRoleEnum.COMPANY)
+  @Get('me')
+  @ApiOperation({ summary: 'Retorna o perfil da empresa autenticada' })
+  @ApiOkResponse({ description: 'Perfil retornado com sucesso.' })
+  @ApiNotFoundResponse({ description: 'Empresa não encontrada.' })
+  async getMyProfile(@CurrentUser() user: AuthenticatedUser) {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException('Token inválido: companyId ausente');
+    }
+
+    this.logger.info('Fetching own company profile', { companyId });
+
+    try {
+      const company = await this.companyService.getCompanyById(companyId);
+      this.logger.info('Own company profile fetched', { companyId });
+      return company;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CompanyNotFoundException') {
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
+  }
+
+  @RequireAuth(UserRoleEnum.COMPANY)
+  @Put('me')
+  @ApiOperation({ summary: 'Atualiza o perfil da empresa autenticada' })
+  @ApiBody({ type: UpdateCompanyMeDto })
+  @ApiOkResponse({ description: 'Perfil atualizado com sucesso.' })
+  @ApiNotFoundResponse({ description: 'Empresa não encontrada.' })
+  @ApiBadRequestResponse({ description: 'Erro de validação.' })
+  @ApiConflictResponse({ description: 'E-mail já cadastrado na plataforma.' })
+  async updateMe(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateCompanyMeDto,
+  ) {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException('Token inválido: companyId ausente');
+    }
+
+    this.logger.info('Updating own company profile (me)', { companyId });
+
+    try {
+      const command: UpdateCompanyMeCommand = { ...dto };
+      const company =
+        await this.companyService.updateAuthenticatedCompanyProfile(
+          companyId,
+          command,
+        );
+      this.logger.info('Own company profile updated', { companyId });
+      return company;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CompanyNotFoundException') {
+        throw new NotFoundException(error.message);
+      }
+      if (
+        error instanceof Error &&
+        error.name === 'UserAlreadyExistsException'
+      ) {
+        throw new ConflictException(error.message);
+      }
+      if (error instanceof Error && error.name === 'DomainException') {
+        throw new BadRequestException(error.message);
       }
       throw error;
     }

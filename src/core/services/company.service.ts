@@ -13,6 +13,7 @@ import {
   CreateCompanyCommand,
   PatchCompanyCommand,
   UpdateCompanyCommand,
+  UpdateCompanyMeCommand,
 } from '../command/company.command';
 import { Contact } from '../domain/contact.entity';
 import { IHashService } from '../ports/hash.service.interface';
@@ -121,6 +122,33 @@ export class CompanyService {
       throw new CompanyNotFoundException(cnpj);
     }
     return company;
+  }
+
+  async updateAuthenticatedCompanyProfile(
+    companyId: string,
+    command: UpdateCompanyMeCommand,
+  ): Promise<Company> {
+    const company = await this.getCompanyById(companyId);
+
+    if (command.email !== undefined) {
+      await this.assertEmailAvailable(command.email, company.id);
+      company.changeEmail(command.email);
+    }
+
+    company.contact.changeAddress({
+      neighbourhood: command.neighbourhood,
+      state: command.state,
+      city: command.city,
+      address: command.address,
+      cep: command.cep,
+      complement: command.complement,
+    });
+
+    if (command.phone !== undefined) {
+      company.contact.changePhone(command.phone);
+    }
+
+    return this.companyRepository.update(company);
   }
 
   async updateCompany(
