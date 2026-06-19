@@ -93,10 +93,10 @@ export class CompanyController {
 
     try {
       const result = await this.companyService.createVacancy(companyId, {
-        title: createDto.title,
+        name: createDto.name,
         description: createDto.description,
-        link: createDto.link,
-        vacancyCount: createDto.vacancyCount,
+        applicationLink: createDto.applicationLink,
+        openingsCount: createDto.openingsCount,
         isPcd: createDto.isPcd,
         workplaceType: createDto.workplaceType,
         skills: createDto.skills,
@@ -141,10 +141,10 @@ export class CompanyController {
 
     try {
       const result = await this.companyService.updateVacancy(id, companyId, {
-        title: updateDto.title,
+        name: updateDto.name,
         description: updateDto.description,
-        link: updateDto.link,
-        vacancyCount: updateDto.vacancyCount,
+        applicationLink: updateDto.applicationLink,
+        openingsCount: updateDto.openingsCount,
         isPcd: updateDto.isPcd,
         workplaceType: updateDto.workplaceType,
         skills: updateDto.skills,
@@ -227,10 +227,16 @@ export class CompanyController {
   @Get('filter')
   @ApiOperation({
     summary: 'Lista empresas com filtros e paginação',
-    description: 'Retorna empresas paginadas com filtros opcionais por busca textual e status.',
+    description:
+      'Retorna empresas paginadas com filtros opcionais por busca textual e status.',
   })
-  @ApiOkResponse({ description: 'Empresas retornadas com sucesso.', type: PaginatedCompaniesResponseDto })
-  async filter(@Query() filters: FilterCompaniesDto): Promise<PaginatedCompaniesResponseDto> {
+  @ApiOkResponse({
+    description: 'Empresas retornadas com sucesso.',
+    type: PaginatedCompaniesResponseDto,
+  })
+  async filter(
+    @Query() filters: FilterCompaniesDto,
+  ): Promise<PaginatedCompaniesResponseDto> {
     this.logger.info('Filtering companies', {
       page: filters.page,
       limit: filters.limit,
@@ -245,7 +251,9 @@ export class CompanyController {
     };
     const result = await this.companyService.filterCompanies(command);
     return {
-      data: result.data.map(({ company, status }) => toCompanyResponse(company, status)),
+      data: result.data.map(({ company, status }) =>
+        toCompanyResponse(company, status),
+      ),
       total: result.total,
       page: result.page,
       limit: result.limit,
@@ -380,6 +388,34 @@ export class CompanyController {
     }
   }
 
+  @RequireAuth(UserRoleEnum.COMPANY, UserRoleEnum.ADMIN)
+  @Get('me/vacancies/:id')
+  @ApiOperation({ summary: 'Busca uma vaga pelo ID' })
+  @ApiOkResponse({ description: 'Vaga encontrada com sucesso.' })
+  @ApiNotFoundResponse({ description: 'Vaga nao encontrada.' })
+  async getVacancyById(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    try {
+      this.logger.info('Buscando vaga por ID', { id });
+      const isAdmin = user.role === UserRoleEnum.ADMIN;
+      return await this.companyService.getVacancyById(
+        id,
+        user.companyId,
+        isAdmin,
+      );
+    } catch (error) {
+      if (error instanceof VacancyNotFoundException) {
+        throw new NotFoundException(error.message);
+      }
+      if (error instanceof VacancyForbiddenException) {
+        throw new ForbiddenException(error.message);
+      }
+      throw error;
+    }
+  }
+
   @RequireAuth(UserRoleEnum.COMPANY)
   @Get('me/vacancies')
   @ApiOperation({
@@ -401,6 +437,7 @@ export class CompanyController {
         search: query.search,
         vacancyCount: query.vacancyCount,
         isPcd: query.isPcd,
+        workplaceType: query.workplaceType,
       });
     } catch (error) {
       if (error instanceof Error && error.name === 'CompanyNotFoundException') {

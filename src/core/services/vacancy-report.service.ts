@@ -4,7 +4,9 @@ import {
   VacancyReportPdfRow,
 } from '../ports/vacancy-report-pdf-generator.interface';
 import {
+  AdminVacancyFilters,
   IVacancyReportRepository,
+  PaginatedAdminVacanciesResult,
   VacancyReportFilters,
   VacancyReportProjection,
 } from '../ports/vacancy-report.repository.interface';
@@ -39,6 +41,12 @@ export class VacancyReportService {
     private readonly pdfGenerator: IVacancyReportPdfGenerator,
     private readonly logger: VacancyReportLogger,
   ) {}
+
+  async findAllVacanciesWithFilter(
+    filters: AdminVacancyFilters,
+  ): Promise<PaginatedAdminVacanciesResult> {
+    return this.vacancyRepository.findAllForAdmin(filters);
+  }
 
   async generateReport(
     command: GenerateVacancyReportCommand,

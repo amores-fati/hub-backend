@@ -12,6 +12,8 @@ export class Curriculum {
     private githubUrlValue: string | null = null,
     private videoPresentationUrlValue: string | null = null,
     private photoUrlValue: string | null = null,
+    private photoBufferValue: Buffer | null = null,
+    private photoMimeTypeValue: string | null = null,
     private skillValues: CurriculumSkill[] = [],
   ) {}
 
@@ -33,6 +35,14 @@ export class Curriculum {
 
   get photoUrl(): string | null {
     return this.photoUrlValue;
+  }
+
+  get photoBuffer(): Buffer | null {
+    return this.photoBufferValue;
+  }
+
+  get photoMimeType(): string | null {
+    return this.photoMimeTypeValue;
   }
 
   get skills(): CurriculumSkill[] {
@@ -64,6 +74,11 @@ export class Curriculum {
 
   changePhotoUrl(photoUrl: string): void {
     this.photoUrlValue = photoUrl;
+  }
+
+  changePhoto(buffer: Buffer, mimeType: string): void {
+    this.photoBufferValue = buffer;
+    this.photoMimeTypeValue = mimeType;
   }
 
   hasSkillName(skillName: string): boolean {

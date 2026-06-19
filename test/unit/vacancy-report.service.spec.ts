@@ -26,6 +26,10 @@ describe('VacancyReportService', () => {
     repository = {
       findManyByIds: jest.fn(),
       findManyByFilters: jest.fn(),
+      findMyVacancies: jest.fn(),
+      findAllForAdmin: jest.fn(),
+      findCompanyIdById: jest.fn(),
+      deleteById: jest.fn(),
     };
     pdfGenerator = {
       generate: jest.fn().mockResolvedValue(Buffer.from('%PDF-1.3')),
@@ -152,6 +156,38 @@ describe('VacancyReportService', () => {
         ],
       }),
     );
+  });
+
+  it('should delegate findAllVacanciesWithFilter to the repository', async () => {
+    const filters = {
+      search: 'dev',
+      isPcd: true,
+      workType: 'online',
+      page: 1,
+      limit: 10,
+    };
+    const repositoryResult = {
+      items: [
+        {
+          id: 'v1',
+          name: 'Dev',
+          companyName: 'Empresa X',
+          openingsCount: 2,
+          isPcd: true,
+          announcementDate: new Date('2026-01-01T00:00:00.000Z'),
+          workplaceType: 'online',
+        },
+      ],
+      total: 1,
+    };
+    (repository.findAllForAdmin as jest.Mock).mockResolvedValue(
+      repositoryResult,
+    );
+
+    const result = await service.findAllVacanciesWithFilter(filters);
+
+    expect(repository.findAllForAdmin).toHaveBeenCalledWith(filters);
+    expect(result).toBe(repositoryResult);
   });
 
   it('should not log full filters values when receiving the request', async () => {

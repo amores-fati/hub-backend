@@ -25,6 +25,6 @@ export interface ICompanyRepository {
   findManyByFilters(
     filters: CompanyFilterOptions,
     page: number,
-    limit: number
+    limit: number,
   ): Promise<{ data: CompanyWithStatus[]; total: number }>;
 }

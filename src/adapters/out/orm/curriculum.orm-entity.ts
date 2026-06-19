@@ -39,6 +39,17 @@ export class CurriculumOrmEntity {
   @Column({ name: 'profile_photo', type: 'varchar', nullable: true })
   profilePhoto: string | null;
 
+  @Column({ name: 'profile_photo_image', type: 'bytea', nullable: true })
+  profilePhotoImage: Buffer | null;
+
+  @Column({
+    name: 'profile_photo_mime_type',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
+  profilePhotoMimeType: string | null;
+
   @Column({ type: 'varchar', length: 100, nullable: true })
   preference: string | null;
 

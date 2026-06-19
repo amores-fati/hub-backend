@@ -79,8 +79,6 @@ import { StudentOrmEntity } from './adapters/out/orm/student.orm-entity';
 import { IStudentRepository } from './core/ports/student.repository.interface';
 import { CurriculumRepository } from './adapters/out/repository/curriculum.repository';
 import { ICurriculumRepository } from './core/ports/curriculum.repository.interface';
-import { LocalResumePhotoStorage } from './adapters/out/storage/local-resume-photo.storage';
-import { IResumePhotoStorage } from './core/ports/resume-photo-storage.interface';
 
 // Enrollment Adapters & Core
 import { EnrollmentService } from './core/services/enrollment.service';
@@ -94,6 +92,12 @@ import { SettingService } from './core/services/setting.service';
 import { SettingRepository } from './adapters/out/repository/setting.repository';
 import { SettingOrmEntity } from './adapters/out/orm/setting.orm-entity';
 import { ISettingRepository } from './core/ports/setting.repository.interface';
+
+// Skill Adapters & Core
+import { SkillController } from './adapters/in/controllers/skill.controller';
+import { SkillService } from './core/services/skill.service';
+import { SkillRepository } from './adapters/out/repository/skill.repository';
+import { ISkillRepository } from './core/ports/skill.repository.interface';
 
 @Module({
   imports: [
@@ -143,6 +147,7 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
     StudentResumeController,
     HealthController,
     SettingController,
+    SkillController,
   ],
   providers: [
     AmoresFatiLogger,
@@ -404,24 +409,19 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       useFactory: (
         curriculumRepository: ICurriculumRepository,
         studentRepository: IStudentRepository,
-        resumePhotoStorage: IResumePhotoStorage,
       ) => {
         return new StudentResumeService(
           curriculumRepository,
           studentRepository,
-          resumePhotoStorage,
         );
       },
-      inject: [ICurriculumRepository, IStudentRepository, IResumePhotoStorage],
+      inject: [ICurriculumRepository, IStudentRepository],
     },
     {
       provide: ICurriculumRepository,
       useClass: CurriculumRepository,
     },
-    {
-      provide: IResumePhotoStorage,
-      useClass: LocalResumePhotoStorage,
-    },
+
     {
       provide: SettingService,
       useFactory: (settingRepository: ISettingRepository) => {
@@ -432,6 +432,17 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
     {
       provide: ISettingRepository,
       useClass: SettingRepository,
+    },
+    {
+      provide: SkillService,
+      useFactory: (skillRepository: ISkillRepository) => {
+        return new SkillService(skillRepository);
+      },
+      inject: [ISkillRepository],
+    },
+    {
+      provide: ISkillRepository,
+      useClass: SkillRepository,
     },
   ],
 })

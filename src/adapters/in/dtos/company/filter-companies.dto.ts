@@ -20,7 +20,8 @@ export class FilterCompaniesDto {
 
   @ApiPropertyOptional({
     example: 'DB Server',
-    description: 'Busca parcial por razão social, CNPJ ou e-mail, case-insensitive.',
+    description:
+      'Busca parcial por razão social, CNPJ ou e-mail, case-insensitive.',
   })
   @IsString()
   @IsOptional()

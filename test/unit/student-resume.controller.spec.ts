@@ -74,7 +74,7 @@ describe('StudentResumeController', () => {
         linkedinUrl: 'https://www.linkedin.com/in/aluno',
         githubUrl: 'https://github.com/aluno',
         videoPresentationUrl: 'https://www.youtube.com/watch?v=abc123',
-        photoUrl: '/uploads/photo.webp',
+        photoUrl: '/api/students/student-id/resume/photo',
         skills: [{ id: 'skill-id', skillName: 'TypeScript' }],
       });
       expect(service.getResume).toHaveBeenCalledWith(user.id);
@@ -136,7 +136,9 @@ describe('StudentResumeController', () => {
 
   describe('uploadPhoto', () => {
     it('should return uploaded photo URL', async () => {
-      service.uploadPhoto.mockResolvedValue({ photoUrl: '/uploads/photo.png' });
+      service.uploadPhoto.mockResolvedValue({
+        photoUrl: `/api/students/${user.id}/resume/photo`,
+      });
 
       const result = await controller.uploadPhoto(user, {
         originalname: 'photo.png',
@@ -145,7 +147,9 @@ describe('StudentResumeController', () => {
         buffer: Buffer.from('image'),
       });
 
-      expect(result).toEqual({ photoUrl: '/uploads/photo.png' });
+      expect(result).toEqual({
+        photoUrl: `/api/students/${user.id}/resume/photo`,
+      });
       expect(service.uploadPhoto).toHaveBeenCalledWith(user.id, {
         originalName: 'photo.png',
         mimeType: 'image/png',
@@ -270,7 +274,9 @@ function buildCurriculum(): Curriculum {
     'https://www.linkedin.com/in/aluno',
     'https://github.com/aluno',
     'https://www.youtube.com/watch?v=abc123',
-    '/uploads/photo.webp',
+    '/api/students/student-id/resume/photo',
+    null,
+    null,
     [{ id: 'skill-id', skillName: 'TypeScript' }],
   );
 }

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsString,
   IsNotEmpty,
@@ -20,7 +21,7 @@ export class CreateUpdateJobOpeningDto {
   })
   @IsString()
   @IsNotEmpty()
-  title: string;
+  name: string;
 
   @ApiProperty({
     example: 'Vaga para trabalhar com React...',
@@ -33,14 +34,19 @@ export class CreateUpdateJobOpeningDto {
   @ApiProperty({
     example: 'https://company.jobs/apply/123',
     description: 'Link de candidatura',
+    required: false,
   })
+  @IsOptional()
   @IsUrl()
-  link: string;
+  @Transform(({ value }: { value: unknown }) =>
+    value == null || value === '' ? undefined : value,
+  )
+  applicationLink?: string;
 
   @ApiProperty({ example: 3, description: 'Quantidade de vagas' })
   @IsInt()
   @Min(1)
-  vacancyCount: number;
+  openingsCount: number;
 
   @ApiProperty({ example: false, description: 'Indicador PCD' })
   @IsBoolean()

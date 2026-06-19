@@ -21,6 +21,7 @@ export interface StudentListProjection {
   phoneNumber: string;
   city?: string;
   state?: string;
+  photoUrl?: string;
   hasDisability?: boolean;
   disabilityType?: string;
   enrollments: StudentEnrollmentListProjection[];
