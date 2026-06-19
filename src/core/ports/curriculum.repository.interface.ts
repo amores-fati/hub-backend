@@ -10,6 +10,7 @@ export interface ResumeListProjection {
   socialName?: string;
   email: string;
   isAvailable: boolean;
+  isPcd: boolean;
   about?: string;
   linkedin?: string;
   github?: string;
