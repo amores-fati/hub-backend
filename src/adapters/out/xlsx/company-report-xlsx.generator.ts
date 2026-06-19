@@ -6,9 +6,7 @@ import {
 } from '../../../core/ports/company-report-xlsx-generator.interface';
 
 @Injectable()
-export class CompanyReportXlsxGenerator
-  implements ICompanyReportXlsxGenerator
-{
+export class CompanyReportXlsxGenerator implements ICompanyReportXlsxGenerator {
   async generate(command: GenerateCompanyReportXlsxCommand): Promise<Buffer> {
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'Amores Fati';
@@ -67,10 +65,7 @@ export class CompanyReportXlsxGenerator
       let maxLength = headerLength;
 
       column.eachCell?.({ includeEmpty: false }, (cell) => {
-        const value = cell.value;
-        const text =
-          value === null || value === undefined ? '' : String(value);
-        maxLength = Math.max(maxLength, text.length);
+        maxLength = Math.max(maxLength, cell.text.length);
       });
 
       column.width = Math.min(Math.max(maxLength + 2, 10), 42);
