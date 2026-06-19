@@ -28,6 +28,22 @@ export class FilterCompaniesDto {
   search?: string;
 
   @ApiPropertyOptional({
+    example: 'RS',
+    description: 'Filtro por UF da empresa.',
+  })
+  @IsString()
+  @IsOptional()
+  state?: string;
+
+  @ApiPropertyOptional({
+    example: 'Porto Alegre',
+    description: 'Filtro por cidade da empresa.',
+  })
+  @IsString()
+  @IsOptional()
+  city?: string;
+
+  @ApiPropertyOptional({
     enum: CompanyStatus,
     example: CompanyStatus.ATIVO,
     description: 'Filtro por situação da empresa.',
