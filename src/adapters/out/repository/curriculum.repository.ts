@@ -20,12 +20,14 @@ import { AddressStudentOrmEntity } from '../orm/address-student.orm-entity';
 import { StudentOrmEntity } from '../orm/student.orm-entity';
 import { TelephoneStudentOrmEntity } from '../orm/telephone-student.orm-entity';
 import { UserOrmEntity } from '../orm/user.orm-entity';
+import { DisabilityOrmEntity } from '../orm/disability.orm-entity';
 
 type CurriculumWithStudent = CurriculumOrmEntity & {
   student: StudentOrmEntity & {
     user: UserOrmEntity;
     phone: TelephoneStudentOrmEntity | null;
     address: AddressStudentOrmEntity | null;
+    disabilities?: DisabilityOrmEntity[];
   };
 };
 
@@ -57,7 +59,7 @@ export class CurriculumRepository implements ICurriculumRepository {
       .innerJoinAndSelect('student.user', 'user')
       .leftJoinAndSelect('student.telephone', 'phone')
       .leftJoinAndSelect('student.address', 'address')
-      .leftJoin('student.disabilities', 'disability');
+      .leftJoinAndSelect('student.disabilities', 'disability');
 
     if (query.search) {
       const search = this.buildLikeFilter(query.search);
@@ -230,6 +232,7 @@ export class CurriculumRepository implements ICurriculumRepository {
       socialName: ormEntity.student.socialName || undefined,
       email: ormEntity.student.user.email,
       isAvailable: ormEntity.isAvailable,
+      isPcd: (ormEntity.student.disabilities && ormEntity.student.disabilities.length > 0) ? true : false,
       about: ormEntity.about || undefined,
       linkedin: ormEntity.linkedin || undefined,
       github: ormEntity.github || undefined,

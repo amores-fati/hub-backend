@@ -1,13 +1,17 @@
-import { Controller, Get, Param, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Param, NotFoundException, Put, Body } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiOkResponse,
   ApiNotFoundResponse,
+  ApiBody,
 } from '@nestjs/swagger';
 import { SettingService } from '../../../core/services/setting.service';
 import { SettingNotFoundException } from '../../../core/exceptions/setting-not-found.exception';
 import { AmoresFatiLogger } from '../../../utils/logger';
+import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
+import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
+import { UpdateSettingDto } from '../dtos/admin/update-setting.dto';
 
 @ApiTags('Settings')
 @Controller('settings')
@@ -64,5 +68,25 @@ export class SettingController {
       }
       throw error;
     }
+  }
+
+  @RequireAuth(UserRoleEnum.ADMIN)
+  @Put(':key')
+  @ApiOperation({
+    summary: 'Atualiza uma configuração pela chave',
+    description: 'Cria ou atualiza uma configuração (Apenas ADMIN).',
+  })
+  @ApiBody({ type: UpdateSettingDto })
+  @ApiOkResponse({
+    description: 'Configuração atualizada com sucesso.',
+  })
+  async updateSetting(
+    @Param('key') key: string,
+    @Body() dto: UpdateSettingDto,
+  ) {
+    this.logger.info(`Atualizando configuração para a chave: ${key}`);
+    const result = await this.settingService.updateSettingByKey(key, dto.value);
+    this.logger.info(`Configuração atualizada para a chave: ${key}`);
+    return result;
   }
 }
