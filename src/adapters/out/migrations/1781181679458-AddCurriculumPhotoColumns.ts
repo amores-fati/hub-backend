@@ -112,24 +112,32 @@ export class AddCurriculumPhotoColumns1781181679458 implements MigrationInterfac
     await queryRunner.query(
       `ALTER TABLE "social_benefit" DROP CONSTRAINT "uq_social_benefit__name"`,
     );
-    await queryRunner.query(`ALTER TABLE "social_benefit" DROP COLUMN "name"`);
     await queryRunner.query(
-      `ALTER TABLE "social_benefit" ADD "name" character varying(100) NOT NULL`,
+      `ALTER TABLE "social_benefit" ALTER COLUMN "name" TYPE character varying(100)`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "social_benefit" ALTER COLUMN "name" SET NOT NULL`,
     );
     await queryRunner.query(
       `ALTER TABLE "social_benefit" ADD CONSTRAINT "UQ_e0c62574c756f0998a85b040774" UNIQUE ("name")`,
     );
     await queryRunner.query(
-      `ALTER TABLE "social_benefit" DROP COLUMN "created_at"`,
+      `ALTER TABLE "social_benefit" ALTER COLUMN "created_at" TYPE TIMESTAMP USING "created_at"::timestamp`,
     );
     await queryRunner.query(
-      `ALTER TABLE "social_benefit" ADD "created_at" TIMESTAMP NOT NULL`,
+      `ALTER TABLE "social_benefit" ALTER COLUMN "created_at" SET NOT NULL`,
     );
     await queryRunner.query(
-      `ALTER TABLE "social_benefit" DROP COLUMN "updated_at"`,
+      `ALTER TABLE "social_benefit" ALTER COLUMN "created_at" SET DEFAULT NOW()`,
     );
     await queryRunner.query(
-      `ALTER TABLE "social_benefit" ADD "updated_at" TIMESTAMP NOT NULL`,
+      `ALTER TABLE "social_benefit" ALTER COLUMN "updated_at" TYPE TIMESTAMP USING "updated_at"::timestamp`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "social_benefit" ALTER COLUMN "updated_at" SET NOT NULL`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "social_benefit" ALTER COLUMN "updated_at" SET DEFAULT NOW()`,
     );
     await queryRunner.query(
       `ALTER TABLE "disability" ALTER COLUMN "id" DROP DEFAULT`,
@@ -137,24 +145,32 @@ export class AddCurriculumPhotoColumns1781181679458 implements MigrationInterfac
     await queryRunner.query(
       `ALTER TABLE "disability" DROP CONSTRAINT "uq_disability__name"`,
     );
-    await queryRunner.query(`ALTER TABLE "disability" DROP COLUMN "name"`);
     await queryRunner.query(
-      `ALTER TABLE "disability" ADD "name" character varying(100) NOT NULL`,
+      `ALTER TABLE "disability" ALTER COLUMN "name" TYPE character varying(100)`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "disability" ALTER COLUMN "name" SET NOT NULL`,
     );
     await queryRunner.query(
       `ALTER TABLE "disability" ADD CONSTRAINT "UQ_808b883745bc0ed6c6f5bdea087" UNIQUE ("name")`,
     );
     await queryRunner.query(
-      `ALTER TABLE "disability" DROP COLUMN "created_at"`,
+      `ALTER TABLE "disability" ALTER COLUMN "created_at" TYPE TIMESTAMP USING "created_at"::timestamp`,
     );
     await queryRunner.query(
-      `ALTER TABLE "disability" ADD "created_at" TIMESTAMP NOT NULL`,
+      `ALTER TABLE "disability" ALTER COLUMN "created_at" SET NOT NULL`,
     );
     await queryRunner.query(
-      `ALTER TABLE "disability" DROP COLUMN "updated_at"`,
+      `ALTER TABLE "disability" ALTER COLUMN "created_at" SET DEFAULT NOW()`,
     );
     await queryRunner.query(
-      `ALTER TABLE "disability" ADD "updated_at" TIMESTAMP NOT NULL`,
+      `ALTER TABLE "disability" ALTER COLUMN "updated_at" TYPE TIMESTAMP USING "updated_at"::timestamp`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "disability" ALTER COLUMN "updated_at" SET NOT NULL`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "disability" ALTER COLUMN "updated_at" SET DEFAULT NOW()`,
     );
     await queryRunner.query(
       `ALTER TABLE "telephone_student" ALTER COLUMN "id" DROP DEFAULT`,

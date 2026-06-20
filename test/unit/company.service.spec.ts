@@ -37,6 +37,7 @@ describe('CompanyService', () => {
   const mockUserRepository: IUserRepository = {
     findById: jest.fn(),
     findByEmail: jest.fn(),
+    updatePassword: jest.fn(),
   };
 
   const mockHashService: IHashService = {

@@ -36,6 +36,10 @@ export class UserRepository implements IUserRepository {
     return ormEntity ? this.mapToDomain(ormEntity) : null;
   }
 
+  async updatePassword(id: string, passwordHash: string): Promise<void> {
+    await this.ormRepository.update(id, { password: passwordHash });
+  }
+
   private mapToDomain(ormEntity: UserOrmEntity): User {
     return new BaseUser(ormEntity.id, ormEntity.email, ormEntity.password);
   }
