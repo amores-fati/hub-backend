@@ -13,6 +13,17 @@ export interface CreateCompanyCommand {
   contact: CreateContactCommand;
 }
 
+export interface UpdateCompanyMeCommand {
+  email?: string;
+  phone?: string;
+  city?: string;
+  state?: string;
+  neighbourhood?: string;
+  address?: string;
+  complement?: string;
+  cep?: string;
+}
+
 export type UpdateCompanyCommand = Omit<
   CreateCompanyCommand,
   'cnpj' | 'contact'
