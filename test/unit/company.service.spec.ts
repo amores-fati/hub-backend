@@ -30,6 +30,8 @@ describe('CompanyService', () => {
     existsById: jest.fn(),
     findLocations: jest.fn(),
     findManyByFilters: jest.fn(),
+    findManyForReportByIds: jest.fn(),
+    findManyForReportByFilters: jest.fn(),
   };
 
   const mockUserRepository: IUserRepository = {
