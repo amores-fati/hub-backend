@@ -23,4 +23,21 @@ export class SettingRepository implements ISettingRepository {
   private mapToDomain(ormEntity: SettingOrmEntity): Setting {
     return new Setting(ormEntity.id, ormEntity.key, ormEntity.value);
   }
+
+  async save(setting: Setting): Promise<Setting> {
+    let ormEntity = await this.ormRepository.findOneBy({ key: setting.key });
+    
+    if (!ormEntity) {
+      ormEntity = this.ormRepository.create({
+        id: setting.id,
+        key: setting.key,
+        value: setting.value,
+      });
+    } else {
+      ormEntity.value = setting.value;
+    }
+    
+    const saved = await this.ormRepository.save(ormEntity);
+    return this.mapToDomain(saved);
+  }
 }
