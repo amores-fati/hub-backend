@@ -213,9 +213,25 @@ export class StudentRepository implements IStudentRepository {
     }
 
     if (query.disabilityType && query.disabilityType.length > 0) {
-      queryBuilder.andWhere('disabilities.name IN (:...disabilityTypes)', {
-        disabilityTypes: query.disabilityType,
-      });
+      const hasNenhuma = query.disabilityType.includes('NENHUMA');
+      const otherTypes = query.disabilityType.filter((t) => t !== 'NENHUMA');
+
+      if (hasNenhuma && otherTypes.length === 0) {
+        queryBuilder.andWhere('disabilities.id IS NULL');
+      } else if (hasNenhuma) {
+        queryBuilder.andWhere(
+          new Brackets((qb) => {
+            qb.where('disabilities.id IS NULL').orWhere(
+              'disabilities.name IN (:...disabilityTypes)',
+              { disabilityTypes: otherTypes },
+            );
+          }),
+        );
+      } else {
+        queryBuilder.andWhere('disabilities.name IN (:...disabilityTypes)', {
+          disabilityTypes: query.disabilityType,
+        });
+      }
     }
 
     const [ormEntities, total] = await queryBuilder
