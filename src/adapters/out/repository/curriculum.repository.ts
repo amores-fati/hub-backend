@@ -239,6 +239,8 @@ export class CurriculumRepository implements ICurriculumRepository {
       preference: ormEntity.preference || undefined,
       phone: ormEntity.student.telephone?.phone || undefined,
       photoUrl: ormEntity.profilePhoto || undefined,
+      city: ormEntity.student.address?.city || undefined,
+      state: ormEntity.student.address?.state || undefined,
     };
   }
 

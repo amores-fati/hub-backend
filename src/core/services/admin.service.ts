@@ -160,6 +160,8 @@ export class AdminService {
       preference: item.preference,
       phone: item.phone,
       photoUrl: item.photoUrl,
+      city: item.city,
+      state: item.state,
     };
   }
 }
