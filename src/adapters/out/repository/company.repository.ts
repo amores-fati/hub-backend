@@ -356,9 +356,27 @@ export class CompanyRepository implements ICompanyRepository {
       qb.andWhere('address.state ILIKE :state', { state });
     }
 
-    const city = filters.city?.trim();
-    if (city) {
-      qb.andWhere('address.city ILIKE :city', { city: `%${city}%` });
+    if (filters.city && filters.city.length > 0) {
+      qb.andWhere(
+        new Brackets((sub) => {
+          filters.city!.forEach((location, index) => {
+            const [city, state] = location.split('/').map((v) => v.trim());
+            if (city && state) {
+              sub.orWhere(
+                `(address.city ILIKE :city${index} AND address.state ILIKE :state${index})`,
+                {
+                  [`city${index}`]: `%${city}%`,
+                  [`state${index}`]: state,
+                },
+              );
+            } else {
+              sub.orWhere(`address.city ILIKE :loc${index}`, {
+                [`loc${index}`]: `%${location}%`,
+              });
+            }
+          });
+        }),
+      );
     }
   }
 

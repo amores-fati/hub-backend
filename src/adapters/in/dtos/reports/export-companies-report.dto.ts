@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsEnum,
@@ -26,10 +26,19 @@ export class ExportCompaniesReportFiltersDto {
   @IsString()
   state?: string;
 
-  @ApiPropertyOptional({ example: 'Porto Alegre' })
+  @ApiPropertyOptional({
+    example: ['Porto Alegre/RS'],
+    type: [String],
+    description: 'Filtro por cidade. Formato: "Cidade/UF" ou "Cidade".',
+  })
+  @Transform(
+    ({ value }) =>
+      (Array.isArray(value) ? value : value ? [value] : []) as string[],
+  )
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  @IsString()
-  city?: string;
+  city?: string[];
 
   @ApiPropertyOptional({
     enum: CompanyStatus,

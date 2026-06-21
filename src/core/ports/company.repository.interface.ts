@@ -7,7 +7,7 @@ export interface CompanyFilterOptions {
   search?: string;
   status?: CompanyStatus;
   state?: string;
-  city?: string;
+  city?: string[];
 }
 
 export interface CompanyWithStatus {

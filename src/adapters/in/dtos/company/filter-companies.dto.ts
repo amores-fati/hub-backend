@@ -1,5 +1,12 @@
-import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsArray,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { CompanyStatus } from '../../../../core/domain/company-status.enum';
 
@@ -36,12 +43,18 @@ export class FilterCompaniesDto {
   state?: string;
 
   @ApiPropertyOptional({
-    example: 'Porto Alegre',
-    description: 'Filtro por cidade da empresa.',
+    example: ['Porto Alegre/RS'],
+    type: [String],
+    description: 'Filtro por cidade da empresa. Formato: "Cidade/UF" ou "Cidade".',
   })
-  @IsString()
+  @Transform(
+    ({ value }) =>
+      (Array.isArray(value) ? value : value ? [value] : []) as string[],
+  )
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  city?: string;
+  city?: string[];
 
   @ApiPropertyOptional({
     enum: CompanyStatus,

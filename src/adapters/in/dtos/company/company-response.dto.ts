@@ -20,6 +20,12 @@ export class CompanyResponseDto {
 
   @ApiProperty({ enum: CompanyStatus, example: CompanyStatus.ATIVO })
   status!: CompanyStatus;
+
+  @ApiProperty({ example: 'Porto Alegre', nullable: true })
+  city!: string | null;
+
+  @ApiProperty({ example: 'RS', nullable: true })
+  state!: string | null;
 }
 
 export function toCompanyResponse(
@@ -33,5 +39,7 @@ export function toCompanyResponse(
     email: company.email,
     responsibleName: company.responsibleName,
     status,
+    city: company.contact.city ?? null,
+    state: company.contact.state ?? null,
   };
 }

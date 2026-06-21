@@ -24,7 +24,7 @@ export interface GenerateCompanyReportCommand {
   filters?: {
     search?: string;
     state?: string;
-    city?: string;
+    city?: string[];
     status?: CompanyStatus;
   };
   generatedBy: {
@@ -121,8 +121,7 @@ export class CompanyReportService {
     const state = this.normalizeState(filters.state);
     if (state) normalized.state = state;
 
-    const city = filters.city?.trim();
-    if (city) normalized.city = city;
+    if (filters.city?.length) normalized.city = filters.city;
 
     if (filters.status) normalized.status = filters.status;
 
