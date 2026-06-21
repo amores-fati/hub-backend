@@ -9,6 +9,10 @@ import {
   IStudentReportPdfGenerator,
   StudentReportPdfRow,
 } from '../ports/student-report-pdf-generator.interface';
+import {
+  IStudentReportXlsxGenerator,
+  StudentReportXlsxRow,
+} from '../ports/student-report-xlsx-generator.interface';
 
 export type StudentReportMode = 'selected' | 'all';
 
@@ -21,6 +25,7 @@ export interface StudentReportLogger {
 export interface GenerateStudentReportCommand {
   mode: StudentReportMode;
   ids?: string[];
+  format?: 'pdf' | 'xlsx';
   filters?: {
     search?: string;
     course?: string;
@@ -44,6 +49,7 @@ export class StudentReportService {
   constructor(
     private readonly studentRepository: IStudentRepository,
     private readonly pdfGenerator: IStudentReportPdfGenerator,
+    private readonly xlsxGenerator: IStudentReportXlsxGenerator,
     private readonly logger: StudentReportLogger,
   ) {}
 
@@ -69,24 +75,33 @@ export class StudentReportService {
     }
 
     const generatedAt = new Date();
-    const rows = students.map((student) => this.toPdfRow(student));
+    const format = command.format ?? 'pdf';
 
     this.logger.info('Generating students report', {
       userId: command.generatedBy.id,
       mode: command.mode,
-      count: rows.length,
+      format,
+      count: students.length,
     });
 
-    const buffer = await this.pdfGenerator.generate({
-      generatedAt,
-      generatedBy: command.generatedBy.name,
-      rows,
-    });
+    let buffer: Buffer;
+
+    if (format === 'xlsx') {
+      const rows = students.map((s) => this.toXlsxRow(s));
+      buffer = await this.xlsxGenerator.generate({ rows });
+    } else {
+      const rows = students.map((s) => this.toPdfRow(s));
+      buffer = await this.pdfGenerator.generate({
+        generatedAt,
+        generatedBy: command.generatedBy.name,
+        rows,
+      });
+    }
 
     return {
-      filename: this.buildFilename(generatedAt),
+      filename: this.buildFilename(generatedAt, format),
       buffer,
-      count: rows.length,
+      count: students.length,
     };
   }
 
@@ -176,6 +191,18 @@ export class StudentReportService {
     }
 
     return status;
+  }
+
+  private toXlsxRow(student: StudentReportProjection): StudentReportXlsxRow {
+    return {
+      name: student.socialName?.trim() || student.fullName,
+      cpf: this.maskCpf(student.cpf),
+      course: student.courseNames.length ? student.courseNames.join(', ') : '-',
+      email: student.email,
+      phone: this.formatPhone(student.phoneNumber),
+      location: this.formatLocation(student.city, student.state),
+      pcd: this.formatPcd(student.hasDisability, student.disabilityType),
+    };
   }
 
   private toPdfRow(student: StudentReportProjection): StudentReportPdfRow {
@@ -279,7 +306,7 @@ export class StudentReportService {
     );
   }
 
-  private buildFilename(date: Date): string {
+  private buildFilename(date: Date, format: 'pdf' | 'xlsx'): string {
     const year = date.getFullYear();
     const month = this.pad(date.getMonth() + 1);
     const day = this.pad(date.getDate());
@@ -287,7 +314,7 @@ export class StudentReportService {
     const minute = this.pad(date.getMinutes());
     const second = this.pad(date.getSeconds());
 
-    return `relatorio_alunos_${year}-${month}-${day}_${hour}${minute}${second}.pdf`;
+    return `relatorio_alunos_${year}-${month}-${day}_${hour}${minute}${second}.${format}`;
   }
 
   private pad(value: number): string {

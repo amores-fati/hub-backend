@@ -44,6 +44,11 @@ export class ExportStudentsReportFiltersDto {
   status?: string;
 }
 
+export enum ExportStudentsReportFormat {
+  PDF = 'pdf',
+  XLSX = 'xlsx',
+}
+
 export class ExportStudentsReportDto {
   @ApiProperty({
     enum: ExportStudentsReportMode,
@@ -51,6 +56,16 @@ export class ExportStudentsReportDto {
   })
   @IsEnum(ExportStudentsReportMode)
   mode: ExportStudentsReportMode;
+
+  @ApiPropertyOptional({
+    enum: ExportStudentsReportFormat,
+    example: ExportStudentsReportFormat.PDF,
+    default: ExportStudentsReportFormat.PDF,
+    description: 'Formato do arquivo exportado.',
+  })
+  @IsOptional()
+  @IsEnum(ExportStudentsReportFormat)
+  format: ExportStudentsReportFormat = ExportStudentsReportFormat.PDF;
 
   @ApiPropertyOptional({
     type: [String],

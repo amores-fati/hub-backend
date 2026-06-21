@@ -142,12 +142,15 @@ export class AdminReportsController {
 
   @Post('students')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Exporta o relatorio de alunos em PDF' })
+  @ApiOperation({ summary: 'Exporta o relatorio de alunos em PDF ou XLSX' })
   @ApiBody({ type: ExportStudentsReportDto })
   @ApiOkResponse({
-    description: 'PDF do relatorio de alunos gerado com sucesso.',
+    description: 'Relatorio de alunos gerado com sucesso (PDF ou XLSX).',
     content: {
       'application/pdf': {
+        schema: { type: 'string', format: 'binary' },
+      },
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
         schema: { type: 'string', format: 'binary' },
       },
     },
@@ -164,6 +167,7 @@ export class AdminReportsController {
       const report = await this.studentReportService.generateReport({
         mode: body.mode,
         ids: body.ids,
+        format: body.format,
         filters: body.filters,
         generatedBy: {
           id: user.id,
@@ -171,7 +175,12 @@ export class AdminReportsController {
         },
       });
 
-      response.setHeader('Content-Type', 'application/pdf');
+      const contentType =
+        body.format === 'xlsx'
+          ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          : 'application/pdf';
+
+      response.setHeader('Content-Type', contentType);
       response.setHeader(
         'Content-Disposition',
         `attachment; filename="${report.filename}"`,

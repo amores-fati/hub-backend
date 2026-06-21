@@ -53,6 +53,8 @@ import { ICourseReportPdfGenerator } from './core/ports/course-report-pdf-genera
 import { IResumeReportRepository } from './core/ports/resume-report.repository.interface';
 import { IResumeReportPdfGenerator } from './core/ports/resume-report-pdf-generator.interface';
 import { IStudentReportPdfGenerator } from './core/ports/student-report-pdf-generator.interface';
+import { IStudentReportXlsxGenerator } from './core/ports/student-report-xlsx-generator.interface';
+import { StudentReportXlsxGenerator } from './adapters/out/xlsx/student-report-xlsx.generator';
 import { IVacancyReportRepository } from './core/ports/vacancy-report.repository.interface';
 import { IVacancyReportPdfGenerator } from './core/ports/vacancy-report-pdf-generator.interface';
 
@@ -304,24 +306,31 @@ import { ISkillRepository } from './core/ports/skill.repository.interface';
       useFactory: (
         studentRepository: IStudentRepository,
         pdfGenerator: StudentReportPdfGenerator,
+        xlsxGenerator: StudentReportXlsxGenerator,
         logger: AmoresFatiLogger,
       ) => {
         logger.setContext(StudentReportService.name);
         return new StudentReportService(
           studentRepository,
           pdfGenerator,
+          xlsxGenerator,
           logger,
         );
       },
       inject: [
         IStudentRepository,
         IStudentReportPdfGenerator,
+        IStudentReportXlsxGenerator,
         AmoresFatiLogger,
       ],
     },
     {
       provide: IStudentReportPdfGenerator,
       useClass: StudentReportPdfGenerator,
+    },
+    {
+      provide: IStudentReportXlsxGenerator,
+      useClass: StudentReportXlsxGenerator,
     },
     {
       provide: VacancyReportService,
