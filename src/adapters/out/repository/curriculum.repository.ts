@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
-import { randomUUID } from 'crypto';
 
 import {
   Curriculum,
@@ -154,13 +153,26 @@ export class CurriculumRepository implements ICurriculumRepository {
   }
 
   async save(curriculum: Curriculum): Promise<Curriculum> {
-    await this.ormRepository.save(this.mapToOrm(curriculum));
+    const ormEntity = this.mapToOrm(curriculum);
+
+    // Em updates, preserva flags gerenciadas fora do fluxo de edição do
+    // currículo (isAvailable e preference) em vez de sobrescrevê-las. Para um
+    // currículo novo, vale o default de mapToOrm (isAvailable = true).
+    const existing = await this.ormRepository.findOne({
+      where: { id: curriculum.id },
+    });
+    if (existing) {
+      ormEntity.isAvailable = existing.isAvailable;
+      ormEntity.preference = existing.preference;
+    }
+
+    await this.ormRepository.save(ormEntity);
     const saved = await this.findByStudentId(curriculum.studentId);
 
     return saved!;
   }
 
-  async findOrCreateSkillByName(skillName: string): Promise<CurriculumSkill> {
+  async findSkillByName(skillName: string): Promise<CurriculumSkill | null> {
     const normalizedSkillName = skillName.trim();
     const skillRepository =
       this.ormRepository.manager.getRepository(SkillOrmEntity);
@@ -172,18 +184,8 @@ export class CurriculumRepository implements ICurriculumRepository {
       })
       .getOne();
 
-    if (existingSkill) {
-      return this.mapSkillToDomain(existingSkill);
-    }
-
-    const skill = skillRepository.create({
-      id: randomUUID(),
-      name: normalizedSkillName,
-    });
-
-    const savedSkill = await skillRepository.save(skill);
-
-    return this.mapSkillToDomain(savedSkill);
+    // Catálogo fechado: não cria skill nova. Retorna null se não existir.
+    return existingSkill ? this.mapSkillToDomain(existingSkill) : null;
   }
 
   async addSkillToCurriculum(

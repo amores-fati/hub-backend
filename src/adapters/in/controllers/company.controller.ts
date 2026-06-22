@@ -336,7 +336,7 @@ export class CompanyController {
     };
   }
 
-  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
+  @RequireAuth(UserRoleEnum.ADMIN)
   @Get(':id')
   @ApiOperation({ summary: 'Busca uma empresa por ID' })
   @ApiOkResponse({ description: 'Empresa encontrada com sucesso.' })
@@ -356,7 +356,7 @@ export class CompanyController {
     }
   }
 
-  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
+  @RequireAuth(UserRoleEnum.ADMIN)
   @Get('cnpj/:cnpj')
   @ApiOperation({ summary: 'Busca uma empresa por CNPJ' })
   @ApiOkResponse({ description: 'Empresa encontrada com sucesso.' })
@@ -376,7 +376,7 @@ export class CompanyController {
     }
   }
 
-  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
+  @RequireAuth(UserRoleEnum.ADMIN)
   @Put(':id')
   @ApiOperation({ summary: 'Atualiza completamente os dados de uma empresa' })
   @ApiBody({ type: UpdateCompanyDto })
@@ -419,7 +419,7 @@ export class CompanyController {
     }
   }
 
-  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
+  @RequireAuth(UserRoleEnum.ADMIN)
   @Patch(':id')
   @ApiOperation({ summary: 'Atualiza parcialmente os dados de uma empresa' })
   @ApiBody({ type: PatchCompanyDto })
@@ -526,7 +526,7 @@ export class CompanyController {
     }
   }
 
-  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
+  @RequireAuth(UserRoleEnum.ADMIN)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Deleta uma empresa pelo ID' })

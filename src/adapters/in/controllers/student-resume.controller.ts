@@ -39,6 +39,7 @@ import { InvalidResumeUrlException } from '../../../core/exceptions/invalid-resu
 import { ResumeSkillAlreadyExistsException } from '../../../core/exceptions/resume-skill-already-exists.exception';
 import { ResumeSkillNotFoundException } from '../../../core/exceptions/resume-skill-not-found.exception';
 import { ResumeNotFoundException } from '../../../core/exceptions/resume-not-found.exception';
+import { SkillNotFoundException } from '../../../core/exceptions/skill-not-found.exception';
 import { StudentNotFoundException } from '../../../core/exceptions/student-not-found.exception';
 import { StudentResumeService } from '../../../core/services/student-resume.service';
 import { CurrentUser } from '../../../utils/decorators/current-user.decorator';
@@ -320,6 +321,13 @@ export class StudentResumeController {
           userId: user.id,
         });
         throw this.conflict(error.message);
+      }
+
+      if (error instanceof SkillNotFoundException) {
+        this.logger.warn('Resume skill not in catalog', {
+          userId: user.id,
+        });
+        throw this.validationError(error.message);
       }
 
       if (error instanceof StudentNotFoundException) {

@@ -56,4 +56,19 @@ export class GetAdminStudentsDto {
   @IsString()
   @IsOptional()
   modality?: string;
+
+  @ApiPropertyOptional({
+    enum: ['fullName', 'phoneNumber', 'city'],
+    description: 'Coluna de ordenação (apenas colunas suportadas pelo backend).',
+  })
+  @IsString()
+  @IsIn(['fullName', 'phoneNumber', 'city'])
+  @IsOptional()
+  sortBy?: string;
+
+  @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'asc' })
+  @IsString()
+  @IsIn(['asc', 'desc'])
+  @IsOptional()
+  sortOrder?: 'asc' | 'desc';
 }

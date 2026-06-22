@@ -6,6 +6,7 @@ import { InvalidResumeUrlException } from '../../src/core/exceptions/invalid-res
 import { ResumeSkillAlreadyExistsException } from '../../src/core/exceptions/resume-skill-already-exists.exception';
 import { ResumeSkillNotFoundException } from '../../src/core/exceptions/resume-skill-not-found.exception';
 import { ResumeNotFoundException } from '../../src/core/exceptions/resume-not-found.exception';
+import { SkillNotFoundException } from '../../src/core/exceptions/skill-not-found.exception';
 import { ICurriculumRepository } from '../../src/core/ports/curriculum.repository.interface';
 import { IStudentRepository } from '../../src/core/ports/student.repository.interface';
 import {
@@ -20,7 +21,7 @@ describe('StudentResumeService', () => {
   const curriculumRepository: jest.Mocked<ICurriculumRepository> = {
     findByStudentId: jest.fn(),
     save: jest.fn(),
-    findOrCreateSkillByName: jest.fn(),
+    findSkillByName: jest.fn(),
     addSkillToCurriculum: jest.fn(),
     removeSkillFromCurriculum: jest.fn(),
   };
@@ -178,7 +179,7 @@ describe('StudentResumeService', () => {
       curriculumRepository.save.mockImplementation((curriculum) =>
         Promise.resolve(curriculum),
       );
-      curriculumRepository.findOrCreateSkillByName.mockResolvedValue({
+      curriculumRepository.findSkillByName.mockResolvedValue({
         id: 'new-skill-id',
         skillName: 'Node.js',
       });
@@ -198,13 +199,26 @@ describe('StudentResumeService', () => {
       expect(curriculumRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({ studentId }),
       );
-      expect(curriculumRepository.findOrCreateSkillByName).toHaveBeenCalledWith(
+      expect(curriculumRepository.findSkillByName).toHaveBeenCalledWith(
         'Node.js',
       );
       expect(curriculumRepository.addSkillToCurriculum).toHaveBeenCalledWith(
         expect.any(String),
         'new-skill-id',
       );
+    });
+
+    it('should reject a skill that is not in the catalog', async () => {
+      curriculumRepository.findByStudentId.mockResolvedValue(null);
+      studentRepository.existsById.mockResolvedValue(true);
+      curriculumRepository.findSkillByName.mockResolvedValue(null);
+
+      await expect(
+        service.addSkill(studentId, { skillName: 'COBOL' }),
+      ).rejects.toThrow(SkillNotFoundException);
+
+      expect(curriculumRepository.save).not.toHaveBeenCalled();
+      expect(curriculumRepository.addSkillToCurriculum).not.toHaveBeenCalled();
     });
 
     it('should reject empty skill names', async () => {

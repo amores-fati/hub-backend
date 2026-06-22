@@ -4,6 +4,7 @@ import {
   ConflictException,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -59,6 +60,14 @@ export class StudentController {
     private readonly logger: AmoresFatiLogger,
   ) {
     this.logger.setContext(StudentController.name);
+  }
+
+  private assertSelfOrAdmin(user: AuthenticatedUser, id: string): void {
+    if (user.role !== UserRoleEnum.ADMIN && user.id !== id) {
+      throw new ForbiddenException(
+        'Você não tem permissão para acessar este recurso.',
+      );
+    }
   }
 
   @Post()
@@ -206,7 +215,11 @@ export class StudentController {
   @ApiOperation({ summary: 'Busca um aluno por ID' })
   @ApiOkResponse({ description: 'Aluno encontrado com sucesso.' })
   @ApiNotFoundResponse({ description: 'Aluno nao encontrado.' })
-  async findById(@Param('id', ParseUUIDPipe) id: string) {
+  async findById(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    this.assertSelfOrAdmin(user, id);
     try {
       this.logger.info('Fetching student by id', { id });
       const student = await this.studentService.getStudentById(id);
@@ -221,7 +234,7 @@ export class StudentController {
     }
   }
 
-  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.STUDENT)
+  @RequireAuth(UserRoleEnum.ADMIN)
   @Get('cpf/:cpf')
   @ApiOperation({ summary: 'Busca um aluno por CPF' })
   @ApiOkResponse({ description: 'Aluno encontrado com sucesso.' })
@@ -250,9 +263,11 @@ export class StudentController {
   @ApiBadRequestResponse({ description: 'Erro de validacao.' })
   @ApiConflictResponse({ description: 'E-mail ja cadastrado na plataforma.' })
   async update(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateStudentDto: UpdateStudentDto,
   ) {
+    this.assertSelfOrAdmin(user, id);
     try {
       this.logger.info('Updating student', { id });
       const command: UpdateStudentCommand = { ...updateStudentDto };
@@ -293,9 +308,11 @@ export class StudentController {
   @ApiBadRequestResponse({ description: 'Erro de validacao.' })
   @ApiConflictResponse({ description: 'E-mail ja cadastrado na plataforma.' })
   async patch(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() patchStudentDto: PatchStudentDto,
   ) {
+    this.assertSelfOrAdmin(user, id);
     try {
       this.logger.info('Patching student', { id });
       const command: PatchStudentCommand = { ...patchStudentDto };

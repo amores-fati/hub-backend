@@ -45,7 +45,10 @@ export class EnrollmentService {
       throw new CourseNotFoundException(courseId);
     }
 
-    if (type === EnrollmentType.ENROLLMENT && course.modality === 'online') {
+    if (
+      type === EnrollmentType.ENROLLMENT &&
+      course.modality?.toLowerCase() === 'online'
+    ) {
       throw new DomainException(
         'Não é possível realizar matrícula direta em cursos da modalidade online.',
       );
@@ -54,12 +57,22 @@ export class EnrollmentService {
     const existing = await this.enrollmentRepository.findByStudentAndCourse(
       studentId,
       courseId,
+      type,
     );
     if (existing) {
       throw new EnrollmentAlreadyExistsException();
     }
 
-    course.decreaseVacancy();
+    // Apenas a matrícula efetiva (INSCRICAO) consome uma vaga do curso.
+    // A reserva é atômica no banco para evitar corrida e estouro de vagas.
+    if (type === EnrollmentType.ENROLLMENT) {
+      const reserved = await this.courseRepository.decreaseVacancy(courseId);
+      if (!reserved) {
+        throw new DomainException(
+          'Não há vagas disponíveis para este curso.',
+        );
+      }
+    }
 
     const enrollment = new Enrollment(
       randomUUID(),
@@ -69,10 +82,15 @@ export class EnrollmentService {
       new Date(),
     );
 
-    const created = await this.enrollmentRepository.create(enrollment);
-    await this.courseRepository.update(course);
-
-    return created;
+    try {
+      return await this.enrollmentRepository.create(enrollment);
+    } catch (error) {
+      // Se a criação falhar (ex.: corrida na unique key), devolve a vaga reservada.
+      if (type === EnrollmentType.ENROLLMENT) {
+        await this.courseRepository.increaseVacancy(courseId);
+      }
+      throw error;
+    }
   }
 
   private async unregister(
@@ -83,20 +101,18 @@ export class EnrollmentService {
     const existing = await this.enrollmentRepository.findByStudentAndCourse(
       studentId,
       courseId,
+      type,
     );
 
-    if (!existing || existing.type !== type) {
+    if (!existing) {
       throw new DomainException('Vínculo não encontrado.');
     }
 
-    const course = await this.courseRepository.findById(courseId);
-    if (!course) {
-      throw new CourseNotFoundException(courseId);
+    await this.enrollmentRepository.delete(studentId, courseId, type);
+
+    // Só devolve vaga quem efetivamente a consumiu (INSCRICAO).
+    if (type === EnrollmentType.ENROLLMENT) {
+      await this.courseRepository.increaseVacancy(courseId);
     }
-
-    await this.enrollmentRepository.delete(studentId, courseId);
-
-    course.increaseVacancy();
-    await this.courseRepository.update(course);
   }
 }

@@ -188,7 +188,7 @@ describe('StudentRepository', () => {
     expect(queryBuilder.leftJoinAndMapMany).toHaveBeenCalled();
     expect(queryBuilder.leftJoinAndMapOne).toHaveBeenCalled();
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      'course.modality = :modality',
+      'LOWER(course.modality) = LOWER(:modality)',
       { modality: 'PRESENCIAL' },
     );
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(expect.any(Brackets));

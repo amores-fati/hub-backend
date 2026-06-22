@@ -4,6 +4,7 @@ import {
   GenerateCompanyReportXlsxCommand,
   ICompanyReportXlsxGenerator,
 } from '../../../core/ports/company-report-xlsx-generator.interface';
+import { neutralizeFormulaRows } from './xlsx-security';
 
 @Injectable()
 export class CompanyReportXlsxGenerator implements ICompanyReportXlsxGenerator {
@@ -26,7 +27,7 @@ export class CompanyReportXlsxGenerator implements ICompanyReportXlsxGenerator {
       { header: 'Data de Cadastro', key: 'createdAt', width: 18 },
     ];
 
-    worksheet.addRows(command.rows);
+    worksheet.addRows(neutralizeFormulaRows(command.rows));
     this.styleHeader(worksheet);
     this.autoFitColumns(worksheet);
 

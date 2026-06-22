@@ -40,7 +40,11 @@ export interface ResumeFilterQuery {
 export interface ICurriculumRepository {
   findByStudentId(studentId: string): Promise<Curriculum | null>;
   save(curriculum: Curriculum): Promise<Curriculum>;
-  findOrCreateSkillByName(skillName: string): Promise<CurriculumSkill>;
+  /**
+   * Busca uma skill do catálogo pelo nome (case-insensitive). Retorna null se
+   * a skill não existir — o catálogo é fechado, o app não cria skills novas.
+   */
+  findSkillByName(skillName: string): Promise<CurriculumSkill | null>;
   addSkillToCurriculum(curriculumId: string, skillId: string): Promise<void>;
   removeSkillFromCurriculum(
     curriculumId: string,

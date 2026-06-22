@@ -75,7 +75,7 @@ export class CourseService {
       command.shift,
       command.address,
       command.description,
-      existing.status,
+      command.status ?? existing.status,
       command.bannerImage ?? existing.bannerImage,
       command.bannerImageMimeType ?? existing.bannerImageMimeType,
     );
