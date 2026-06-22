@@ -153,7 +153,9 @@ export class StudentRepository implements IStudentRepository {
         CurriculumOrmEntity,
         'curriculum',
         'curriculum.student_id = student.id',
-      );
+      )
+      .addSelect('curriculum.isAvailable')
+      .addSelect('curriculum.profilePhoto');
 
     if (query.search) {
       const search = this.buildLikeFilter(query.search);
@@ -179,7 +181,7 @@ export class StudentRepository implements IStudentRepository {
       if (query.modality === 'NAO_INSCRITO') {
         queryBuilder.andWhere('enrollment.id IS NULL');
       } else {
-        queryBuilder.andWhere('course.modality = :modality', {
+        queryBuilder.andWhere('LOWER(course.modality) = LOWER(:modality)', {
           modality: query.modality,
         });
       }
@@ -211,9 +213,41 @@ export class StudentRepository implements IStudentRepository {
     }
 
     if (query.disabilityType && query.disabilityType.length > 0) {
-      queryBuilder.andWhere('disabilities.name IN (:...disabilityTypes)', {
-        disabilityTypes: query.disabilityType,
-      });
+      const hasNenhuma = query.disabilityType.includes('NENHUMA');
+      const otherTypes = query.disabilityType.filter((t) => t !== 'NENHUMA');
+
+      if (hasNenhuma && otherTypes.length === 0) {
+        queryBuilder.andWhere('disabilities.id IS NULL');
+      } else if (hasNenhuma) {
+        queryBuilder.andWhere(
+          new Brackets((qb) => {
+            qb.where('disabilities.id IS NULL').orWhere(
+              'disabilities.name IN (:...disabilityTypes)',
+              { disabilityTypes: otherTypes },
+            );
+          }),
+        );
+      } else {
+        queryBuilder.andWhere('disabilities.name IN (:...disabilityTypes)', {
+          disabilityTypes: query.disabilityType,
+        });
+      }
+    }
+
+    // Ordenação: apenas colunas da raiz/1-para-1 são suportadas. Colunas de
+    // relação de coleção (curso via enrollment, PCD via deficiências) não são
+    // ordenáveis aqui porque quebram a paginação com DISTINCT do Postgres.
+    const SORT_COLUMNS: Record<string, string> = {
+      fullName: 'student.fullName',
+      phoneNumber: 'telephone.phone',
+      city: 'address.city',
+    };
+    const sortColumn = query.sortBy ? SORT_COLUMNS[query.sortBy] : undefined;
+    if (sortColumn) {
+      const direction = query.sortOrder === 'desc' ? 'DESC' : 'ASC';
+      queryBuilder
+        .orderBy(sortColumn, direction)
+        .addOrderBy('student.id', 'ASC');
     }
 
     const [ormEntities, total] = await queryBuilder
@@ -798,6 +832,7 @@ export class StudentRepository implements IStudentRepository {
         courseModality: enrollment.course?.modality ?? 'ONLINE',
       })),
       curriculumIsAvailable: ormEntity.curriculum?.isAvailable ?? false,
+      photoUrl: ormEntity.curriculum?.profilePhoto || undefined,
     };
   }
 

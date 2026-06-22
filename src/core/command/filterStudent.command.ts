@@ -5,4 +5,6 @@ export interface FilterStudentCommand {
   modality?: string;
   page?: number;
   pageSize?: 20 | 50;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }

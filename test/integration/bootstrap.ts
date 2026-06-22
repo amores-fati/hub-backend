@@ -1,5 +1,5 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, TestingModule, TestingModuleBuilder } from '@nestjs/testing';
 import * as dotenv from 'dotenv';
 import { existsSync, readFileSync } from 'fs';
 import { createRequire } from 'module';
@@ -10,6 +10,9 @@ type SeedIntegrationDatabase = (dataSource: DataSource) => Promise<void>;
 
 interface CreateIntegrationAppOptions {
   seed?: SeedIntegrationDatabase;
+  configureTestingModule?: (
+    builder: TestingModuleBuilder,
+  ) => TestingModuleBuilder;
 }
 
 interface IntegrationEnvironment {
@@ -153,9 +156,15 @@ export async function createIntegrationApp(
     '../../src/app.module',
   ) as typeof import('../../src/app.module');
 
-  const moduleFixture: TestingModule = await Test.createTestingModule({
+  let moduleBuilder = Test.createTestingModule({
     imports: [AppModule],
-  }).compile();
+  });
+
+  if (options.configureTestingModule) {
+    moduleBuilder = options.configureTestingModule(moduleBuilder);
+  }
+
+  const moduleFixture: TestingModule = await moduleBuilder.compile();
 
   const app = moduleFixture.createNestApplication();
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));

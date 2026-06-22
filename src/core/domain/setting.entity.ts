@@ -36,6 +36,11 @@ export class Setting {
     }
   }
 
+  updateValue(value: string): void {
+    this.#value = value;
+    this.validate();
+  }
+
   toJSON() {
     return {
       id: this.id,

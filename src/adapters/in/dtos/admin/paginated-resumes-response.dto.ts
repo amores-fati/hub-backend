@@ -20,6 +20,9 @@ export class ResumeListItemDto {
   email: string;
 
   @ApiProperty({ example: true })
+  isPcd: boolean;
+
+  @ApiProperty({ example: true })
   isAvailable: boolean;
 
   @ApiProperty({
@@ -36,6 +39,9 @@ export class ResumeListItemDto {
 
   @ApiProperty({ example: 'Remoto', required: false })
   preference?: string;
+
+  @ApiProperty({ example: '/api/students/123/resume/photo', required: false })
+  photoUrl?: string;
 
   @ApiProperty({ example: '(51) 99999-9999', required: false })
   phone?: string;

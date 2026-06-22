@@ -97,7 +97,8 @@ export class CourseController {
   async create(@Body() createCourseDto: CreateCourseDto) {
     try {
       this.logger.info('Creating course', { name: createCourseDto.name });
-      const command: CreateCourseCommand = this.toCreateCommand(createCourseDto);
+      const command: CreateCourseCommand =
+        this.toCreateCommand(createCourseDto);
       const course = await this.courseService.createCourse(command);
       this.logger.info('Course created', {
         id: (course as { id?: string })?.id,
@@ -118,7 +119,9 @@ export class CourseController {
     const { bannerImage, bannerImageMimeType, ...rest } = dto;
     return {
       ...rest,
-      bannerImage: bannerImage ? this.decodeBase64Image(bannerImage) : undefined,
+      bannerImage: bannerImage
+        ? this.decodeBase64Image(bannerImage)
+        : undefined,
       bannerImageMimeType: bannerImage ? bannerImageMimeType : undefined,
     };
   }
@@ -464,6 +467,9 @@ export class CourseController {
           errorKind: 'CONFLICT',
         });
       }
+      if (error instanceof Error && error.name === 'DomainException') {
+        throw new BadRequestException(error.message);
+      }
       throw error;
     }
   }
@@ -536,6 +542,89 @@ export class CourseController {
           message: 'Você já possui um vínculo com este curso',
           errorKind: 'CONFLICT',
         });
+      }
+      if (error instanceof Error && error.name === 'DomainException') {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
+  }
+
+  @RequireAuth(UserRoleEnum.STUDENT)
+  @Delete(':id/interest')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Remove o interesse do aluno em um curso',
+    description:
+      'Remove o interesse do aluno autenticado no curso informado e restaura as vagas. Requer perfil student.',
+  })
+  @ApiParam({ name: 'id', description: 'UUID do curso', type: String })
+  @ApiNoContentResponse({
+    description: 'Interesse removido com sucesso.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Curso não encontrado.',
+  })
+  @ApiBadRequestResponse({
+    description: 'Vínculo não encontrado ou inválido.',
+  })
+  async removeInterest(
+    @Param('id', ParseUUIDPipe) courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    this.logger.info('Removing interest', { userId: user.id, courseId });
+    try {
+      await this.enrollmentService.removeInterest(user.id, courseId);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CourseNotFoundException') {
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Curso não encontrado',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+      if (error instanceof Error && error.name === 'DomainException') {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
+  }
+
+  @RequireAuth(UserRoleEnum.STUDENT)
+  @Delete(':id/enroll')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Remove a matrícula do aluno em um curso',
+    description:
+      'Realiza o descadastro do aluno autenticado no curso informado e restaura as vagas. Requer perfil student.',
+  })
+  @ApiParam({ name: 'id', description: 'UUID do curso', type: String })
+  @ApiNoContentResponse({
+    description: 'Matrícula removida com sucesso.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Curso não encontrado.',
+  })
+  @ApiBadRequestResponse({
+    description: 'Vínculo não encontrado ou inválido.',
+  })
+  async unenroll(
+    @Param('id', ParseUUIDPipe) courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    this.logger.info('Unenrolling student', { userId: user.id, courseId });
+    try {
+      await this.enrollmentService.unenroll(user.id, courseId);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CourseNotFoundException') {
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Curso não encontrado',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+      if (error instanceof Error && error.name === 'DomainException') {
+        throw new BadRequestException(error.message);
       }
       throw error;
     }

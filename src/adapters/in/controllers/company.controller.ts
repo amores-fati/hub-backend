@@ -28,22 +28,36 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 
 import {
   CreateCompanyCommand,
   UpdateCompanyCommand,
+  UpdateCompanyMeCommand,
 } from '../../../core/command/company.command';
-import { CompanyService } from '../../../core/services/company.service';
+import {
+  CompanyService,
+  FilterCompaniesCommand,
+} from '../../../core/services/company.service';
+import { UpdateCompanyMeDto } from '../dtos/company/update-company-me.dto';
 import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
-import { CurrentUser } from '../../../utils/decorators/current-user.decorator';
-import type { AuthenticatedUser as BaseAuthenticatedUser } from '../../../utils/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  type AuthenticatedUser as BaseAuthenticatedUser,
+} from '../../../utils/decorators/current-user.decorator';
 import { AmoresFatiLogger } from '../../../utils/logger';
 import { CreateCompanyDto } from '../dtos/company/create-company.dto';
 import { PatchCompanyDto } from '../dtos/company/patch-company.dto';
 import { UpdateCompanyDto } from '../dtos/company/update-company.dto';
+import { FilterCompaniesDto } from '../dtos/company/filter-companies.dto';
+import { PaginatedCompaniesResponseDto } from '../dtos/company/paginated-companies-response.dto';
+import { toCompanyResponse } from '../dtos/company/company-response.dto';
 import { ListMyVacanciesQueryDto } from '../dtos/vacancy/list-my-vacancies-query.dto';
 import { UserRoleEnum } from '../../../core/domain/enums/user-role.enum';
+import { CreateUpdateJobOpeningDto } from '../dtos/job-opening/create-update-job-opening.dto';
+import { VacancyNotFoundException } from '../../../core/exceptions/vacancy-not-found.exception';
+import { VacancyForbiddenException } from '../../../core/exceptions/vacancy-forbidden.exception';
 
 interface AuthenticatedUser extends BaseAuthenticatedUser {
   companyId: string | null;
@@ -57,6 +71,168 @@ export class CompanyController {
     private readonly logger: AmoresFatiLogger,
   ) {
     this.logger.setContext(CompanyController.name);
+  }
+
+  @RequireAuth(UserRoleEnum.COMPANY)
+  @Post('me/vacancies')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Cria uma nova vaga para a empresa autenticada' })
+  @ApiBody({ type: CreateUpdateJobOpeningDto })
+  @ApiCreatedResponse({ description: 'Vaga criada com sucesso.' })
+  @ApiBadRequestResponse({ description: 'Erro de validacao.' })
+  async createMyVacancy(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() createDto: CreateUpdateJobOpeningDto,
+  ) {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException('Token inválido: companyId ausente');
+    }
+
+    this.logger.info('Creating job opening for company (me)', {
+      companyId,
+    });
+
+    try {
+      const result = await this.companyService.createVacancy(companyId, {
+        name: createDto.name,
+        description: createDto.description,
+        applicationLink: createDto.applicationLink,
+        openingsCount: createDto.openingsCount,
+        isPcd: createDto.isPcd,
+        workplaceType: createDto.workplaceType,
+        skills: createDto.skills,
+      });
+
+      this.logger.info('Job opening created', {
+        jobId: result.id,
+        companyId,
+      });
+      return result;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CompanyNotFoundException') {
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
+  }
+
+  @RequireAuth(UserRoleEnum.COMPANY)
+  @Get('me')
+  @ApiOperation({ summary: 'Retorna o perfil da empresa autenticada' })
+  @ApiOkResponse({ description: 'Perfil retornado com sucesso.' })
+  @ApiNotFoundResponse({ description: 'Empresa não encontrada.' })
+  async getMyProfile(@CurrentUser() user: AuthenticatedUser) {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException('Token inválido: companyId ausente');
+    }
+
+    this.logger.info('Fetching own company profile', { companyId });
+
+    try {
+      const company = await this.companyService.getCompanyById(companyId);
+      this.logger.info('Own company profile fetched', { companyId });
+      return company;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CompanyNotFoundException') {
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
+  }
+
+  @RequireAuth(UserRoleEnum.COMPANY)
+  @Put('me')
+  @ApiOperation({ summary: 'Atualiza o perfil da empresa autenticada' })
+  @ApiBody({ type: UpdateCompanyMeDto })
+  @ApiOkResponse({ description: 'Perfil atualizado com sucesso.' })
+  @ApiNotFoundResponse({ description: 'Empresa não encontrada.' })
+  @ApiBadRequestResponse({ description: 'Erro de validação.' })
+  @ApiConflictResponse({ description: 'E-mail já cadastrado na plataforma.' })
+  async updateMe(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateCompanyMeDto,
+  ) {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException('Token inválido: companyId ausente');
+    }
+
+    this.logger.info('Updating own company profile (me)', { companyId });
+
+    try {
+      const command: UpdateCompanyMeCommand = { ...dto };
+      const company =
+        await this.companyService.updateAuthenticatedCompanyProfile(
+          companyId,
+          command,
+        );
+      this.logger.info('Own company profile updated', { companyId });
+      return company;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'CompanyNotFoundException') {
+        throw new NotFoundException(error.message);
+      }
+      if (
+        error instanceof Error &&
+        error.name === 'UserAlreadyExistsException'
+      ) {
+        throw new ConflictException(error.message);
+      }
+      if (error instanceof Error && error.name === 'DomainException') {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
+  }
+
+  @RequireAuth(UserRoleEnum.COMPANY)
+  @Put('me/vacancies/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Atualiza uma vaga da propria empresa' })
+  @ApiBody({ type: CreateUpdateJobOpeningDto })
+  @ApiOkResponse({ description: 'Vaga atualizada com sucesso.' })
+  @ApiNotFoundResponse({ description: 'Vaga nao encontrada.' })
+  @ApiForbiddenResponse({ description: 'A vaga pertence a outra empresa.' })
+  @ApiBadRequestResponse({ description: 'Erro de validacao.' })
+  async updateMyVacancy(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateDto: CreateUpdateJobOpeningDto,
+  ) {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException('Token inválido: companyId ausente');
+    }
+
+    this.logger.info('Updating job opening for company (me)', {
+      companyId,
+      jobId: id,
+    });
+
+    try {
+      const result = await this.companyService.updateVacancy(id, companyId, {
+        name: updateDto.name,
+        description: updateDto.description,
+        applicationLink: updateDto.applicationLink,
+        openingsCount: updateDto.openingsCount,
+        isPcd: updateDto.isPcd,
+        workplaceType: updateDto.workplaceType,
+        skills: updateDto.skills,
+      });
+
+      this.logger.info('Job opening updated', { jobId: result.id });
+      return result;
+    } catch (error) {
+      if (error instanceof VacancyNotFoundException) {
+        throw new NotFoundException(error.message);
+      }
+      if (error instanceof VacancyForbiddenException) {
+        throw new ForbiddenException(error.message);
+      }
+      throw error;
+    }
   }
 
   @Post()
@@ -119,7 +295,48 @@ export class CompanyController {
     return companies;
   }
 
-  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
+  @RequireAuth(UserRoleEnum.ADMIN)
+  @Get('filter')
+  @ApiOperation({
+    summary: 'Lista empresas com filtros e paginação',
+    description:
+      'Retorna empresas paginadas com filtros opcionais por busca textual e status.',
+  })
+  @ApiOkResponse({
+    description: 'Empresas retornadas com sucesso.',
+    type: PaginatedCompaniesResponseDto,
+  })
+  async filter(
+    @Query() filters: FilterCompaniesDto,
+  ): Promise<PaginatedCompaniesResponseDto> {
+    this.logger.info('Filtering companies', {
+      page: filters.page,
+      limit: filters.limit,
+      search: filters.search,
+      state: filters.state,
+      city: filters.city,
+      status: filters.status,
+    });
+    const command: FilterCompaniesCommand = {
+      page: filters.page,
+      limit: filters.limit,
+      search: filters.search,
+      state: filters.state,
+      city: filters.city,
+      status: filters.status,
+    };
+    const result = await this.companyService.filterCompanies(command);
+    return {
+      data: result.data.map(({ company, status }) =>
+        toCompanyResponse(company, status),
+      ),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
+  }
+
+  @RequireAuth(UserRoleEnum.ADMIN)
   @Get(':id')
   @ApiOperation({ summary: 'Busca uma empresa por ID' })
   @ApiOkResponse({ description: 'Empresa encontrada com sucesso.' })
@@ -139,7 +356,7 @@ export class CompanyController {
     }
   }
 
-  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
+  @RequireAuth(UserRoleEnum.ADMIN)
   @Get('cnpj/:cnpj')
   @ApiOperation({ summary: 'Busca uma empresa por CNPJ' })
   @ApiOkResponse({ description: 'Empresa encontrada com sucesso.' })
@@ -159,7 +376,7 @@ export class CompanyController {
     }
   }
 
-  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
+  @RequireAuth(UserRoleEnum.ADMIN)
   @Put(':id')
   @ApiOperation({ summary: 'Atualiza completamente os dados de uma empresa' })
   @ApiBody({ type: UpdateCompanyDto })
@@ -202,7 +419,7 @@ export class CompanyController {
     }
   }
 
-  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
+  @RequireAuth(UserRoleEnum.ADMIN)
   @Patch(':id')
   @ApiOperation({ summary: 'Atualiza parcialmente os dados de uma empresa' })
   @ApiBody({ type: PatchCompanyDto })
@@ -247,6 +464,34 @@ export class CompanyController {
     }
   }
 
+  @RequireAuth(UserRoleEnum.COMPANY, UserRoleEnum.ADMIN)
+  @Get('me/vacancies/:id')
+  @ApiOperation({ summary: 'Busca uma vaga pelo ID' })
+  @ApiOkResponse({ description: 'Vaga encontrada com sucesso.' })
+  @ApiNotFoundResponse({ description: 'Vaga nao encontrada.' })
+  async getVacancyById(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    try {
+      this.logger.info('Buscando vaga por ID', { id });
+      const isAdmin = user.role === UserRoleEnum.ADMIN;
+      return await this.companyService.getVacancyById(
+        id,
+        user.companyId,
+        isAdmin,
+      );
+    } catch (error) {
+      if (error instanceof VacancyNotFoundException) {
+        throw new NotFoundException(error.message);
+      }
+      if (error instanceof VacancyForbiddenException) {
+        throw new ForbiddenException(error.message);
+      }
+      throw error;
+    }
+  }
+
   @RequireAuth(UserRoleEnum.COMPANY)
   @Get('me/vacancies')
   @ApiOperation({
@@ -268,6 +513,7 @@ export class CompanyController {
         search: query.search,
         vacancyCount: query.vacancyCount,
         isPcd: query.isPcd,
+        workplaceType: query.workplaceType,
       });
     } catch (error) {
       if (error instanceof Error && error.name === 'CompanyNotFoundException') {
@@ -280,7 +526,7 @@ export class CompanyController {
     }
   }
 
-  @RequireAuth(UserRoleEnum.ADMIN, UserRoleEnum.COMPANY)
+  @RequireAuth(UserRoleEnum.ADMIN)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Deleta uma empresa pelo ID' })
@@ -325,12 +571,12 @@ export class CompanyController {
       await this.companyService.deleteVacancy(id, companyId);
       this.logger.info('Vacancy deleted', { id });
     } catch (error) {
-      if (error instanceof NotFoundException) {
+      if (error instanceof VacancyNotFoundException) {
         this.logger.warn('Vacancy not found', { id });
         throw new NotFoundException(error.message);
       }
 
-      if (error instanceof ForbiddenException) {
+      if (error instanceof VacancyForbiddenException) {
         this.logger.warn('Forbidden deleting vacancy', { id });
         throw new ForbiddenException(error.message);
       }

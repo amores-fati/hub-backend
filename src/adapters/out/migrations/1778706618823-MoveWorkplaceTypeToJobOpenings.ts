@@ -4,10 +4,17 @@ export class MoveWorkplaceTypeToJobOpenings1778706618823 implements MigrationInt
   name = 'MoveWorkplaceTypeToJobOpenings1778706618823';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Add workplace_type column to job_openings table
+    // Update existing workplace_type column in job_openings table
     await queryRunner.query(`
             ALTER TABLE "job_openings"
-            ADD COLUMN "workplace_type" VARCHAR(100) NOT NULL DEFAULT 'presencial'
+            ALTER COLUMN "workplace_type" TYPE VARCHAR(100),
+            ALTER COLUMN "workplace_type" SET DEFAULT 'presencial'
+        `);
+
+    await queryRunner.query(`
+            UPDATE "job_openings"
+            SET "workplace_type" = 'presencial'
+            WHERE "workplace_type" = 'presential'
         `);
 
     // Add check constraint for job_openings
@@ -50,10 +57,17 @@ export class MoveWorkplaceTypeToJobOpenings1778706618823 implements MigrationInt
             DROP CONSTRAINT "ck_job_openings__workplace_type"
         `);
 
-    // Remove workplace_type column from job_openings
+    // Revert workplace_type column in job_openings table
     await queryRunner.query(`
             ALTER TABLE "job_openings"
-            DROP COLUMN "workplace_type"
+            ALTER COLUMN "workplace_type" TYPE VARCHAR(20),
+            ALTER COLUMN "workplace_type" SET DEFAULT 'presential'
+        `);
+
+    await queryRunner.query(`
+            UPDATE "job_openings"
+            SET "workplace_type" = 'presential'
+            WHERE "workplace_type" = 'presencial'
         `);
   }
 }

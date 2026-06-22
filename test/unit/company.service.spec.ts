@@ -13,7 +13,9 @@ import {
 import { IUserRepository } from '../../src/core/ports/user.repository.interface';
 import { IHashService } from '../../src/core/ports/hash.service.interface';
 import { IVacancyReportRepository } from '../../src/core/ports/vacancy-report.repository.interface';
+import { IJobOpeningRepository } from '../../src/core/ports/job-open.company.repository.interface';
 import { UserAlreadyExistsException } from '../../src/core/exceptions/user-already-exists.exception';
+import { CompanyStatus } from '../../src/core/domain/company-status.enum';
 
 describe('CompanyService', () => {
   let service: CompanyService;
@@ -27,11 +29,15 @@ describe('CompanyService', () => {
     delete: jest.fn(),
     existsById: jest.fn(),
     findLocations: jest.fn(),
+    findManyByFilters: jest.fn(),
+    findManyForReportByIds: jest.fn(),
+    findManyForReportByFilters: jest.fn(),
   };
 
   const mockUserRepository: IUserRepository = {
     findById: jest.fn(),
     findByEmail: jest.fn(),
+    updatePassword: jest.fn(),
   };
 
   const mockHashService: IHashService = {
@@ -43,6 +49,15 @@ describe('CompanyService', () => {
     findManyByIds: jest.fn(),
     findManyByFilters: jest.fn(),
     findMyVacancies: jest.fn(),
+    findAllForAdmin: jest.fn(),
+    findCompanyIdById: jest.fn(),
+    deleteById: jest.fn(),
+  };
+
+  const mockJobOpeningRepository: IJobOpeningRepository = {
+    countActive: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
   };
 
   let mockContact: Contact;
@@ -77,6 +92,7 @@ describe('CompanyService', () => {
       mockUserRepository,
       mockHashService,
       mockVacancyRepository,
+      mockJobOpeningRepository,
     );
   });
 
@@ -388,6 +404,94 @@ describe('CompanyService', () => {
       await expect(
         service.listMyVacancies('missing-company-id', { page: 1, limit: 10 }),
       ).rejects.toThrow(CompanyNotFoundException);
+    });
+  });
+
+  describe('filterCompanies', () => {
+    const make245Companies = () =>
+      Array.from({ length: 245 }, (_, i) => ({
+        company: new Company(
+          `id-${i}`,
+          `empresa${i}@test.com`,
+          'hashedPassword',
+          `Empresa ${i}`,
+          `${String(i).padStart(14, '0')}`,
+          'Responsável',
+          mockContact,
+        ),
+        status: CompanyStatus.ATIVO,
+      }));
+
+    it('should return 10 companies and total=245 when page=1&limit=10', async () => {
+      (mockRepository.findManyByFilters as jest.Mock).mockResolvedValue({
+        data: make245Companies().slice(0, 10),
+        total: 245,
+      });
+
+      const result = await service.filterCompanies({ page: 1, limit: 10 });
+
+      expect(result.total).toBe(245);
+      expect(result.data).toHaveLength(10);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(10);
+    });
+
+    it('should return correct slice for page 2', async () => {
+      (mockRepository.findManyByFilters as jest.Mock).mockResolvedValue({
+        data: make245Companies().slice(10, 20),
+        total: 245,
+      });
+
+      const result = await service.filterCompanies({ page: 2, limit: 10 });
+
+      expect(result.data).toHaveLength(10);
+      expect(result.data[0].company.id).toBe('id-10');
+    });
+
+    it('should pass search filter to repository', async () => {
+      (mockRepository.findManyByFilters as jest.Mock).mockResolvedValue({
+        data: [{ company: mockCompany, status: CompanyStatus.ATIVO }],
+        total: 1,
+      });
+
+      await service.filterCompanies({ page: 1, limit: 10, search: 'db' });
+
+      expect(mockRepository.findManyByFilters).toHaveBeenCalledWith(
+        { search: 'db' },
+        1,
+        10,
+      );
+    });
+
+    it('should pass status filter to repository', async () => {
+      (mockRepository.findManyByFilters as jest.Mock).mockResolvedValue({
+        data: [],
+        total: 0,
+      });
+
+      await service.filterCompanies({
+        page: 1,
+        limit: 10,
+        status: CompanyStatus.INATIVO,
+      });
+
+      expect(mockRepository.findManyByFilters).toHaveBeenCalledWith(
+        { status: CompanyStatus.INATIVO },
+        1,
+        10,
+      );
+    });
+
+    it('should return empty data when no companies match', async () => {
+      (mockRepository.findManyByFilters as jest.Mock).mockResolvedValue({
+        data: [],
+        total: 0,
+      });
+
+      const result = await service.filterCompanies({ page: 1, limit: 10 });
+
+      expect(result.data).toHaveLength(0);
+      expect(result.total).toBe(0);
     });
   });
 });

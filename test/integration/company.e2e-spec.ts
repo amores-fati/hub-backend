@@ -1,7 +1,10 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { Server } from 'http';
+import { execSync } from 'child_process';
+import { randomUUID } from 'crypto';
 import { cnpj } from 'cpf-cnpj-validator';
+import { DataSource } from 'typeorm';
 import { createIntegrationApp } from './bootstrap';
 
 interface CompanyResponse {
@@ -14,16 +17,42 @@ interface CompanyResponse {
   };
 }
 
-describe('CompanyController (e2e)', () => {
+const runE2e = (() => {
+  try {
+    execSync('docker info', { stdio: 'ignore', timeout: 2000 });
+    return true;
+  } catch {
+    // If Docker is not available locally, skip heavy e2e tests to allow local dev and PRs.
+    // CI environments that provide Docker will still run these tests.
+
+    console.warn('Skipping e2e tests: Docker daemon not available.');
+    return false;
+  }
+})();
+
+const describeOrSkip: typeof describe = runE2e ? describe : describe.skip;
+
+describeOrSkip('CompanyController (e2e)', () => {
   let app: INestApplication;
   let createdCompanyId: string;
   let dynamicCnpj: string;
   let accessToken: string;
+  let skillIds: string[] = [];
   const companyEmail = `test-${Date.now()}@company.com`;
   const companyPassword = 'securepassword123';
 
   beforeAll(async () => {
-    app = await createIntegrationApp();
+    const seed = async (dataSource: DataSource) => {
+      const typescriptId = randomUUID();
+      const nestjsId = randomUUID();
+      const reactId = randomUUID();
+      await dataSource.query(
+        `INSERT INTO "skills" (id, name) VALUES ($1, $2), ($3, $4), ($5, $6)`,
+        [typescriptId, 'TypeScript', nestjsId, 'NestJS', reactId, 'React'],
+      );
+      skillIds = [typescriptId, nestjsId, reactId];
+    };
+    app = await createIntegrationApp({ seed });
     dynamicCnpj = cnpj.generate();
   });
 
@@ -177,6 +206,165 @@ describe('CompanyController (e2e)', () => {
           const body = res.body as unknown as CompanyResponse;
           expect(body.name).toBe('Patched E2E Company');
         });
+    });
+  });
+
+  describe('/companies/me/vacancies (POST) and /companies/me/vacancies/:id (PUT)', () => {
+    let vacancyId: string;
+    let otherCompanyToken: string;
+
+    beforeAll(async () => {
+      const otherCnpj = cnpj.generate();
+      const otherEmail = `other-${Date.now()}@company.com`;
+
+      await request(app.getHttpServer() as Server)
+        .post('/companies')
+        .send({
+          name: 'Other E2E Company',
+          cnpj: otherCnpj,
+          email: otherEmail,
+          password: companyPassword,
+          responsibleName: 'Other Admin',
+          contact: {
+            city: 'Brasilia',
+            state: 'DF',
+            address: 'SQN',
+            neighbourhood: 'Asa Norte',
+            cep: '70000000',
+            phone: '61988888888',
+          },
+        })
+        .expect(201);
+
+      const loginRes = await request(app.getHttpServer() as Server)
+        .post('/auth/login')
+        .send({ email: otherEmail, password: companyPassword })
+        .expect(200);
+
+      otherCompanyToken = (loginRes.body as { accessToken: string })
+        .accessToken;
+    });
+
+    it('should create a new vacancy for the authenticated company (201)', async () => {
+      const response = await request(app.getHttpServer() as Server)
+        .post('/companies/me/vacancies')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          name: 'Desenvolvedor Fullstack',
+          description:
+            'Vaga de desenvolvedor para atuar com backend e frontend.',
+          applicationLink: 'https://company.jobs/apply/fullstack',
+          openingsCount: 2,
+          isPcd: false,
+          workplaceType: 'hibrido',
+          skills: skillIds,
+        })
+        .expect(201);
+
+      const body = response.body as {
+        id: string;
+        name: string;
+        openingsCount: number;
+        applicationLink: string;
+        isPcd: boolean;
+        workplaceType: string;
+        skills: { id: string; name: string }[];
+      };
+      expect(body.id).toBeDefined();
+      expect(body.name).toBe('Desenvolvedor Fullstack');
+      expect(body.openingsCount).toBe(2);
+      expect(body.applicationLink).toBe('https://company.jobs/apply/fullstack');
+      expect(body.isPcd).toBe(false);
+      expect(body.workplaceType).toBe('hibrido');
+      expect(body.skills).toHaveLength(3);
+      expect(body.skills.map((s) => s.name).sort()).toEqual([
+        'NestJS',
+        'React',
+        'TypeScript',
+      ]);
+      vacancyId = body.id;
+    });
+
+    it('should return 400 for invalid workplaceType', () => {
+      return request(app.getHttpServer() as Server)
+        .post('/companies/me/vacancies')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          name: 'Vaga invalida',
+          description: 'Teste',
+          applicationLink: 'https://company.jobs/apply/test',
+          openingsCount: 1,
+          isPcd: false,
+          workplaceType: 'invalid-type',
+        })
+        .expect(400);
+    });
+
+    it('should update an existing vacancy for the authenticated company (200)', async () => {
+      const response = await request(app.getHttpServer() as Server)
+        .put(`/companies/me/vacancies/${vacancyId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          name: 'Desenvolvedor Fullstack Senior',
+          description: 'Vaga atualizada para desenvolvedor fullstack senior.',
+          applicationLink: 'https://company.jobs/apply/fullstack-senior',
+          openingsCount: 1,
+          isPcd: true,
+          workplaceType: 'online',
+          skills: [skillIds[0]],
+        })
+        .expect(200);
+
+      const body = response.body as {
+        id: string;
+        name: string;
+        openingsCount: number;
+        applicationLink: string;
+        isPcd: boolean;
+        workplaceType: string;
+        skills: { id: string; name: string }[];
+      };
+      expect(body.id).toBe(vacancyId);
+      expect(body.name).toBe('Desenvolvedor Fullstack Senior');
+      expect(body.openingsCount).toBe(1);
+      expect(body.applicationLink).toBe(
+        'https://company.jobs/apply/fullstack-senior',
+      );
+      expect(body.isPcd).toBe(true);
+      expect(body.workplaceType).toBe('online');
+      expect(body.skills).toHaveLength(1);
+      expect(body.skills[0].name).toBe('TypeScript');
+    });
+
+    it('should return 404 when updating a non-existing vacancy', () => {
+      const nonExistentVacancyId = '123e4567-e89b-12d3-a456-426614174999';
+      return request(app.getHttpServer() as Server)
+        .put(`/companies/me/vacancies/${nonExistentVacancyId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          name: 'Vaga Inexistente',
+          description: 'Teste',
+          applicationLink: 'https://company.jobs/apply/not-found',
+          openingsCount: 1,
+          isPcd: false,
+          workplaceType: 'presencial',
+        })
+        .expect(404);
+    });
+
+    it('should return 403 when updating a vacancy belonging to another company', () => {
+      return request(app.getHttpServer() as Server)
+        .put(`/companies/me/vacancies/${vacancyId}`)
+        .set('Authorization', `Bearer ${otherCompanyToken}`)
+        .send({
+          name: 'Tentativa indevida',
+          description: 'Outra empresa tentando atualizar.',
+          applicationLink: 'https://company.jobs/apply/forbidden',
+          openingsCount: 1,
+          isPcd: false,
+          workplaceType: 'presencial',
+        })
+        .expect(403);
     });
   });
 

@@ -41,6 +41,7 @@ describe('StudentService', () => {
   const mockUserRepository: IUserRepository = {
     findById: jest.fn(),
     findByEmail: jest.fn(),
+    updatePassword: jest.fn(),
   };
 
   const mockHashService: IHashService = {
@@ -237,7 +238,7 @@ describe('StudentService', () => {
         id: mockStudent.id,
         cpf: '123.***.***-09',
         phoneNumber: mockStudent.contact.phone,
-        enrollmentStatus: 'ONLINE',
+        enrollmentStatus: ['ONLINE'],
       });
       expect(result.meta).toEqual({
         page: 1,
@@ -294,7 +295,7 @@ describe('StudentService', () => {
 
       const result = await service.findAllStudentsWithFilter({});
 
-      expect(result.items[0].enrollmentStatus).toBe('NAO_INSCRITO');
+      expect(result.items[0].enrollmentStatus).toEqual(['NAO_INSCRITO']);
     });
   });
 

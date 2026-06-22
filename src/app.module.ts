@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule, JwtService } from '@nestjs/jwt';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { buildDatabaseOptions } from './config/database.config';
 import { AmoresFatiLogger, HttpLoggerInterceptor } from './utils/logger';
+import { DomainExceptionFilter } from './utils/filters/domain-exception.filter';
 
 // Admin Adapters & Core
 import { AdminController } from './adapters/in/controllers/admin.controller';
@@ -27,6 +29,11 @@ import { JwtTokenService } from './adapters/out/auth/jwt-token.service';
 import { IHashService } from './core/ports/hash.service.interface';
 import { ITokenService } from './core/ports/token.service.interface';
 import { JwtStrategy } from './utils/strategies/jwt.strategy';
+import { PasswordResetTokenOrmEntity } from './adapters/out/orm/password-reset-token.orm-entity';
+import { PasswordResetTokenRepository } from './adapters/out/repository/password-reset-token.repository';
+import { IPasswordResetTokenRepository } from './core/ports/password-reset-token.repository.interface';
+import { IMailService } from './core/ports/mail.service.interface';
+import { NodemailerMailService } from './adapters/out/mail/nodemailer-mail.service';
 
 // Course Adapters & Core
 import { CourseController } from './adapters/in/controllers/course.controller';
@@ -48,6 +55,8 @@ import { ICourseReportPdfGenerator } from './core/ports/course-report-pdf-genera
 import { IResumeReportRepository } from './core/ports/resume-report.repository.interface';
 import { IResumeReportPdfGenerator } from './core/ports/resume-report-pdf-generator.interface';
 import { IStudentReportPdfGenerator } from './core/ports/student-report-pdf-generator.interface';
+import { IStudentReportXlsxGenerator } from './core/ports/student-report-xlsx-generator.interface';
+import { StudentReportXlsxGenerator } from './adapters/out/xlsx/student-report-xlsx.generator';
 import { IVacancyReportRepository } from './core/ports/vacancy-report.repository.interface';
 import { IVacancyReportPdfGenerator } from './core/ports/vacancy-report-pdf-generator.interface';
 
@@ -55,9 +64,12 @@ import { IVacancyReportPdfGenerator } from './core/ports/vacancy-report-pdf-gene
 import { CompanyOrmEntity } from './adapters/out/orm/company.orm-entity';
 import { AdminOrmEntity } from './adapters/out/orm/admin.orm-entity';
 import { CompanyController } from './adapters/in/controllers/company.controller';
+import { CompanyReportService } from './core/services/company-report.service';
 import { CompanyService } from './core/services/company.service';
 import { ICompanyRepository } from './core/ports/company.repository.interface';
 import { CompanyRepository } from './adapters/out/repository/company.repository';
+import { CompanyReportXlsxGenerator } from './adapters/out/xlsx/company-report-xlsx.generator';
+import { ICompanyReportXlsxGenerator } from './core/ports/company-report-xlsx-generator.interface';
 import { IJobOpeningRepository } from './core/ports/job-open.company.repository.interface';
 import { JobOpeningRepository } from './adapters/out/repository/job.opening.repository';
 
@@ -79,8 +91,6 @@ import { StudentOrmEntity } from './adapters/out/orm/student.orm-entity';
 import { IStudentRepository } from './core/ports/student.repository.interface';
 import { CurriculumRepository } from './adapters/out/repository/curriculum.repository';
 import { ICurriculumRepository } from './core/ports/curriculum.repository.interface';
-import { LocalResumePhotoStorage } from './adapters/out/storage/local-resume-photo.storage';
-import { IResumePhotoStorage } from './core/ports/resume-photo-storage.interface';
 
 // Enrollment Adapters & Core
 import { EnrollmentService } from './core/services/enrollment.service';
@@ -95,6 +105,12 @@ import { SettingRepository } from './adapters/out/repository/setting.repository'
 import { SettingOrmEntity } from './adapters/out/orm/setting.orm-entity';
 import { ISettingRepository } from './core/ports/setting.repository.interface';
 
+// Skill Adapters & Core
+import { SkillController } from './adapters/in/controllers/skill.controller';
+import { SkillService } from './core/services/skill.service';
+import { SkillRepository } from './adapters/out/repository/skill.repository';
+import { ISkillRepository } from './core/ports/skill.repository.interface';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -102,14 +118,15 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
     }),
     PassportModule,
+    // Rate limiting: 10 requisições por minuto por IP. Aplicado apenas no
+    // AuthController (login/forgot-password/reset-password/change-password)
+    // via @UseGuards(ThrottlerGuard), para mitigar brute-force e abuso.
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>(
-          'JWT_SECRET',
-          'default-secret-key-for-dev',
-        ),
+        secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: { expiresIn: '7d' },
       }),
     }),
@@ -131,6 +148,7 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       SettingOrmEntity,
       EnrollmentOrmEntity,
       JobOpeningOrmEntity,
+      PasswordResetTokenOrmEntity,
     ]),
   ],
   controllers: [
@@ -143,12 +161,17 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
     StudentResumeController,
     HealthController,
     SettingController,
+    SkillController,
   ],
   providers: [
     AmoresFatiLogger,
     {
       provide: APP_INTERCEPTOR,
       useClass: HttpLoggerInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: DomainExceptionFilter,
     },
     {
       provide: AdminService,
@@ -199,6 +222,9 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         studentRepository: IStudentRepository,
         companyRepository: ICompanyRepository,
         adminRepository: IAdminRepository,
+        passwordResetTokenRepository: IPasswordResetTokenRepository,
+        mailService: IMailService,
+        configService: ConfigService,
       ) => {
         return new AuthService(
           userRepository,
@@ -207,6 +233,20 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
           studentRepository,
           companyRepository,
           adminRepository,
+          passwordResetTokenRepository,
+          mailService,
+          {
+            frontendUrl: configService.get<string>(
+              'FRONTEND_URL',
+              'http://localhost:3000',
+            ),
+            expirationMinutes: Number(
+              configService.get<string>(
+                'RESET_PASSWORD_TOKEN_EXPIRATION_MINUTES',
+                '30',
+              ),
+            ),
+          },
         );
       },
       inject: [
@@ -216,7 +256,18 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         IStudentRepository,
         ICompanyRepository,
         IAdminRepository,
+        IPasswordResetTokenRepository,
+        IMailService,
+        ConfigService,
       ],
+    },
+    {
+      provide: IPasswordResetTokenRepository,
+      useClass: PasswordResetTokenRepository,
+    },
+    {
+      provide: IMailService,
+      useClass: NodemailerMailService,
     },
     {
       provide: IHashService,
@@ -262,24 +313,31 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       useFactory: (
         studentRepository: IStudentRepository,
         pdfGenerator: StudentReportPdfGenerator,
+        xlsxGenerator: StudentReportXlsxGenerator,
         logger: AmoresFatiLogger,
       ) => {
         logger.setContext(StudentReportService.name);
         return new StudentReportService(
           studentRepository,
           pdfGenerator,
+          xlsxGenerator,
           logger,
         );
       },
       inject: [
         IStudentRepository,
         IStudentReportPdfGenerator,
+        IStudentReportXlsxGenerator,
         AmoresFatiLogger,
       ],
     },
     {
       provide: IStudentReportPdfGenerator,
       useClass: StudentReportPdfGenerator,
+    },
+    {
+      provide: IStudentReportXlsxGenerator,
+      useClass: StudentReportXlsxGenerator,
     },
     {
       provide: VacancyReportService,
@@ -358,12 +416,14 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         userRepository: IUserRepository,
         hashService: IHashService,
         vacancyRepository: IVacancyReportRepository,
+        jobOpeningRepository: IJobOpeningRepository,
       ) => {
         return new CompanyService(
           companyRepository,
           userRepository,
           hashService,
           vacancyRepository,
+          jobOpeningRepository,
         );
       },
       inject: [
@@ -371,11 +431,36 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
         IUserRepository,
         IHashService,
         IVacancyReportRepository,
+        IJobOpeningRepository,
       ],
     },
     {
       provide: ICompanyRepository,
       useClass: CompanyRepository,
+    },
+    {
+      provide: CompanyReportService,
+      useFactory: (
+        companyRepository: ICompanyRepository,
+        xlsxGenerator: CompanyReportXlsxGenerator,
+        logger: AmoresFatiLogger,
+      ) => {
+        logger.setContext(CompanyReportService.name);
+        return new CompanyReportService(
+          companyRepository,
+          xlsxGenerator,
+          logger,
+        );
+      },
+      inject: [
+        ICompanyRepository,
+        ICompanyReportXlsxGenerator,
+        AmoresFatiLogger,
+      ],
+    },
+    {
+      provide: ICompanyReportXlsxGenerator,
+      useClass: CompanyReportXlsxGenerator,
     },
     {
       provide: StudentService,
@@ -401,24 +486,19 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
       useFactory: (
         curriculumRepository: ICurriculumRepository,
         studentRepository: IStudentRepository,
-        resumePhotoStorage: IResumePhotoStorage,
       ) => {
         return new StudentResumeService(
           curriculumRepository,
           studentRepository,
-          resumePhotoStorage,
         );
       },
-      inject: [ICurriculumRepository, IStudentRepository, IResumePhotoStorage],
+      inject: [ICurriculumRepository, IStudentRepository],
     },
     {
       provide: ICurriculumRepository,
       useClass: CurriculumRepository,
     },
-    {
-      provide: IResumePhotoStorage,
-      useClass: LocalResumePhotoStorage,
-    },
+
     {
       provide: SettingService,
       useFactory: (settingRepository: ISettingRepository) => {
@@ -429,6 +509,17 @@ import { ISettingRepository } from './core/ports/setting.repository.interface';
     {
       provide: ISettingRepository,
       useClass: SettingRepository,
+    },
+    {
+      provide: SkillService,
+      useFactory: (skillRepository: ISkillRepository) => {
+        return new SkillService(skillRepository);
+      },
+      inject: [ISkillRepository],
+    },
+    {
+      provide: ISkillRepository,
+      useClass: SkillRepository,
     },
   ],
 })

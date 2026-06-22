@@ -39,8 +39,9 @@ export interface StudentListItem {
   state?: string;
   hasDisability?: boolean;
   disabilityType?: string;
-  enrollmentStatus: 'ONLINE' | 'PRESENCIAL' | 'NAO_INSCRITO';
+  enrollmentStatus: Array<'ONLINE' | 'PRESENCIAL' | 'NAO_INSCRITO'>;
   curriculumIsAvailable: boolean;
+  photoUrl?: string;
 }
 
 export interface PaginatedStudentsResponse {
@@ -151,6 +152,8 @@ export class StudentService {
       modality: this.normalizeFilterValue(command.modality),
       page: command.page ?? 1,
       pageSize: command.pageSize ?? 20,
+      sortBy: command.sortBy,
+      sortOrder: command.sortOrder,
     };
 
     const result = await this.studentRepository.findAllWithFilter(query);
@@ -504,6 +507,7 @@ export class StudentService {
       disabilityType: student.disabilityType,
       enrollmentStatus: this.deriveEnrollmentStatus(student, modality),
       curriculumIsAvailable: student.curriculumIsAvailable,
+      photoUrl: student.photoUrl,
     };
   }
 
@@ -511,15 +515,32 @@ export class StudentService {
     student: StudentListProjection,
     modality?: string,
   ): StudentListItem['enrollmentStatus'] {
-    const enrollment = modality
-      ? student.enrollments.find((item) => item.courseModality === modality)
-      : student.enrollments[0];
-
-    if (!enrollment) {
-      return 'NAO_INSCRITO';
+    if (modality) {
+      const enrollment = student.enrollments.find(
+        (item) => item.courseModality === modality,
+      );
+      if (!enrollment) return ['NAO_INSCRITO'];
+      return [
+        enrollment.courseModality.toUpperCase() === 'PRESENCIAL'
+          ? 'PRESENCIAL'
+          : 'ONLINE',
+      ];
     }
 
-    return enrollment.courseModality === 'PRESENCIAL' ? 'PRESENCIAL' : 'ONLINE';
+    if (!student.enrollments || student.enrollments.length === 0) {
+      return ['NAO_INSCRITO'];
+    }
+
+    const statuses = new Set<'ONLINE' | 'PRESENCIAL'>();
+    for (const enrollment of student.enrollments) {
+      statuses.add(
+        enrollment.courseModality.toUpperCase() === 'PRESENCIAL'
+          ? 'PRESENCIAL'
+          : 'ONLINE',
+      );
+    }
+
+    return Array.from(statuses);
   }
 
   private maskCpf(cpf: string): string {

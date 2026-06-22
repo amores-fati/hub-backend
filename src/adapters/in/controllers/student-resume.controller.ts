@@ -12,9 +12,12 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
+  Res,
+  Header,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBadRequestResponse,
@@ -26,6 +29,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 
@@ -35,6 +39,7 @@ import { InvalidResumeUrlException } from '../../../core/exceptions/invalid-resu
 import { ResumeSkillAlreadyExistsException } from '../../../core/exceptions/resume-skill-already-exists.exception';
 import { ResumeSkillNotFoundException } from '../../../core/exceptions/resume-skill-not-found.exception';
 import { ResumeNotFoundException } from '../../../core/exceptions/resume-not-found.exception';
+import { SkillNotFoundException } from '../../../core/exceptions/skill-not-found.exception';
 import { StudentNotFoundException } from '../../../core/exceptions/student-not-found.exception';
 import { StudentResumeService } from '../../../core/services/student-resume.service';
 import { CurrentUser } from '../../../utils/decorators/current-user.decorator';
@@ -74,7 +79,7 @@ export class StudentResumeController {
         linkedinUrl: 'https://www.linkedin.com/in/aluno',
         githubUrl: 'https://github.com/aluno',
         videoPresentationUrl: 'https://www.youtube.com/watch?v=abc123',
-        photoUrl: '/uploads/resume-photos/student-id/photo.webp',
+        photoUrl: '/api/students/student-id/resume/photo',
         skills: [{ id: 'skill-id', skillName: 'TypeScript' }],
       },
     },
@@ -111,7 +116,7 @@ export class StudentResumeController {
         linkedinUrl: 'https://www.linkedin.com/in/aluno',
         githubUrl: 'https://github.com/aluno',
         videoPresentationUrl: 'https://www.youtube.com/watch?v=abc123',
-        photoUrl: '/uploads/resume-photos/student-id/photo.webp',
+        photoUrl: '/api/students/student-id/resume/photo',
         skills: [{ id: 'skill-id', skillName: 'TypeScript' }],
       },
     },
@@ -190,7 +195,7 @@ export class StudentResumeController {
   })
   @ApiOkResponse({
     description: 'Foto atualizada com sucesso.',
-    schema: { example: { photoUrl: '/uploads/resume-photos/id/photo.webp' } },
+    schema: { example: { photoUrl: '/api/students/student-id/resume/photo' } },
   })
   @ApiBadRequestResponse({ description: 'Arquivo invalido.' })
   async uploadPhoto(
@@ -234,6 +239,50 @@ export class StudentResumeController {
     }
   }
 
+  @Get('students/:id/resume/photo')
+  @ApiOperation({
+    summary: 'Retorna os bytes da foto do curriculo do aluno',
+  })
+  @ApiParam({ name: 'id', description: 'UUID do aluno', type: String })
+  @ApiOkResponse({
+    description: 'Imagem retornada com sucesso.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Curriculo ou foto nao encontrada.',
+  })
+  @Header('Cache-Control', 'public, max-age=3600')
+  async getPhoto(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    try {
+      const curriculum = await this.studentResumeService.getResume(id);
+      if (!curriculum.photoBuffer || curriculum.photoBuffer.length === 0) {
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Foto de curriculo nao encontrada',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+
+      res.setHeader(
+        'Content-Type',
+        curriculum.photoMimeType ?? 'application/octet-stream',
+      );
+      res.setHeader('Content-Length', curriculum.photoBuffer.length);
+      res.end(curriculum.photoBuffer);
+    } catch (error) {
+      if (error instanceof ResumeNotFoundException) {
+        throw new NotFoundException({
+          statusCode: 404,
+          message: 'Curriculo não encontrado',
+          errorKind: 'NOT_FOUND',
+        });
+      }
+      throw error;
+    }
+  }
+
   @RequireAuth(UserRoleEnum.STUDENT)
   @Post('students/me/resume/skills')
   @HttpCode(HttpStatus.CREATED)
@@ -272,6 +321,13 @@ export class StudentResumeController {
           userId: user.id,
         });
         throw this.conflict(error.message);
+      }
+
+      if (error instanceof SkillNotFoundException) {
+        this.logger.warn('Resume skill not in catalog', {
+          userId: user.id,
+        });
+        throw this.validationError(error.message);
       }
 
       if (error instanceof StudentNotFoundException) {

@@ -6,8 +6,8 @@ import { InvalidResumeUrlException } from '../../src/core/exceptions/invalid-res
 import { ResumeSkillAlreadyExistsException } from '../../src/core/exceptions/resume-skill-already-exists.exception';
 import { ResumeSkillNotFoundException } from '../../src/core/exceptions/resume-skill-not-found.exception';
 import { ResumeNotFoundException } from '../../src/core/exceptions/resume-not-found.exception';
+import { SkillNotFoundException } from '../../src/core/exceptions/skill-not-found.exception';
 import { ICurriculumRepository } from '../../src/core/ports/curriculum.repository.interface';
-import { IResumePhotoStorage } from '../../src/core/ports/resume-photo-storage.interface';
 import { IStudentRepository } from '../../src/core/ports/student.repository.interface';
 import {
   MAX_RESUME_PHOTO_SIZE_BYTES,
@@ -21,7 +21,7 @@ describe('StudentResumeService', () => {
   const curriculumRepository: jest.Mocked<ICurriculumRepository> = {
     findByStudentId: jest.fn(),
     save: jest.fn(),
-    findOrCreateSkillByName: jest.fn(),
+    findSkillByName: jest.fn(),
     addSkillToCurriculum: jest.fn(),
     removeSkillFromCurriculum: jest.fn(),
   };
@@ -43,17 +43,9 @@ describe('StudentResumeService', () => {
     findManyForReportByFilters: jest.fn(),
   };
 
-  const resumePhotoStorage: jest.Mocked<IResumePhotoStorage> = {
-    save: jest.fn(),
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new StudentResumeService(
-      curriculumRepository,
-      studentRepository,
-      resumePhotoStorage,
-    );
+    service = new StudentResumeService(curriculumRepository, studentRepository);
   });
 
   describe('getResume', () => {
@@ -139,7 +131,6 @@ describe('StudentResumeService', () => {
     it('should validate, store and update resume photo', async () => {
       curriculumRepository.findByStudentId.mockResolvedValue(null);
       studentRepository.existsById.mockResolvedValue(true);
-      resumePhotoStorage.save.mockResolvedValue('/uploads/photo.png');
 
       const result = await service.uploadPhoto(studentId, {
         originalName: 'photo.png',
@@ -148,15 +139,15 @@ describe('StudentResumeService', () => {
         buffer: Buffer.from('image'),
       });
 
-      expect(result).toEqual({ photoUrl: '/uploads/photo.png' });
-      expect(resumePhotoStorage.save).toHaveBeenCalledWith({
-        studentId,
-        originalName: 'photo.png',
-        mimeType: 'image/png',
-        buffer: Buffer.from('image'),
+      expect(result).toEqual({
+        photoUrl: `/api/students/${studentId}/resume/photo`,
       });
       expect(curriculumRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({ studentId }),
+        expect.objectContaining({
+          studentId,
+          photoBufferValue: Buffer.from('image'),
+          photoMimeTypeValue: 'image/png',
+        }),
       );
     });
 
@@ -188,7 +179,7 @@ describe('StudentResumeService', () => {
       curriculumRepository.save.mockImplementation((curriculum) =>
         Promise.resolve(curriculum),
       );
-      curriculumRepository.findOrCreateSkillByName.mockResolvedValue({
+      curriculumRepository.findSkillByName.mockResolvedValue({
         id: 'new-skill-id',
         skillName: 'Node.js',
       });
@@ -208,13 +199,26 @@ describe('StudentResumeService', () => {
       expect(curriculumRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({ studentId }),
       );
-      expect(curriculumRepository.findOrCreateSkillByName).toHaveBeenCalledWith(
+      expect(curriculumRepository.findSkillByName).toHaveBeenCalledWith(
         'Node.js',
       );
       expect(curriculumRepository.addSkillToCurriculum).toHaveBeenCalledWith(
         expect.any(String),
         'new-skill-id',
       );
+    });
+
+    it('should reject a skill that is not in the catalog', async () => {
+      curriculumRepository.findByStudentId.mockResolvedValue(null);
+      studentRepository.existsById.mockResolvedValue(true);
+      curriculumRepository.findSkillByName.mockResolvedValue(null);
+
+      await expect(
+        service.addSkill(studentId, { skillName: 'COBOL' }),
+      ).rejects.toThrow(SkillNotFoundException);
+
+      expect(curriculumRepository.save).not.toHaveBeenCalled();
+      expect(curriculumRepository.addSkillToCurriculum).not.toHaveBeenCalled();
     });
 
     it('should reject empty skill names', async () => {
@@ -287,6 +291,8 @@ function buildCurriculum(): Curriculum {
     'https://github.com/aluno',
     'https://www.youtube.com/watch?v=abc123',
     '/uploads/photo.webp',
+    null,
+    null,
     [{ id: 'skill-id', skillName: 'TypeScript' }],
   );
 }

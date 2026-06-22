@@ -21,6 +21,7 @@ export interface StudentListProjection {
   phoneNumber: string;
   city?: string;
   state?: string;
+  photoUrl?: string;
   hasDisability?: boolean;
   disabilityType?: string;
   enrollments: StudentEnrollmentListProjection[];
@@ -63,6 +64,8 @@ export interface StudentFilterQuery {
   modality?: string;
   page: number;
   pageSize: 20 | 50;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 export interface DisabilityCount {
   disabilityType: string;

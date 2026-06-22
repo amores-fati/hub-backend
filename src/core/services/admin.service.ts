@@ -99,6 +99,7 @@ export class AdminService {
       preference: query.preference,
       status: query.status,
       city: query.city,
+      isPcd: query.isPcd,
       page: normalizedPage,
       limit: normalizedLimit,
     };
@@ -152,11 +153,15 @@ export class AdminService {
       socialName: item.socialName,
       email: item.email,
       isAvailable: item.isAvailable,
+      isPcd: item.isPcd,
       about: item.about,
       linkedin: item.linkedin,
       github: item.github,
       preference: item.preference,
       phone: item.phone,
+      photoUrl: item.photoUrl,
+      city: item.city,
+      state: item.state,
     };
   }
 }

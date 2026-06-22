@@ -8,7 +8,9 @@ import {
   HttpStatus,
   UnauthorizedException,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -19,12 +21,27 @@ import {
 } from '@nestjs/swagger';
 import { AuthService } from '../../../core/services/auth.service';
 import { LoginDto } from '../dtos/login/login.dto';
-import { LoginCommand } from '../../../core/command/auth.command';
+import {
+  ChangePasswordCommand,
+  ForgotPasswordCommand,
+  LoginCommand,
+  ResetPasswordCommand,
+} from '../../../core/command/auth.command';
 import { InvalidCredentialsException } from '../../../core/exceptions/invalid-credentials.exception';
 import { DomainException } from '../../../core/exceptions/domain.exception';
 import { AmoresFatiLogger } from '../../../utils/logger';
+import { RequireAuth } from '../../../utils/decorators/api-auth.decorator';
+import {
+  CurrentUser,
+  type AuthenticatedUser,
+} from '../../../utils/decorators/current-user.decorator';
+import { ChangePasswordDto } from '../dtos/auth/change-password.dto';
+import { ForgotPasswordDto } from '../dtos/auth/forgot-password.dto';
+import { ResetPasswordDto } from '../dtos/auth/reset-password.dto';
+import { InvalidPasswordResetTokenException } from '../../../core/exceptions/invalid-password-reset-token.exception';
 
 @ApiTags('Auth')
+@UseGuards(ThrottlerGuard)
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -90,6 +107,150 @@ export class AuthController {
       }
       if (error instanceof DomainException) {
         this.logger.error('Login domain error');
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Solicita recuperacao de senha',
+    description:
+      'Recebe um email e, se existir usuario cadastrado, envia um link temporario de redefinicao.',
+  })
+  @ApiBody({ type: ForgotPasswordDto })
+  @ApiOkResponse({
+    description: 'Solicitacao recebida',
+    schema: {
+      example: {
+        message:
+          'Se o e-mail estiver cadastrado, enviaremos as instrucoes para recuperacao de senha.',
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Erro de validacao.',
+  })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    this.logger.info('Password reset requested');
+
+    const command: ForgotPasswordCommand = {
+      email: forgotPasswordDto.email,
+    };
+
+    // Resposta constante: nunca revela se o e-mail existe nem vaza falha de
+    // infra/mail. Erros internos são logados, mas a resposta é sempre 200.
+    try {
+      await this.authService.forgotPassword(command);
+    } catch {
+      this.logger.error(
+        'forgotPassword: falha interna suprimida para manter resposta constante',
+      );
+    }
+
+    return {
+      message:
+        'Se o e-mail estiver cadastrado, enviaremos as instrucoes para recuperacao de senha.',
+    };
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Redefine senha com token de recuperacao',
+    description:
+      'Recebe o token enviado por email e uma nova senha, valida o token e atualiza a senha.',
+  })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiOkResponse({
+    description: 'Senha redefinida com sucesso',
+    schema: {
+      example: {
+        message: 'Senha redefinida com sucesso.',
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Token invalido/expirado ou erro de validacao.',
+  })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    try {
+      const command: ResetPasswordCommand = {
+        token: resetPasswordDto.token,
+        newPassword: resetPasswordDto.newPassword,
+      };
+
+      await this.authService.resetPassword(command);
+
+      return { message: 'Senha redefinida com sucesso.' };
+    } catch (error) {
+      if (error instanceof InvalidPasswordResetTokenException) {
+        throw new BadRequestException(error.message);
+      }
+      if (error instanceof DomainException) {
+        this.logger.error('Password reset domain error');
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
+  }
+
+  @RequireAuth()
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Altera a senha do usuario autenticado',
+    description:
+      'Recebe a senha atual e a nova senha, valida as credenciais atuais e atualiza a senha do usuario autenticado.',
+  })
+  @ApiBody({ type: ChangePasswordDto })
+  @ApiOkResponse({
+    description: 'Senha alterada com sucesso',
+    schema: {
+      example: {
+        message: 'Senha alterada com sucesso.',
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Erro de validacao.',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token ausente/invalido ou senha atual incorreta.',
+  })
+  async changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    try {
+      this.logger.info('Changing authenticated user password', {
+        userId: user.id,
+      });
+
+      const command: ChangePasswordCommand = {
+        userId: user.id,
+        currentPassword: changePasswordDto.currentPassword,
+        newPassword: changePasswordDto.newPassword,
+      };
+
+      await this.authService.changePassword(command);
+
+      this.logger.info('Authenticated user password changed', {
+        userId: user.id,
+      });
+
+      return { message: 'Senha alterada com sucesso.' };
+    } catch (error) {
+      if (error instanceof InvalidCredentialsException) {
+        this.logger.warn('Password change failed: invalid credentials', {
+          userId: user.id,
+        });
+        throw new UnauthorizedException(error.message);
+      }
+      if (error instanceof DomainException) {
+        this.logger.error('Password change domain error');
         throw new BadRequestException(error.message);
       }
       throw error;

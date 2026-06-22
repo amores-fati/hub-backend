@@ -20,6 +20,7 @@ import { TelephoneStudentOrmEntity } from '../adapters/out/orm/telephone-student
 import { AddressStudentOrmEntity } from '../adapters/out/orm/address-student.orm-entity';
 import { SettingOrmEntity } from '../adapters/out/orm/setting.orm-entity';
 import { EnrollmentOrmEntity } from '../adapters/out/orm/enrollment.orm-entity';
+import { PasswordResetTokenOrmEntity } from '../adapters/out/orm/password-reset-token.orm-entity';
 import { SnakeNamingStrategy } from './snake-naming.strategy';
 
 export const ORM_ENTITIES = [
@@ -41,6 +42,7 @@ export const ORM_ENTITIES = [
   SkillOrmEntity,
   SettingOrmEntity,
   EnrollmentOrmEntity,
+  PasswordResetTokenOrmEntity,
 ] as const;
 
 type SharedDatabaseOptions = PostgresConnectionOptions;

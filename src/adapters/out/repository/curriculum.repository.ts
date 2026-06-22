@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
-import { randomUUID } from 'crypto';
 
 import {
   Curriculum,
@@ -20,12 +19,14 @@ import { AddressStudentOrmEntity } from '../orm/address-student.orm-entity';
 import { StudentOrmEntity } from '../orm/student.orm-entity';
 import { TelephoneStudentOrmEntity } from '../orm/telephone-student.orm-entity';
 import { UserOrmEntity } from '../orm/user.orm-entity';
+import { DisabilityOrmEntity } from '../orm/disability.orm-entity';
 
 type CurriculumWithStudent = CurriculumOrmEntity & {
   student: StudentOrmEntity & {
     user: UserOrmEntity;
     phone: TelephoneStudentOrmEntity | null;
     address: AddressStudentOrmEntity | null;
+    disabilities?: DisabilityOrmEntity[];
   };
 };
 
@@ -56,7 +57,8 @@ export class CurriculumRepository implements ICurriculumRepository {
       .innerJoinAndSelect('curriculum.student', 'student')
       .innerJoinAndSelect('student.user', 'user')
       .leftJoinAndSelect('student.telephone', 'phone')
-      .leftJoinAndSelect('student.address', 'address');
+      .leftJoinAndSelect('student.address', 'address')
+      .leftJoinAndSelect('student.disabilities', 'disability');
 
     if (query.search) {
       const search = this.buildLikeFilter(query.search);
@@ -82,9 +84,7 @@ export class CurriculumRepository implements ICurriculumRepository {
       queryBuilder.andWhere(
         'LOWER(student.activityArea) IN (:...activityAreas)',
         {
-          activityAreas: query.activityArea.map((area) =>
-            area.toLowerCase(),
-          ),
+          activityAreas: query.activityArea.map((area) => area.toLowerCase()),
         },
       );
     }
@@ -131,6 +131,14 @@ export class CurriculumRepository implements ICurriculumRepository {
       );
     }
 
+    if (query.isPcd !== undefined) {
+      if (query.isPcd) {
+        queryBuilder.andWhere('disability.id IS NOT NULL');
+      } else {
+        queryBuilder.andWhere('disability.id IS NULL');
+      }
+    }
+
     const [ormEntities, total] = await queryBuilder
       .skip((normalizedPage - 1) * normalizedLimit)
       .take(normalizedLimit)
@@ -145,13 +153,26 @@ export class CurriculumRepository implements ICurriculumRepository {
   }
 
   async save(curriculum: Curriculum): Promise<Curriculum> {
-    await this.ormRepository.save(this.mapToOrm(curriculum));
+    const ormEntity = this.mapToOrm(curriculum);
+
+    // Em updates, preserva flags gerenciadas fora do fluxo de edição do
+    // currículo (isAvailable e preference) em vez de sobrescrevê-las. Para um
+    // currículo novo, vale o default de mapToOrm (isAvailable = true).
+    const existing = await this.ormRepository.findOne({
+      where: { id: curriculum.id },
+    });
+    if (existing) {
+      ormEntity.isAvailable = existing.isAvailable;
+      ormEntity.preference = existing.preference;
+    }
+
+    await this.ormRepository.save(ormEntity);
     const saved = await this.findByStudentId(curriculum.studentId);
 
     return saved!;
   }
 
-  async findOrCreateSkillByName(skillName: string): Promise<CurriculumSkill> {
+  async findSkillByName(skillName: string): Promise<CurriculumSkill | null> {
     const normalizedSkillName = skillName.trim();
     const skillRepository =
       this.ormRepository.manager.getRepository(SkillOrmEntity);
@@ -163,18 +184,8 @@ export class CurriculumRepository implements ICurriculumRepository {
       })
       .getOne();
 
-    if (existingSkill) {
-      return this.mapSkillToDomain(existingSkill);
-    }
-
-    const skill = skillRepository.create({
-      id: randomUUID(),
-      name: normalizedSkillName,
-    });
-
-    const savedSkill = await skillRepository.save(skill);
-
-    return this.mapSkillToDomain(savedSkill);
+    // Catálogo fechado: não cria skill nova. Retorna null se não existir.
+    return existingSkill ? this.mapSkillToDomain(existingSkill) : null;
   }
 
   async addSkillToCurriculum(
@@ -223,11 +234,15 @@ export class CurriculumRepository implements ICurriculumRepository {
       socialName: ormEntity.student.socialName || undefined,
       email: ormEntity.student.user.email,
       isAvailable: ormEntity.isAvailable,
+      isPcd: (ormEntity.student.disabilities && ormEntity.student.disabilities.length > 0) ? true : false,
       about: ormEntity.about || undefined,
       linkedin: ormEntity.linkedin || undefined,
       github: ormEntity.github || undefined,
       preference: ormEntity.preference || undefined,
       phone: ormEntity.student.telephone?.phone || undefined,
+      photoUrl: ormEntity.profilePhoto || undefined,
+      city: ormEntity.student.address?.city || undefined,
+      state: ormEntity.student.address?.state || undefined,
     };
   }
 
@@ -248,6 +263,8 @@ export class CurriculumRepository implements ICurriculumRepository {
     ormEntity.github = curriculum.githubUrl;
     ormEntity.videoPresentation = curriculum.videoPresentationUrl;
     ormEntity.profilePhoto = curriculum.photoUrl;
+    ormEntity.profilePhotoImage = curriculum.photoBuffer;
+    ormEntity.profilePhotoMimeType = curriculum.photoMimeType;
 
     return ormEntity;
   }
@@ -264,6 +281,8 @@ export class CurriculumRepository implements ICurriculumRepository {
       ormEntity.github,
       ormEntity.videoPresentation,
       ormEntity.profilePhoto,
+      ormEntity.profilePhotoImage,
+      ormEntity.profilePhotoMimeType,
       (ormEntity.curriculumSkills ?? []).map((curriculumSkill) => ({
         id: curriculumSkill.skill.id,
         skillName: curriculumSkill.skill.name,

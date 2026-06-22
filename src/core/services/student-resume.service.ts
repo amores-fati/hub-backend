@@ -12,9 +12,10 @@ import { InvalidResumeUrlException } from '../exceptions/invalid-resume-url.exce
 import { ResumeSkillAlreadyExistsException } from '../exceptions/resume-skill-already-exists.exception';
 import { ResumeSkillNotFoundException } from '../exceptions/resume-skill-not-found.exception';
 import { ResumeNotFoundException } from '../exceptions/resume-not-found.exception';
+import { SkillNotFoundException } from '../exceptions/skill-not-found.exception';
 import { StudentNotFoundException } from '../exceptions/student-not-found.exception';
 import { ICurriculumRepository } from '../ports/curriculum.repository.interface';
-import { IResumePhotoStorage } from '../ports/resume-photo-storage.interface';
+
 import { IStudentRepository } from '../ports/student.repository.interface';
 
 const ACCEPTED_PHOTO_MIME_TYPES = new Set([
@@ -29,7 +30,6 @@ export class StudentResumeService {
   constructor(
     private readonly curriculumRepository: ICurriculumRepository,
     private readonly studentRepository: IStudentRepository,
-    private readonly resumePhotoStorage: IResumePhotoStorage,
   ) {}
 
   async getResume(studentId: string): Promise<Curriculum> {
@@ -61,14 +61,11 @@ export class StudentResumeService {
   ): Promise<{ photoUrl: string }> {
     this.validatePhoto(command);
     const curriculum = await this.findOrCreateResume(studentId);
-    const photoUrl = await this.resumePhotoStorage.save({
-      studentId,
-      originalName: command.originalName,
-      mimeType: command.mimeType,
-      buffer: command.buffer,
-    });
 
+    curriculum.changePhoto(command.buffer, command.mimeType);
+    const photoUrl = `/api/students/${studentId}/resume/photo`;
     curriculum.changePhotoUrl(photoUrl);
+
     await this.curriculumRepository.save(curriculum);
 
     return { photoUrl };
@@ -85,9 +82,14 @@ export class StudentResumeService {
       throw new ResumeSkillAlreadyExistsException(skillName);
     }
 
+    // Catálogo fechado: a skill precisa existir previamente. O app não cria
+    // skills novas (evita lixo e crescimento infinito da tabela).
+    const skill = await this.curriculumRepository.findSkillByName(skillName);
+    if (!skill) {
+      throw new SkillNotFoundException(skillName);
+    }
+
     const savedCurriculum = await this.curriculumRepository.save(curriculum);
-    const skill =
-      await this.curriculumRepository.findOrCreateSkillByName(skillName);
 
     await this.curriculumRepository.addSkillToCurriculum(
       savedCurriculum.id,
