@@ -33,6 +33,7 @@ export interface UpdateCourseCommand {
   modality: string;
   linkAccess?: string;
   vacancyCount: number;
+  status?: CourseStatus;
   shift: string;
   address?: string;
 }

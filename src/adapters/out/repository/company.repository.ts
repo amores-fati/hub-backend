@@ -109,30 +109,13 @@ export class CompanyRepository implements ICompanyRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const ormEntity = await this.ormRepository.findOne({
-      where: { id },
-      relations: ['user', 'telephone', 'address'],
-    });
-
-    if (ormEntity) {
-      await this.ormRepository.manager.transaction(
-        async (transactionalEntityManager) => {
-          if (ormEntity.telephone) {
-            await transactionalEntityManager.remove(ormEntity.telephone);
-          }
-
-          if (ormEntity.address) {
-            await transactionalEntityManager.remove(ormEntity.address);
-          }
-
-          await transactionalEntityManager.remove(ormEntity);
-
-          if (ormEntity.user) {
-            await transactionalEntityManager.remove(ormEntity.user);
-          }
-        },
-      );
-    }
+    // Soft delete: marca o usuário como inativo (deleted_at), preservando a
+    // empresa, suas vagas e o histórico. O filtro de empresas passa a exibi-la
+    // como INATIVO (espelha o comportamento de exclusão de aluno) e o login
+    // fica bloqueado, pois o usuário deletado deixa de ser retornado.
+    await this.ormRepository.manager
+      .getRepository(UserOrmEntity)
+      .softDelete(id);
   }
 
   private mapToOrm(company: Company): CompanyOrmEntity {

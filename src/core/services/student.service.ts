@@ -152,6 +152,8 @@ export class StudentService {
       modality: this.normalizeFilterValue(command.modality),
       page: command.page ?? 1,
       pageSize: command.pageSize ?? 20,
+      sortBy: command.sortBy,
+      sortOrder: command.sortOrder,
     };
 
     const result = await this.studentRepository.findAllWithFilter(query);

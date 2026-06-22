@@ -4,6 +4,7 @@ import {
   GenerateStudentReportXlsxCommand,
   IStudentReportXlsxGenerator,
 } from '../../../core/ports/student-report-xlsx-generator.interface';
+import { neutralizeFormulaRows } from './xlsx-security';
 
 @Injectable()
 export class StudentReportXlsxGenerator implements IStudentReportXlsxGenerator {
@@ -24,7 +25,7 @@ export class StudentReportXlsxGenerator implements IStudentReportXlsxGenerator {
       { header: 'PCD', key: 'pcd', width: 16 },
     ];
 
-    worksheet.addRows(command.rows);
+    worksheet.addRows(neutralizeFormulaRows(command.rows));
     this.styleHeader(worksheet);
     this.autoFitColumns(worksheet);
 

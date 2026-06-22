@@ -64,6 +64,8 @@ export interface StudentFilterQuery {
   modality?: string;
   page: number;
   pageSize: 20 | 50;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 export interface DisabilityCount {
   disabilityType: string;

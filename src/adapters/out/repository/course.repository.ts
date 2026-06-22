@@ -100,6 +100,27 @@ export class CourseRepository implements ICourseRepository {
     await this.ormRepository.delete(id);
   }
 
+  async decreaseVacancy(courseId: string): Promise<boolean> {
+    const result = await this.ormRepository
+      .createQueryBuilder()
+      .update(CourseOrmEntity)
+      .set({ vacancyCount: () => 'vacancy_count - 1' })
+      .where('id = :id', { id: courseId })
+      .andWhere('vacancy_count > 0')
+      .execute();
+
+    return (result.affected ?? 0) > 0;
+  }
+
+  async increaseVacancy(courseId: string): Promise<void> {
+    await this.ormRepository
+      .createQueryBuilder()
+      .update(CourseOrmEntity)
+      .set({ vacancyCount: () => 'vacancy_count + 1' })
+      .where('id = :id', { id: courseId })
+      .execute();
+  }
+
   private mapToDomain(ormEntity: CourseOrmEntity): Course {
     return new Course(
       ormEntity.id,

@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule, JwtService } from '@nestjs/jwt';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { buildDatabaseOptions } from './config/database.config';
 import { AmoresFatiLogger, HttpLoggerInterceptor } from './utils/logger';
+import { DomainExceptionFilter } from './utils/filters/domain-exception.filter';
 
 // Admin Adapters & Core
 import { AdminController } from './adapters/in/controllers/admin.controller';
@@ -116,14 +118,15 @@ import { ISkillRepository } from './core/ports/skill.repository.interface';
       envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
     }),
     PassportModule,
+    // Rate limiting: 10 requisições por minuto por IP. Aplicado apenas no
+    // AuthController (login/forgot-password/reset-password/change-password)
+    // via @UseGuards(ThrottlerGuard), para mitigar brute-force e abuso.
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>(
-          'JWT_SECRET',
-          'default-secret-key-for-dev',
-        ),
+        secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: { expiresIn: '7d' },
       }),
     }),
@@ -165,6 +168,10 @@ import { ISkillRepository } from './core/ports/skill.repository.interface';
     {
       provide: APP_INTERCEPTOR,
       useClass: HttpLoggerInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: DomainExceptionFilter,
     },
     {
       provide: AdminService,

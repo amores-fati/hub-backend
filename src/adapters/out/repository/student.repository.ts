@@ -181,7 +181,7 @@ export class StudentRepository implements IStudentRepository {
       if (query.modality === 'NAO_INSCRITO') {
         queryBuilder.andWhere('enrollment.id IS NULL');
       } else {
-        queryBuilder.andWhere('course.modality = :modality', {
+        queryBuilder.andWhere('LOWER(course.modality) = LOWER(:modality)', {
           modality: query.modality,
         });
       }
@@ -232,6 +232,22 @@ export class StudentRepository implements IStudentRepository {
           disabilityTypes: query.disabilityType,
         });
       }
+    }
+
+    // Ordenação: apenas colunas da raiz/1-para-1 são suportadas. Colunas de
+    // relação de coleção (curso via enrollment, PCD via deficiências) não são
+    // ordenáveis aqui porque quebram a paginação com DISTINCT do Postgres.
+    const SORT_COLUMNS: Record<string, string> = {
+      fullName: 'student.fullName',
+      phoneNumber: 'telephone.phone',
+      city: 'address.city',
+    };
+    const sortColumn = query.sortBy ? SORT_COLUMNS[query.sortBy] : undefined;
+    if (sortColumn) {
+      const direction = query.sortOrder === 'desc' ? 'DESC' : 'ASC';
+      queryBuilder
+        .orderBy(sortColumn, direction)
+        .addOrderBy('student.id', 'ASC');
     }
 
     const [ormEntities, total] = await queryBuilder

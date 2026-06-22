@@ -26,9 +26,10 @@ export class EnrollmentRepository implements IEnrollmentRepository {
   async findByStudentAndCourse(
     studentId: string,
     courseId: string,
+    type: EnrollmentType,
   ): Promise<Enrollment | null> {
     const ormEntity = await this.ormRepository.findOne({
-      where: { studentId, courseId },
+      where: { studentId, courseId, type },
     });
     if (!ormEntity) return null;
     return this.mapToDomain(ormEntity);
@@ -46,8 +47,12 @@ export class EnrollmentRepository implements IEnrollmentRepository {
     return this.mapToDomain(saved);
   }
 
-  async delete(studentId: string, courseId: string): Promise<void> {
-    await this.ormRepository.delete({ studentId, courseId });
+  async delete(
+    studentId: string,
+    courseId: string,
+    type: EnrollmentType,
+  ): Promise<void> {
+    await this.ormRepository.delete({ studentId, courseId, type });
   }
 
   private mapToDomain(orm: EnrollmentOrmEntity): Enrollment {

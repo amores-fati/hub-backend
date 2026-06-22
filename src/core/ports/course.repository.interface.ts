@@ -19,4 +19,10 @@ export interface ICourseRepository {
   findManyByFilters(filters?: CourseReportFilters): Promise<Course[]>;
   update(course: Course): Promise<Course>;
   delete(id: string): Promise<void>;
+  /**
+   * Decrementa uma vaga de forma atômica (UPDATE condicional no banco).
+   * Retorna false quando não há vagas disponíveis, evitando corrida/overflow.
+   */
+  decreaseVacancy(courseId: string): Promise<boolean>;
+  increaseVacancy(courseId: string): Promise<void>;
 }

@@ -8,7 +8,9 @@ import {
   HttpStatus,
   UnauthorizedException,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -39,6 +41,7 @@ import { ResetPasswordDto } from '../dtos/auth/reset-password.dto';
 import { InvalidPasswordResetTokenException } from '../../../core/exceptions/invalid-password-reset-token.exception';
 
 @ApiTags('Auth')
+@UseGuards(ThrottlerGuard)
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -137,7 +140,15 @@ export class AuthController {
       email: forgotPasswordDto.email,
     };
 
-    await this.authService.forgotPassword(command);
+    // Resposta constante: nunca revela se o e-mail existe nem vaza falha de
+    // infra/mail. Erros internos são logados, mas a resposta é sempre 200.
+    try {
+      await this.authService.forgotPassword(command);
+    } catch {
+      this.logger.error(
+        'forgotPassword: falha interna suprimida para manter resposta constante',
+      );
+    }
 
     return {
       message:
